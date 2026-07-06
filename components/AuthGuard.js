@@ -41,6 +41,12 @@ export default function AuthGuard({ role, children }) {
         return;
       }
       if (compte.role !== role) {
+        // L'administrateur peut consulter les autres tableaux de bord
+        // (apercu), les autres roles restent cantonnes au leur.
+        if (compte.role === "admin") {
+          setEtat("autorise");
+          return;
+        }
         router.replace(CHEMIN_PAR_ROLE[compte.role] || "/login");
         return;
       }
