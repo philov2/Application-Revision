@@ -19,7 +19,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Nom et email requis." }, { status: 400 });
   }
 
-  const { data: invite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
+  const { data: invite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, { redirectTo: new URL("/definir-mot-de-passe", request.url).toString() });
   if (inviteError) {
     return NextResponse.json({ error: `Échec de l'invitation : ${inviteError.message}` }, { status: 500 });
   }
