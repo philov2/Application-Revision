@@ -32,7 +32,7 @@ export async function POST(request, { params }) {
   }
 
   // 1) Créer le compte Supabase Auth et envoyer l'email d'invitation
-  const { data: invite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(demande.email);
+  const { data: invite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(demande.email, { redirectTo: new URL("/definir-mot-de-passe", request.url).toString() });
   if (inviteError) {
     return NextResponse.json({ error: `Échec de l'invitation : ${inviteError.message}` }, { status: 500 });
   }
