@@ -16,7 +16,7 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Réservé à l'administrateur." }, { status: 403 });
   }
 
-  const { id } = params;
+    const { id } = await params;
 
   const { data: demande, error: demandeError } = await supabaseAdmin
     .from("demandes_comptes")
