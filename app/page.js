@@ -9,19 +9,24 @@ import { CHEMIN_PAR_ROLE } from "@/lib/roles";
 export default function Home() {
   const [verification, setVerification] = useState(supabaseConfigured);
 
-  useEffect(() => {
-    if (!supabaseConfigured) return;
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setVerification(false);
-        return;
-      }
-      const { data: compte } = await supabase.from("comptes").select("role").eq("id", session.user.id).single();
-      if (compte) window.location.href = CHEMIN_PAR_ROLE[compte.role] || "/login";
-      else setVerification(false);
-    })();
-  }, []);
+useEffect(() => {
+  if (!supabaseConfigured) return;
+  const hash = typeof window !== "undefined" ? window.location.hash : "";
+  if (hash.includes("type=recovery") || hash.includes("type=invite")) {
+    window.location.replace("/definir-mot-de-passe" + hash);
+    return;
+  }
+  (async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setVerification(false);
+      return;
+    }
+    const { data: compte } = await supabase.from("comptes").select("role").eq("id", session.user.id).single();
+    if (compte) window.location.href = CHEMIN_PAR_ROLE[compte.role] || "/login";
+    else setVerification(false);
+  })();
+}, []);
 
   if (verification) {
     return (
