@@ -48,4 +48,18 @@ export default function DevoirCard({ devoir, onToggle }) {
       </label>
     </div>
   );
+}          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
+            {dateLabel}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+            {devoir.origine}
+          </span>
+        </div>
+      </div>
+      <label className="flex items-center gap-2 text-sm shrink-0">
+        <input type="checkbox" checked={fait} onChange={() => onToggle?.(devoir.id)} className="h-5 w-5" />
+        {fait ? "Fait" : "À faire"}
+      </label>
+    </div>
+  );
 }
