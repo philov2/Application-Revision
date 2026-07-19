@@ -1,40 +1,54 @@
-// Données d'exemple utilisées uniquement tant que le projet Supabase n'est pas
-// encore connecté (voir README.md). Reflètent la composition réelle de la
-// famille (voir supabase/seed.sql) pour prévisualiser l'interface avec des
-// données proches du réel, en attendant la création des vrais comptes.
+"use client";
 
-// Palette de 8 couleurs franches et bien distinctes (une par matière), pour
-// repérer une matière au premier coup d'œil sur les cases de devoirs et les
-// listes de matières.
-export const matieres = [
-  { id: "m1", nom: "Mathématiques", couleur: "#3B82F6" },
-  { id: "m7", nom: "Physique-Chimie", couleur: "#8B5CF6" },
-  { id: "m6", nom: "Technologie", couleur: "#F97316" },
-  { id: "m8", nom: "Sciences de la Vie et de la Terre", couleur: "#22C55E" },
-  { id: "m5", nom: "Histoire-Géographie", couleur: "#EAB308" },
-  { id: "m3", nom: "Anglais", couleur: "#EF4444" },
-  { id: "m4", nom: "Allemand", couleur: "#06B6D4" },
-  { id: "m2", nom: "Français", couleur: "#EC4899" },
-];
+import { matieres } from "@/lib/sampleData";
 
-// Répartition réelle des soutiens par matière (voir Addendum au DCF) :
-// - Viviane : Allemand, Français, Anglais, Histoire-Géographie
-// - Philippe (administrateur) : Mathématiques, Technologie, Physique-Chimie,
-//   Sciences de la Vie et de la Terre, Histoire-Géographie, Anglais
-export const devoirsEnfant = [
-  { id: "d1", matiere: "Mathématiques", chapitre: "Fractions", type: "revision", echeance: "2026-07-06", statut: "a_faire", origine: "Philippe (soutien)" },
-  { id: "d2", matiere: "Français", chapitre: "Le passé simple", type: "exercice", echeance: "2026-07-07", statut: "a_faire", origine: "Viviane (soutien)" },
-  { id: "d3", matiere: "Histoire-Géographie", chapitre: "La Révolution française", type: "test", echeance: "2026-07-05", statut: "fait", origine: "Virginie (parent)" },
-  { id: "d4", matiere: "Anglais", chapitre: "Present perfect", type: "revision", echeance: "2026-07-08", statut: "a_faire", origine: "JC (parent)" },
-];
+const LABEL_TYPE = { revision: "Réviser le cours", exercice: "Exercices", test: "Test" };
 
-export const enfants = [
-  { id: "e1", nom: "Rose", niveau: "4ème (collège)", devoirsAFaire: 3, devoirsFaits: 1 },
-];
+function statutDate(dateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const echeance = new Date(dateStr + "T00:00:00");
+  if (echeance.getTime() === today.getTime()) return "aujourdhui";
+  return echeance < today ? "retard" : "avenir";
+}
 
-export const demandesAdmin = [
-  { id: "r1", type: "Nouveau compte Soutien", nom: "Viviane", email: "à renseigner", date: "2026-07-04" },
-];          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
+const COULEUR_DATE = {
+  avenir: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  retard: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  aujourdhui: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+};
+
+export default function DevoirCard({ devoir, onToggle }) {
+  const couleur = matieres.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
+  const fait = devoir.statut === "fait";
+  const [, month, day] = devoir.echeance.split("-");
+  const dateLabel = `${day}/${month}`;
+  const statut = statutDate(devoir.echeance);
+
+  return (
+    <div
+      className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between gap-4"
+      style={{ borderLeft: `6px solid ${couleur}` }}
+    >
+      <div>
+        <p className="text-xs uppercase tracking-wide text-slate-500">{devoir.matiere} · {devoir.chapitre}</p>
+        <p className="font-medium">{LABEL_TYPE[devoir.type] || devoir.type}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
+            {dateLabel}
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+            {devoir.origine}
+          </span>
+        </div>
+      </div>
+      <label className="flex items-center gap-2 text-sm shrink-0">
+        <input type="checkbox" checked={fait} onChange={() => onToggle?.(devoir.id)} className="h-5 w-5" />
+        {fait ? "Fait" : "À faire"}
+      </label>
+    </div>
+  );
+}];          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
             {dateLabel}
           </span>
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
