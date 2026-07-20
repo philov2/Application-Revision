@@ -19,6 +19,7 @@ export default function DashboardAdmin() {
 function Contenu() {
   const [demandes, setDemandes] = useState(supabaseConfigured ? [] : demandesAdmin);
   const [erreur, setErreur] = useState("");
+  const [enCours, setEnCours] = useState(new Set());
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -32,19 +33,27 @@ function Contenu() {
     })();
   }, []);
 
-  async function valider(id) {
-    setErreur("");
-    if (!supabaseConfigured) {
-      setDemandes((prev) => prev.filter((d) => d.id !== id));
-      return;
-    }
-    try {
-      await authFetch(`/api/demandes/${id}/valider`, { method: "POST" });
-      setDemandes((prev) => prev.filter((d) => d.id !== id));
-    } catch (err) {
-      setErreur(err.message);
-    }
+async function valider(id) {
+  if (enCours.has(id)) return;
+  setErreur("");
+  if (!supabaseConfigured) {
+    setDemandes((prev) => prev.filter((d) => d.id !== id));
+    return;
   }
+  setEnCours((prev) => new Set(prev).add(id));
+  try {
+    await authFetch(`/api/demandes/${id}/valider`, { method: "POST" });
+    setDemandes((prev) => prev.filter((d) => d.id !== id));
+  } catch (err) {
+    setErreur(err.message);
+  } finally {
+    setEnCours((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+}
 
   return (
     <>
@@ -61,9 +70,14 @@ function Contenu() {
                 <p className="text-sm text-slate-500">{d.nom} · {d.email}</p>
                 <p className="text-xs text-slate-400">Reçue le {(d.date_demande || d.date || "").toString().slice(0, 10)}</p>
               </div>
-              <button onClick={() => valider(d.id)} className="rounded-lg px-4 py-2 text-sm font-medium" style={{ background: "#91CAFF" }}>
-                Valider
-              </button>
+<button
+  onClick={() => valider(d.id)}
+    disabled={enCours.has(d.id)}
+className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+  style={{ background: "#91CAFF" }}
+>
+{enCours.has(d.id) ? "Validation..." : "Valider"}
+</button>
             </div>
           ))}
           {demandes.length === 0 && <p className="text-slate-500 text-sm">Aucune demande en attente.</p>}
