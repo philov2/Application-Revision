@@ -24,12 +24,17 @@ function Contenu() {
   const [formEnfantOuvert, setFormEnfantOuvert] = useState(false);
   const [formSoutienOuvert, setFormSoutienOuvert] = useState(false);
   const [message, setMessage] = useState("");
+  const [nomParent, setNomParent] = useState("");
 
   useEffect(() => {
     if (!supabaseConfigured) return;
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
+
+      const { data: compte } = await supabase.from("comptes").select("nom").eq("id", session.user.id).single();
+      if (compte?.nom) setNomParent(compte.nom);
+      
 
       const { data: liens } = await supabase
         .from("liens_parent_enfant")
@@ -110,7 +115,7 @@ function Contenu() {
   return (
     <>
       <DemoBanner />
-      <Navbar role="parent" nom="JC / Virginie" />
+      <Navbar role="parent" nom={nomParent || "Parent"}/>
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-6">
         {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
 
