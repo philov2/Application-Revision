@@ -10,6 +10,9 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
 import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
+import { chargerDevoirs } from "@/lib/devoirsSupabase";
+import FormulaireDevoir from "@/components/FormulaireDevoir";
+
 
 // En démonstration, Viviane est rattachée à Rose pour 4 matières (voir
 // supabase/seed.sql et l'Addendum au DCF). Une fois Supabase connecté, la
@@ -32,6 +35,7 @@ function Contenu() {
     const [matieres, setMatieres] = useState([]);
     const [enfantId, setEnfantId] = useState(null);
     const [compteId, setCompteId] = useState(null);
+    const [devoirs, setDevoirs] = useState(devoirsEnfant);
 
   useEffect(() => {
         if (!supabaseConfigured) return;
@@ -50,6 +54,7 @@ function Contenu() {
                          }
                          const { data: enfant } = await supabase.from("comptes").select("id").eq("role", "enfant").limit(1).single();
                          if (enfant) setEnfantId(enfant.id);
+                   if (enfant) await recharger(enfant.id);
                          return;
                }
 
@@ -64,12 +69,19 @@ function Contenu() {
                           setMatieresSuivies(noms);
                           setMatieres(mats);
                           setEnfantId(liens[0]?.enfant_id || null);
+                    if (liens[0]?.enfant_id) await recharger(liens[0].enfant_id);
                 }
         })();
   }, []);
 
-  const devoirsVisibles = devoirsEnfant.filter((d) => matieresSuivies.includes(d.matiere));
-        const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+    async function recharger(id) {
+          const liste = await chargerDevoirs(id);
+          setDevoirs(liste);
+    }
+    
+
+    const devoirsVisibles = devoirs.filter((d) => matieresSuivies.includes(d.matiere));
+    const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
         const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsVisibles);
   return (
         <>
@@ -79,8 +91,11 @@ function Contenu() {
             <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
               <StatsDevoirs devoirs={devoirsVisibles} />
                 <section>
-                          <h2 className="font-semibold mb-3">Devoirs a faire</h2>
-                        <div className="space-y-3">
+                <div className="flex items-center justify-between mb-3">
+                        <h2 className="font-semibold">Devoirs a faire</h2>
+                        <FormulaireDevoir enfantId={enfantId} compteId={compteId} matieres={matieres} onCree={() => recharger(enfantId)} />
+    </div>
+    <div className="space-y-3">
   {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} />)}
 {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
     </div>
