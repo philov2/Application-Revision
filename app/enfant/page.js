@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
@@ -9,6 +9,8 @@ import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
 import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
 
+import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
+import { chargerDevoirs, basculerStatutDevoir } from "@/lib/devoirsSupabase";
 export default function DashboardEnfant() {
   return (
     <AuthGuard role="enfant">
@@ -19,21 +21,48 @@ export default function DashboardEnfant() {
 
 function Contenu() {
   const [devoirs, setDevoirs] = useState(devoirsEnfant);
+  const [enfantId, setEnfantId] = useState(null);
+  const [nomEnfant, setNomEnfant] = useState("Rose");
 
-  function toggle(id) {
-    setDevoirs((prev) => prev.map((d) => {
-            if (d.id !== id) return d;
-            const nouveauStatut = d.statut === "fait" ? "a_faire" : "fait";
-            return { ...d, statut: nouveauStatut, date_realisation: nouveauStatut === "fait" ? new Date().toISOString().slice(0, 10) : d.date_realisation };
-    }));
+  async function recharger(id) {
+      const liste = await chargerDevoirs(id);
+      setDevoirs(liste);
+  }
+
+  useEffect(() => {
+      if (!supabaseConfigured) return;
+      (async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            setEnfantId(session.user.id);
+            const { data: compte } = await supabase.from("comptes").select("nom").eq("id", session.user.id).single();
+            if (compte?.nom) setNomEnfant(compte.nom);
+            await recharger(session.user.id);
+      })();
+  }, []);
+  
+
+async function toggle(id) {
+    if (supabaseConfigured && enfantId) {
+          const devoir = devoirs.find((d) => d.id === id);
+          const nouveauStatut = devoir?.statut === "fait" ? "a_faire" : "fait";
+          await basculerStatutDevoir(id, nouveauStatut);
+          await recharger(enfantId);
+          return;
     }
+    setDevoirs((prev) => prev.map((d) => {
+          if (d.id !== id) return d;
+          const nouveauStatut = d.statut === "fait" ? "a_faire" : "fait";
+          return { ...d, statut: nouveauStatut, date_realisation: nouveauStatut === "fait" ? new Date().toISOString().slice(0, 10) : d.date_realisation };
+    }));
+}
 
     const aFaire = devoirs.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
   const faits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
       <DemoBanner />
-      <Navbar role="enfant" nom="Rose" />
+      <Navbar role="enfant" nom={nomEnfant} />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
             <StatsDevoirs devoirs={devoirs} />
         <section>
