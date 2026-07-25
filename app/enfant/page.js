@@ -6,6 +6,7 @@ import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import { devoirsEnfant } from "@/lib/sampleData";
+import StatsDevoirs from "@/components/StatsDevoirs";
 
 export default function DashboardEnfant() {
   return (
@@ -30,6 +31,7 @@ function Contenu() {
       <DemoBanner />
       <Navbar role="enfant" nom="Rose" />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
+            <StatsDevoirs devoirs={devoirs} />
         <section>
           <h2 className="font-semibold mb-3">À faire ({aFaire.length})</h2>
           <div className="space-y-3">
