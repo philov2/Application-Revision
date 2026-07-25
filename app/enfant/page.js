@@ -23,7 +23,7 @@ function Contenu() {
     setDevoirs((prev) => prev.map((d) => d.id === id ? { ...d, statut: d.statut === "fait" ? "a_faire" : "fait" } : d));
   }
 
-  const aFaire = devoirs.filter((d) => d.statut === "a_faire");
+    const aFaire = devoirs.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
   const faits = devoirs.filter((d) => d.statut === "fait");
 
   return (
