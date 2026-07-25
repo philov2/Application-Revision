@@ -9,6 +9,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
+import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
 
 // En démonstration, Viviane est rattachée à Rose pour 4 matières (voir
 // supabase/seed.sql et l'Addendum au DCF). Une fois Supabase connecté, la
@@ -69,8 +70,7 @@ function Contenu() {
 
   const devoirsVisibles = devoirsEnfant.filter((d) => matieresSuivies.includes(d.matiere));
         const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-        const devoirsFaits = devoirsVisibles.filter((d) => d.statut === "fait");
-
+        const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsVisibles);
   return (
         <>
           <DemoBanner />
