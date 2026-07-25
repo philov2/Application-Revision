@@ -52,10 +52,11 @@ function Contenu() {
                                      setMatieres(toutesMatieres);
                                      setMatieresSuivies(toutesMatieres.map((m) => m.nom));
                          }
-                         const { data: enfant } = await supabase.from("comptes").select("id").eq("role", "enfant").limit(1).single();
-                         if (enfant) setEnfantId(enfant.id);
-                   if (enfant) await recharger(enfant.id);
-                         return;
+                                             const { data: enfants } = await supabase.from("comptes").select("id").eq("role", "enfant").limit(1);
+                                       const enfant = enfants && enfants[0];
+                                       if (enfant) setEnfantId(enfant.id);
+                                       if (enfant) await recharger(enfant.id);
+                   return;
                }
 
                const { data } = await supabase
