@@ -89,7 +89,7 @@ function Contenu() {
           <DemoBanner />
           <Navbar role="soutien" nom="Viviane" />
           <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
-            <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
+            <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose [DEBUG enfantId={String(enfantId)} compteId={String(compteId)}]</p>
               <StatsDevoirs devoirs={devoirsVisibles} />
                 <section>
                 <div className="flex items-center justify-between mb-3">
