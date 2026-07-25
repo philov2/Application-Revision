@@ -68,6 +68,8 @@ function Contenu() {
   }, []);
 
   const devoirsVisibles = devoirsEnfant.filter((d) => matieresSuivies.includes(d.matiere));
+        const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+        const devoirsFaits = devoirsVisibles.filter((d) => d.statut === "fait");
 
   return (
         <>
@@ -76,13 +78,20 @@ function Contenu() {
           <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
             <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
               <StatsDevoirs devoirs={devoirsVisibles} />
-          <section>
-              <h2 className="font-semibold mb-3">Devoirs</h2>
-            <div className="space-y-3">
-  {devoirsVisibles.map((d) => <DevoirCard key={d.id} devoir={d} />)}
-{devoirsVisibles.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
-  </div>
-  </section>
+                <section>
+                          <h2 className="font-semibold mb-3">Devoirs a faire</h2>
+                        <div className="space-y-3">
+  {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} />)}
+{devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
+    </div>
+    </section>
+
+                <section>
+                        <h2 className="font-semibold mb-3">Devoirs faits</h2>
+                    <div className="space-y-3">
+{devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} />)}
+                  </div>
+                  </section>
 
 {enfantId && compteId && matieres.length > 0 && (
             <section>
