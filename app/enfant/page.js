@@ -7,6 +7,7 @@ import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
+import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
 
 export default function DashboardEnfant() {
   return (
@@ -20,12 +21,15 @@ function Contenu() {
   const [devoirs, setDevoirs] = useState(devoirsEnfant);
 
   function toggle(id) {
-    setDevoirs((prev) => prev.map((d) => d.id === id ? { ...d, statut: d.statut === "fait" ? "a_faire" : "fait" } : d));
-  }
+    setDevoirs((prev) => prev.map((d) => {
+            if (d.id !== id) return d;
+            const nouveauStatut = d.statut === "fait" ? "a_faire" : "fait";
+            return { ...d, statut: nouveauStatut, date_realisation: nouveauStatut === "fait" ? new Date().toISOString().slice(0, 10) : d.date_realisation };
+    }));
+    }
 
     const aFaire = devoirs.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-  const faits = devoirs.filter((d) => d.statut === "fait");
-
+  const faits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
       <DemoBanner />
