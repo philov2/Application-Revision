@@ -141,3 +141,9 @@ create policy "admin met a jour les demandes" on demandes_comptes
 
 -- NOTE: ce fichier pose les fondations. Chaque nouvelle fonctionnalité (V2) devra
 -- ajouter ses propres policies avant mise en production.
+
+
+-- Jalon 3 : l'enfant peut mettre a jour le statut de ses propres devoirs
+create policy "enfant met a jour le statut de ses devoirs" on devoirs
+  for update using (enfant_id = auth.uid())
+  with check (enfant_id = auth.uid());
