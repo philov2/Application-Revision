@@ -113,6 +113,9 @@ function Contenu() {
     }
   }
 
+    const devoirsAFaireTries = [...devoirsEnfant].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+    const devoirsFaits = devoirsEnfant.filter((d) => d.statut === "fait");
+
   return (
     <>
       <DemoBanner />
@@ -150,18 +153,25 @@ function Contenu() {
           <>
             <StatsDevoirs devoirs={devoirsEnfant} />
           
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Devoirs de {enfant.nom}</h2>
-                <button className="text-sm font-medium rounded-lg px-3 py-1.5" style={{ background: "#91CAFF" }}>
-                  + Nouveau devoir
-                </button>
-              </div>
-              <div className="space-y-3">
-                {devoirsEnfant.map((d) => <DevoirCard key={d.id} devoir={d} />)}
-              </div>
-            </section>
-          </>
+                        <section>
+                        <div className="flex items-center justify-between mb-3">
+                          <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
+                          <button className="text-sm font-medium rounded-lg px-3 py-1.5" style={{ background: "#91CAFF" }}>
+                            + Nouveau devoir
+                              </button>
+                              </div>
+                                            <div className="space-y-3">
+                            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} />)}
+                                                    </div>
+                                                    </section>
+                                                    
+                                                                <section>
+                                                                  <h2 className="font-semibold mb-3">Devoirs faits</h2>
+                                                                  <div className="space-y-3">
+                                                    {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} />)}
+                                                    </div>
+                                                    </section>
+                                                    </>
         )}
 
         <section>
