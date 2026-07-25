@@ -9,6 +9,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
+import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
 
 export default function DashboardParent() {
   return (
@@ -114,8 +115,7 @@ function Contenu() {
   }
 
     const devoirsAFaireTries = [...devoirsEnfant].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-    const devoirsFaits = devoirsEnfant.filter((d) => d.statut === "fait");
-
+    const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsEnfant);
   return (
     <>
       <DemoBanner />
