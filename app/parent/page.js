@@ -10,6 +10,9 @@ import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
 import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
+import { chargerDevoirs } from "@/lib/devoirsSupabase";
+import FormulaireDevoir from "@/components/FormulaireDevoir";
+
 
 export default function DashboardParent() {
   return (
@@ -27,6 +30,8 @@ function Contenu() {
   const [formSoutienOuvert, setFormSoutienOuvert] = useState(false);
   const [message, setMessage] = useState("");
   const [nomParent, setNomParent] = useState("");
+  const [compteId, setCompteId] = useState(null);
+  const [devoirs, setDevoirs] = useState(devoirsEnfant);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -36,6 +41,7 @@ function Contenu() {
 
       const { data: compte } = await supabase.from("comptes").select("nom").eq("id", session.user.id).single();
       if (compte?.nom) setNomParent(compte.nom);
+      setCompteId(session.user.id);
       
 
       const { data: liens } = await supabase
@@ -53,6 +59,7 @@ function Contenu() {
       if (listeEnfants.length > 0) {
         setEnfants(listeEnfants);
         setEnfantSelectionne(listeEnfants[0].id);
+        await recharger(listeEnfants[0].id);
       }
 
       const { data: mats } = await supabase.from("matieres").select("id, nom, couleur");
@@ -61,6 +68,12 @@ function Contenu() {
   }, []);
 
   const enfant = enfants.find((e) => e.id === enfantSelectionne) || enfants[0];
+
+  async function recharger(id) {
+      const liste = await chargerDevoirs(id);
+      setDevoirs(liste);
+  }
+  
 
   async function ajouterEnfant(e) {
     e.preventDefault();
@@ -114,8 +127,8 @@ function Contenu() {
     }
   }
 
-    const devoirsAFaireTries = [...devoirsEnfant].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-    const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsEnfant);
+    const devoirsAFaireTries = [...devoirs].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+    const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
       <DemoBanner />
@@ -127,8 +140,8 @@ function Contenu() {
           {enfants.map((e) => (
             <button
               key={e.id}
-              onClick={() => setEnfantSelectionne(e.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent" : "border-slate-300 dark:border-slate-600"}`}
+                onClick={() => { setEnfantSelectionne(e.id); if (supabaseConfigured) recharger(e.id); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent" : "border-slate-300 dark:border-slate-600"}`}
               style={e.id === enfantSelectionne ? { background: "#91CAFF" } : {}}
             >
               {e.nom} · {e.niveau}
@@ -151,14 +164,12 @@ function Contenu() {
 
         {enfant && (
           <>
-            <StatsDevoirs devoirs={devoirsEnfant} />
+        <StatsDevoirs devoirs={devoirs} />
           
                         <section>
                         <div className="flex items-center justify-between mb-3">
                           <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
-                          <button className="text-sm font-medium rounded-lg px-3 py-1.5" style={{ background: "#91CAFF" }}>
-                            + Nouveau devoir
-                              </button>
+<FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
                               </div>
                                             <div className="space-y-3">
                             {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} />)}
