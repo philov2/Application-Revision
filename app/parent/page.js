@@ -8,6 +8,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
+import StatsDevoirs from "@/components/StatsDevoirs";
 
 export default function DashboardParent() {
   return (
@@ -147,17 +148,8 @@ function Contenu() {
 
         {enfant && (
           <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
-                <p className="text-2xl font-semibold">{enfant.devoirsAFaire}</p>
-                <p className="text-xs text-slate-500">devoirs à faire</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
-                <p className="text-2xl font-semibold">{enfant.devoirsFaits}</p>
-                <p className="text-xs text-slate-500">devoirs réalisés</p>
-              </div>
-            </div>
-
+            <StatsDevoirs devoirs={devoirsEnfant} />
+          
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Devoirs de {enfant.nom}</h2>
