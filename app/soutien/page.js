@@ -8,6 +8,7 @@ import MatiereDocuments from "@/components/MatiereDocuments";
 import AuthGuard from "@/components/AuthGuard";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { devoirsEnfant } from "@/lib/sampleData";
+import StatsDevoirs from "@/components/StatsDevoirs";
 
 // En démonstration, Viviane est rattachée à Rose pour 4 matières (voir
 // supabase/seed.sql et l'Addendum au DCF). Une fois Supabase connecté, la
@@ -74,6 +75,7 @@ function Contenu() {
           <Navbar role="soutien" nom="Viviane" />
           <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
             <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
+              <StatsDevoirs devoirs={devoirsVisibles} />
           <section>
               <h2 className="font-semibold mb-3">Devoirs</h2>
             <div className="space-y-3">
