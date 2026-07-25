@@ -36,8 +36,6 @@ function Contenu() {
     const [enfantId, setEnfantId] = useState(null);
     const [compteId, setCompteId] = useState(null);
     const [devoirs, setDevoirs] = useState(devoirsEnfant);
-        const [rolesDebug, setRolesDebug] = useState("");
-
   useEffect(() => {
         if (!supabaseConfigured) return;
         (async () => {
@@ -53,9 +51,8 @@ function Contenu() {
                                      setMatieres(toutesMatieres);
                                      setMatieresSuivies(toutesMatieres.map((m) => m.nom));
                          }
-                                                                 const { data: touscomptes } = await supabase.from("comptes").select("id, role");
-                                       setRolesDebug(JSON.stringify(touscomptes));
-                                       const enfant = (touscomptes || []).find((c) => c.role === "enfant");
+                                                                                     const { data: enfants } = await supabase.from("comptes").select("id").eq("role", "enfant").limit(1);
+                                       const enfant = enfants && enfants[0];
                                        if (enfant) setEnfantId(enfant.id);
                                        if (enfant) await recharger(enfant.id);
                    return;
@@ -91,7 +88,7 @@ function Contenu() {
           <DemoBanner />
           <Navbar role="soutien" nom="Viviane" />
           <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
-            <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose [DEBUG enfantId={String(enfantId)} compteId={String(compteId)}] roles={rolesDebug}</p>
+            <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
               <StatsDevoirs devoirs={devoirsVisibles} />
                 <section>
                 <div className="flex items-center justify-between mb-3">
