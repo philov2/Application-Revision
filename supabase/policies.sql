@@ -147,3 +147,10 @@ create policy "admin met a jour les demandes" on demandes_comptes
 create policy "enfant met a jour le statut de ses devoirs" on devoirs
   for update using (enfant_id = auth.uid())
   with check (enfant_id = auth.uid());
+
+
+-- Jalon 3 : l'administrateur peut aussi creer des devoirs
+create policy "admin cree des devoirs" on devoirs
+  for insert with check (
+      exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+    );
