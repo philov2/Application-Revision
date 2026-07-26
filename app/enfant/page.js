@@ -20,7 +20,7 @@ export default function DashboardEnfant() {
 }
 
 function Contenu() {
-  const [devoirs, setDevoirs] = useState(devoirsEnfant);
+  const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
   const [enfantId, setEnfantId] = useState(null);
   const [nomEnfant, setNomEnfant] = useState("Rose");
 
