@@ -97,7 +97,7 @@ if (!texteSynthese) {
 const cheminSynthese = `${document.enfant_id}/${Date.now()}-synthese-${document.nom || "cours"}.md`;
 const { error: uploadError } = await supabaseAdmin.storage
 .from("documents")
-.upload(cheminSynthese, Buffer.from(texteSynthese, "utf-8"), { contentType: "text/markdown" });
+  .upload(cheminSynthese, Buffer.from(texteSynthese, "utf-8"), { contentType: "text/markdown; charset=utf-8" });
 if (uploadError) {
   return NextResponse.json({ error: `Echec de l'enregistrement de la synthese : ${uploadError.message}` }, { status: 500 });
   }
