@@ -31,11 +31,11 @@ export default function DashboardSoutien() {
 }
 
 function Contenu() {
-    const [matieresSuivies, setMatieresSuivies] = useState(MATIERES_DEMO);
+const [matieresSuivies, setMatieresSuivies] = useState(supabaseConfigured ? [] : MATIERES_DEMO); 
     const [matieres, setMatieres] = useState([]);
     const [enfantId, setEnfantId] = useState(null);
     const [compteId, setCompteId] = useState(null);
-    const [devoirs, setDevoirs] = useState(devoirsEnfant);
+    const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
   useEffect(() => {
         if (!supabaseConfigured) return;
         (async () => {
