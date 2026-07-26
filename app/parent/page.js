@@ -23,15 +23,15 @@ export default function DashboardParent() {
 }
 
 function Contenu() {
-  const [enfants, setEnfants] = useState(enfantsDemo);
-  const [matieres, setMatieres] = useState(matieresDemo);
-  const [enfantSelectionne, setEnfantSelectionne] = useState(enfantsDemo[0]?.id);
+  const [enfants, setEnfants] = useState(supabaseConfigured ? [] : enfantsDemo);
+  const [matieres, setMatieres] = useState(supabaseConfigured ? [] : matieresDemo);
+   const [enfantSelectionne, setEnfantSelectionne] = useState(enfantsDemo[0]?.id);
   const [formEnfantOuvert, setFormEnfantOuvert] = useState(false);
   const [formSoutienOuvert, setFormSoutienOuvert] = useState(false);
   const [message, setMessage] = useState("");
   const [nomParent, setNomParent] = useState("");
   const [compteId, setCompteId] = useState(null);
-  const [devoirs, setDevoirs] = useState(devoirsEnfant);
+  const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
