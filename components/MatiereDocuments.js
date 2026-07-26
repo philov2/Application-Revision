@@ -94,9 +94,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       		setEnCoursSynthese((prev) => new Set(prev).add(documentId));
       		setMessage("");
       		try {
-            			const res = await authFetch(`/api/documents/${documentId}/synthese`, { method: "POST" });
-            			const data = await res.json();
-            			if (!res.ok) throw new Error(data.error || "Erreur lors de la generation.");
+            			          await authFetch(`/api/documents/${documentId}/synthese`, { method: "POST" });
             			charger();
           } catch (err) {
             			setMessage(err.message);
