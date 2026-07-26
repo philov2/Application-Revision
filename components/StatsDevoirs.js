@@ -9,6 +9,7 @@ export default function StatsDevoirs({ devoirs }) {
     { label: "devoirs en retard", valeur: stats.enRetard },
     { label: "realises dans les delais", valeur: stats.realisesDansLesDelais },
     { label: "retard de plus d'une semaine", valeur: stats.retardPlusUneSemaine },
+    { label: "total devoirs a faire", valeur: stats.totalAFaire },
     ];
 
 return (
