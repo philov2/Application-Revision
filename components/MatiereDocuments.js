@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { authFetch } from "@/lib/authFetch";
 
 const TYPES_DOCUMENT = [
   { value: "cours", label: "Cours" },
@@ -19,6 +20,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     const [formOuvert, setFormOuvert] = useState(false);
     const [envoi, setEnvoi] = useState(false);
     const [message, setMessage] = useState("");
+  	const [enCoursSynthese, setEnCoursSynthese] = useState(new Set());
 
   async function charger() {
         const { data: chaps } = await supabase
@@ -88,6 +90,24 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
         }
   }
 
+  	async function genererSynthese(documentId) {
+      		setEnCoursSynthese((prev) => new Set(prev).add(documentId));
+      		setMessage("");
+      		try {
+            			const res = await authFetch(`/api/documents/${documentId}/synthese`, { method: "POST" });
+            			const data = await res.json();
+            			if (!res.ok) throw new Error(data.error || "Erreur lors de la generation.");
+            			charger();
+          } catch (err) {
+            			setMessage(err.message);
+          } finally {
+            			setEnCoursSynthese((prev) => {
+                    				const next = new Set(prev);
+                    				next.delete(documentId);
+                    				return next;
+                  });
+          }
+    }
   async function telecharger(chemin) {
         const { data, error } = await supabase.storage.from("documents").createSignedUrl(chemin, 60);
         if (error) {
@@ -150,7 +170,14 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
                       <p className="font-medium">{d.nom}</p>
                                    <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}{d.chapitre?.nom ? ` · ${d.chapitre.nom}` : ""}</p>
         </div>
+                      <div className="flex items-center gap-3">
+      {d.type === "cours" && (
+                      <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
+      {enCoursSynthese.has(d.id) ? "Generation..." : "Generer une synthese"}
+</button>
+              )}
             <button onClick={() => telecharger(d.fichier_url)} className="text-xs font-medium underline">Ouvrir</button>
+              </div>
         </div>
         ))}
 {documents.length === 0 && <p className="text-slate-500 text-xs">Aucun document pour cette matière.</p>}
