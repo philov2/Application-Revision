@@ -26,6 +26,7 @@ function Contenu() {
   const [roleEdite, setRoleEdite] = useState("");
   const [enCours, setEnCours] = useState(new Set());
   const [enConfirmation, setEnConfirmation] = useState(null);
+  const [message, setMessage] = useState("");
 
   async function charger() {
     if (!supabaseConfigured) return;
@@ -72,6 +73,24 @@ function Contenu() {
     }
   }
 
+  async function reinitialiserMotDePasse(c) {
+    setErreur("");
+    setMessage("");
+    setEnCours((prev) => new Set(prev).add(c.id));
+    try {
+      const res = await authFetch(`/api/comptes/${c.id}/reinitialiser-mot-de-passe`, { method: "POST" });
+      setMessage(`Email de réinitialisation envoyé à ${res.email}.`);
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setEnCours((prev) => {
+        const next = new Set(prev);
+        next.delete(c.id);
+        return next;
+      });
+    }
+  }
+
   async function supprimer(c) {
     setErreur("");
     setEnCours((prev) => new Set(prev).add(c.id));
@@ -97,6 +116,7 @@ function Contenu() {
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-6">
         <h2 className="font-semibold">Comptes ({comptes.length})</h2>
         {erreur && <p className="text-sm text-red-600">{erreur}</p>}
+        {message && <p className="text-sm text-green-600">{message}</p>}
         <div className="space-y-3">
           {comptes.map((c) => (
             <div key={c.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between gap-4 flex-wrap">
@@ -140,6 +160,13 @@ function Contenu() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={() => commencerEdition(c)} className="text-xs font-medium underline">Modifier</button>
+                    <button
+                      onClick={() => reinitialiserMotDePasse(c)}
+                      disabled={enCours.has(c.id)}
+                      className="text-xs font-medium underline disabled:opacity-50"
+                    >
+                      {enCours.has(c.id) ? "Envoi..." : "Réinitialiser le mot de passe"}
+                    </button>
                     {enConfirmation === c.id ? (
                       <>
                         <span className="text-xs text-red-600">Confirmer ?</span>
