@@ -56,6 +56,13 @@ export default function Navbar({ role, nom }) {
                   {t.label}
                 </Link>
               ))}
+              <Link
+                href="/admin/comptes"
+                className={`px-2.5 py-1 rounded-lg ${pathname === "/admin/comptes" ? "font-medium" : "text-slate-500 dark:text-slate-400"}`}
+                style={pathname === "/admin/comptes" ? { background: "#91CAFF" } : {}}
+              >
+                Comptes
+              </Link>
             </nav>
           )}
           <span className="text-sm text-slate-500 dark:text-slate-400">
