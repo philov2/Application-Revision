@@ -19,7 +19,8 @@ export default function DashboardAdmin() {
 function Contenu() {
   const [demandes, setDemandes] = useState(supabaseConfigured ? [] : demandesAdmin);
   const [erreur, setErreur] = useState("");
-  const [enCours, setEnCours] = useState(new Set());
+  const [enCoursValidation, setEnCoursValidation] = useState(new Set());
+  const [enCoursRejet, setEnCoursRejet] = useState(new Set());
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -33,27 +34,49 @@ function Contenu() {
     })();
   }, []);
 
-async function valider(id) {
-  if (enCours.has(id)) return;
-  setErreur("");
-  if (!supabaseConfigured) {
-    setDemandes((prev) => prev.filter((d) => d.id !== id));
-    return;
+  async function valider(id) {
+    if (enCoursValidation.has(id) || enCoursRejet.has(id)) return;
+    setErreur("");
+    if (!supabaseConfigured) {
+      setDemandes((prev) => prev.filter((d) => d.id !== id));
+      return;
+    }
+    setEnCoursValidation((prev) => new Set(prev).add(id));
+    try {
+      await authFetch(`/api/demandes/${id}/valider`, { method: "POST" });
+      setDemandes((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setEnCoursValidation((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   }
-  setEnCours((prev) => new Set(prev).add(id));
-  try {
-    await authFetch(`/api/demandes/${id}/valider`, { method: "POST" });
-    setDemandes((prev) => prev.filter((d) => d.id !== id));
-  } catch (err) {
-    setErreur(err.message);
-  } finally {
-    setEnCours((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+
+  async function rejeter(id) {
+    if (enCoursValidation.has(id) || enCoursRejet.has(id)) return;
+    setErreur("");
+    if (!supabaseConfigured) {
+      setDemandes((prev) => prev.filter((d) => d.id !== id));
+      return;
+    }
+    setEnCoursRejet((prev) => new Set(prev).add(id));
+    try {
+      await authFetch(`/api/demandes/${id}/rejeter`, { method: "POST" });
+      setDemandes((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setEnCoursRejet((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   }
-}
 
   return (
     <>
@@ -70,14 +93,23 @@ async function valider(id) {
                 <p className="text-sm text-slate-500">{d.nom} · {d.email}</p>
                 <p className="text-xs text-slate-400">Reçue le {(d.date_demande || d.date || "").toString().slice(0, 10)}</p>
               </div>
-<button
-  onClick={() => valider(d.id)}
-    disabled={enCours.has(d.id)}
-className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
-  style={{ background: "#91CAFF" }}
->
-{enCours.has(d.id) ? "Validation..." : "Valider"}
-</button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => valider(d.id)}
+                  disabled={enCoursValidation.has(d.id) || enCoursRejet.has(d.id)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+                  style={{ background: "#91CAFF" }}
+                >
+                  {enCoursValidation.has(d.id) ? "Validation..." : "Valider"}
+                </button>
+                <button
+                  onClick={() => rejeter(d.id)}
+                  disabled={enCoursValidation.has(d.id) || enCoursRejet.has(d.id)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 disabled:opacity-50"
+                >
+                  {enCoursRejet.has(d.id) ? "Rejet..." : "Rejeter"}
+                </button>
+              </div>
             </div>
           ))}
           {demandes.length === 0 && <p className="text-slate-500 text-sm">Aucune demande en attente.</p>}
