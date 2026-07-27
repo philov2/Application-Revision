@@ -13,7 +13,6 @@ import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
 import { chargerDevoirs } from "@/lib/devoirsSupabase";
 import FormulaireDevoir from "@/components/FormulaireDevoir";
 
-
 export default function DashboardParent() {
   return (
     <AuthGuard role="parent">
@@ -25,7 +24,7 @@ export default function DashboardParent() {
 function Contenu() {
   const [enfants, setEnfants] = useState(supabaseConfigured ? [] : enfantsDemo);
   const [matieres, setMatieres] = useState(supabaseConfigured ? [] : matieresDemo);
-   const [enfantSelectionne, setEnfantSelectionne] = useState(enfantsDemo[0]?.id);
+  const [enfantSelectionne, setEnfantSelectionne] = useState(enfantsDemo[0]?.id);
   const [formEnfantOuvert, setFormEnfantOuvert] = useState(false);
   const [formSoutienOuvert, setFormSoutienOuvert] = useState(false);
   const [message, setMessage] = useState("");
@@ -42,7 +41,6 @@ function Contenu() {
       const { data: compte } = await supabase.from("comptes").select("nom").eq("id", session.user.id).single();
       if (compte?.nom) setNomParent(compte.nom);
       setCompteId(session.user.id);
-      
 
       const { data: liens } = await supabase
         .from("liens_parent_enfant")
@@ -70,10 +68,9 @@ function Contenu() {
   const enfant = enfants.find((e) => e.id === enfantSelectionne) || enfants[0];
 
   async function recharger(id) {
-      const liste = await chargerDevoirs(id);
-      setDevoirs(liste);
+    const liste = await chargerDevoirs(id);
+    setDevoirs(liste);
   }
-  
 
   async function ajouterEnfant(e) {
     e.preventDefault();
@@ -127,8 +124,8 @@ function Contenu() {
     }
   }
 
-    const devoirsAFaireTries = [...devoirs].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-    const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
+  const devoirsAFaireTries = [...devoirs].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+  const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
       <DemoBanner />
@@ -140,8 +137,8 @@ function Contenu() {
           {enfants.map((e) => (
             <button
               key={e.id}
-                onClick={() => { setEnfantSelectionne(e.id); if (supabaseConfigured) recharger(e.id); }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent" : "border-slate-300 dark:border-slate-600"}`}
+              onClick={() => { setEnfantSelectionne(e.id); if (supabaseConfigured) recharger(e.id); }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent" : "border-slate-300 dark:border-slate-600"}`}
               style={e.id === enfantSelectionne ? { background: "#91CAFF" } : {}}
             >
               {e.nom} · {e.niveau}
@@ -164,25 +161,25 @@ function Contenu() {
 
         {enfant && (
           <>
-        <StatsDevoirs devoirs={devoirs} />
-          
-                        <section>
-                        <div className="flex items-center justify-between mb-3">
-                          <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
-<FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
-                              </div>
-                                            <div className="space-y-3">
-                            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} />)}
-                                                    </div>
-                                                    </section>
-                                                    
-                                                                <section>
-                                                                  <h2 className="font-semibold mb-3">Devoirs faits</h2>
-                                                                  <div className="space-y-3">
-                                                    {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} />)}
-                                                    </div>
-                                                    </section>
-                                                    </>
+            <StatsDevoirs devoirs={devoirs} />
+
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
+                <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
+              </div>
+              <div className="space-y-3">
+                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} onChange={() => recharger(enfant.id)} />)}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="font-semibold mb-3">Devoirs faits</h2>
+              <div className="space-y-3">
+                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} onChange={() => recharger(enfant.id)} />)}
+              </div>
+            </section>
+          </>
         )}
 
         <section>
