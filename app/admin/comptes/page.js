@@ -25,6 +25,7 @@ function Contenu() {
   const [nomEdite, setNomEdite] = useState("");
   const [roleEdite, setRoleEdite] = useState("");
   const [enCours, setEnCours] = useState(new Set());
+  const [enConfirmation, setEnConfirmation] = useState(null);
 
   async function charger() {
     if (!supabaseConfigured) return;
@@ -72,12 +73,12 @@ function Contenu() {
   }
 
   async function supprimer(c) {
-    if (!window.confirm(`Supprimer définitivement le compte de ${c.nom} (${c.email}) ?`)) return;
     setErreur("");
     setEnCours((prev) => new Set(prev).add(c.id));
     try {
       await authFetch(`/api/comptes/${c.id}`, { method: "DELETE" });
       setComptes((prev) => prev.filter((x) => x.id !== c.id));
+      setEnConfirmation(null);
     } catch (err) {
       setErreur(err.message);
     } finally {
@@ -139,13 +140,26 @@ function Contenu() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={() => commencerEdition(c)} className="text-xs font-medium underline">Modifier</button>
-                    <button
-                      onClick={() => supprimer(c)}
-                      disabled={enCours.has(c.id)}
-                      className="text-xs font-medium underline text-red-600 disabled:opacity-50"
-                    >
-                      Supprimer
-                    </button>
+                    {enConfirmation === c.id ? (
+                      <>
+                        <span className="text-xs text-red-600">Confirmer ?</span>
+                        <button
+                          onClick={() => supprimer(c)}
+                          disabled={enCours.has(c.id)}
+                          className="text-xs font-medium underline text-red-600 disabled:opacity-50"
+                        >
+                          {enCours.has(c.id) ? "Suppression..." : "Oui, supprimer"}
+                        </button>
+                        <button onClick={() => setEnConfirmation(null)} className="text-xs font-medium underline text-slate-500">Annuler</button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setEnConfirmation(c.id)}
+                        className="text-xs font-medium underline text-red-600"
+                      >
+                        Supprimer
+                      </button>
+                    )}
                   </div>
                 </>
               )}
