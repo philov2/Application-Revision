@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
 import { modifierDevoir, supprimerDevoir } from "@/lib/devoirsSupabase";
+import { soumettrePhotoExercice, noterExercice, urlSigneePhotoExercice } from "@/lib/reponsesExercicesSupabase";
 
 const LABEL_TYPE = { revision: "Réviser le cours", exercice: "Exercices", test: "Test" };
 const TYPES_DEVOIR = [
@@ -26,7 +27,7 @@ const COULEUR_DATE = {
   aujourdhui: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
-export default function DevoirCard({ devoir, onToggle, matieres, onChange }) {
+export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId }) {
   const couleur = matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
   const fait = devoir.statut === "fait";
   const [, month, day] = devoir.echeance.split("-");
@@ -42,6 +43,16 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange }) {
   const [chapitres, setChapitres] = useState([]);
   const [type, setType] = useState(devoir.type);
   const [dateEcheance, setDateEcheance] = useState(devoir.echeance);
+
+  const [enEnvoiPhoto, setEnEnvoiPhoto] = useState(false);
+  const [erreurPhoto, setErreurPhoto] = useState("");
+  const fileInputRef = useRef(null);
+
+  const [enChargementPhoto, setEnChargementPhoto] = useState(false);
+  const [note, setNote] = useState("");
+  const [commentaire, setCommentaire] = useState("");
+  const [enCoursNote, setEnCoursNote] = useState(false);
+  const [erreurNote, setErreurNote] = useState("");
 
   useEffect(() => {
     if (!matiereId) {
@@ -91,6 +102,54 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange }) {
     }
   }
 
+  async function envoyerPhoto(e) {
+    const fichier = e.target.files?.[0];
+    if (!fichier || !enfantId) return;
+    setErreurPhoto("");
+    setEnEnvoiPhoto(true);
+    try {
+      await soumettrePhotoExercice(devoir.id, enfantId, fichier);
+      onChange?.();
+    } catch (err) {
+      setErreurPhoto(err.message);
+    } finally {
+      setEnEnvoiPhoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function voirPhoto() {
+    if (!devoir.reponseExercice) return;
+    setErreurNote("");
+    setEnChargementPhoto(true);
+    try {
+      const url = await urlSigneePhotoExercice(devoir.reponseExercice.photoUrl);
+      window.open(url, "_blank");
+    } catch (err) {
+      setErreurNote(err.message);
+    } finally {
+      setEnChargementPhoto(false);
+    }
+  }
+
+  async function enregistrerNote() {
+    if (!devoir.reponseExercice) return;
+    setErreurNote("");
+    setEnCoursNote(true);
+    try {
+      await noterExercice(devoir.reponseExercice.id, {
+        note: note === "" ? null : Number(note),
+        commentaire: commentaire || null,
+        notePar: compteId,
+      });
+      onChange?.();
+    } catch (err) {
+      setErreurNote(err.message);
+    } finally {
+      setEnCoursNote(false);
+    }
+  }
+
   if (enEdition) {
     return (
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2" style={{ borderLeft: `6px solid ${couleur}` }}>
@@ -134,6 +193,50 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange }) {
           </span>
         </div>
         {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
+
+        {devoir.type === "exercice" && onToggle && (
+          <div className="mt-2 text-xs">
+            {erreurPhoto && <p className="text-red-600 mb-1">{erreurPhoto}</p>}
+            {!devoir.reponseExercice && (
+              <>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={envoyerPhoto} disabled={enEnvoiPhoto} className="hidden" id={`photo-${devoir.id}`} />
+                <label htmlFor={`photo-${devoir.id}`} className="cursor-pointer underline font-medium text-blue-600">
+                  {enEnvoiPhoto ? "Envoi en cours..." : "Envoyer une photo de l'exercice"}
+                </label>
+              </>
+            )}
+            {devoir.reponseExercice && devoir.reponseExercice.note == null && (
+              <p className="text-slate-500">Photo envoyée, en attente de correction.</p>
+            )}
+            {devoir.reponseExercice && devoir.reponseExercice.note != null && (
+              <p className="text-green-700 dark:text-green-400 font-medium">
+                Note : {devoir.reponseExercice.note}/20{devoir.reponseExercice.commentaire ? ` — ${devoir.reponseExercice.commentaire}` : ""}
+              </p>
+            )}
+          </div>
+        )}
+
+        {devoir.type === "exercice" && matieres && devoir.reponseExercice && (
+          <div className="mt-2 text-xs space-y-1">
+            {erreurNote && <p className="text-red-600">{erreurNote}</p>}
+            <button onClick={voirPhoto} disabled={enChargementPhoto} className="underline font-medium text-blue-600 disabled:opacity-50">
+              {enChargementPhoto ? "Ouverture..." : "Voir la photo envoyée"}
+            </button>
+            {devoir.reponseExercice.note == null ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <input type="number" min="0" max="20" step="0.5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note /20" className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
+                <input type="text" value={commentaire} onChange={(e) => setCommentaire(e.target.value)} placeholder="Commentaire (optionnel)" className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
+                <button onClick={enregistrerNote} disabled={enCoursNote || note === ""} className="rounded-lg px-3 py-1 font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                  {enCoursNote ? "Enregistrement..." : "Enregistrer la note"}
+                </button>
+              </div>
+            ) : (
+              <p className="text-green-700 dark:text-green-400 font-medium">
+                Note : {devoir.reponseExercice.note}/20{devoir.reponseExercice.commentaire ? ` — ${devoir.reponseExercice.commentaire}` : ""}
+              </p>
+            )}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-3 shrink-0">
         {onToggle && (
