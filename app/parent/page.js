@@ -38,9 +38,29 @@ function Contenu() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: compte } = await supabase.from("comptes").select("nom").eq("id", session.user.id).single();
+      const { data: compte } = await supabase.from("comptes").select("nom, role").eq("id", session.user.id).single();
       if (compte?.nom) setNomParent(compte.nom);
       setCompteId(session.user.id);
+
+      if (compte?.role === "admin") {
+        const { data: tousEnfants } = await supabase.from("comptes").select("id, nom").eq("role", "enfant").order("nom");
+        const listeEnfants = (tousEnfants || []).map((e) => ({
+          id: e.id,
+          nom: e.nom,
+          niveau: "",
+          devoirsAFaire: 0,
+          devoirsFaits: 0,
+        }));
+        if (listeEnfants.length > 0) {
+          setEnfants(listeEnfants);
+          setEnfantSelectionne(listeEnfants[0].id);
+          await recharger(listeEnfants[0].id);
+        }
+
+        const { data: mats } = await supabase.from("matieres").select("id, nom, couleur");
+        if (mats) setMatieres(mats);
+        return;
+      }
 
       const { data: liens } = await supabase
         .from("liens_parent_enfant")
@@ -141,7 +161,7 @@ function Contenu() {
               className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent" : "border-slate-300 dark:border-slate-600"}`}
               style={e.id === enfantSelectionne ? { background: "#91CAFF" } : {}}
             >
-              {e.nom} · {e.niveau}
+              {e.nom}{e.niveau ? ` · ${e.niveau}` : ""}
             </button>
           ))}
           <button onClick={() => setFormEnfantOuvert((v) => !v)} className="px-4 py-2 rounded-lg text-sm font-medium border border-dashed border-slate-400">
