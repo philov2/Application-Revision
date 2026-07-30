@@ -1,8 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
+import { supprimerTest } from "@/lib/testsSupabase";
+import FormulaireTest from "@/components/FormulaireTest";
 
 const TYPES_DOCUMENT = [
   { value: "cours", label: "Cours" },
@@ -16,6 +17,7 @@ const TYPES_DOCUMENT = [
 export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [chapitres, setChapitres] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [testsParChapitre, setTestsParChapitre] = useState({});
   const [nouveauChapitre, setNouveauChapitre] = useState("");
   const [formOuvert, setFormOuvert] = useState(false);
   const [envoi, setEnvoi] = useState(false);
@@ -23,6 +25,8 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [enCoursSynthese, setEnCoursSynthese] = useState(new Set());
   const [enCoursSuppression, setEnCoursSuppression] = useState(new Set());
   const [enConfirmationSuppression, setEnConfirmationSuppression] = useState(null);
+  const [enConfirmationSuppressionTest, setEnConfirmationSuppressionTest] = useState(null);
+  const [enCoursSuppressionTest, setEnCoursSuppressionTest] = useState(new Set());
 
   async function charger() {
     const { data: chaps } = await supabase
@@ -31,6 +35,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       .eq("matiere_id", matiere.id)
       .order("nom");
     setChapitres(chaps || []);
+
     const { data: docs } = await supabase
       .from("documents")
       .select("id, nom, type, fichier_url, chapitre:chapitres(nom)")
@@ -38,6 +43,19 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       .eq("enfant_id", enfantId)
       .order("created_at", { ascending: false });
     setDocuments(docs || []);
+
+    const chapitreIds = (chaps || []).map((c) => c.id);
+    if (chapitreIds.length > 0) {
+      const { data: tests } = await supabase.from("tests").select("id, titre, chapitre_id").in("chapitre_id", chapitreIds);
+      const parChapitre = {};
+      (tests || []).forEach((t) => {
+        if (!parChapitre[t.chapitre_id]) parChapitre[t.chapitre_id] = [];
+        parChapitre[t.chapitre_id].push(t);
+      });
+      setTestsParChapitre(parChapitre);
+    } else {
+      setTestsParChapitre({});
+    }
   }
 
   useEffect(() => {
@@ -70,6 +88,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       const chemin = `${compteId}/${Date.now()}-${fichier.name}`;
       const { error: uploadError } = await supabase.storage.from("documents").upload(chemin, fichier);
       if (uploadError) throw uploadError;
+
       const { error: insertError } = await supabase.from("documents").insert({
         nom: form.get("nom") || fichier.name,
         type: form.get("type"),
@@ -127,6 +146,24 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     }
   }
 
+  async function retirerTest(testId) {
+    setEnCoursSuppressionTest((prev) => new Set(prev).add(testId));
+    setMessage("");
+    try {
+      await supprimerTest(testId);
+      setEnConfirmationSuppressionTest(null);
+      charger();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursSuppressionTest((prev) => {
+        const next = new Set(prev);
+        next.delete(testId);
+        return next;
+      });
+    }
+  }
+
   async function telecharger(chemin) {
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(chemin, 60);
     if (error) {
@@ -144,9 +181,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
           + Importer un document
         </button>
       </div>
-
       {message && <p className="text-sm text-red-600">{message}</p>}
-
       <form onSubmit={ajouterChapitre} className="flex gap-2">
         <input
           value={nouveauChapitre}
@@ -156,15 +191,37 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
         />
         <button type="submit" className="rounded-lg px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600">Ajouter</button>
       </form>
-
       {chapitres.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-2">
           {chapitres.map((c) => (
-            <span key={c.id} className="text-xs px-2 py-1 rounded-md border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300">{c.nom}</span>
+            <div key={c.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{c.nom}</span>
+                <FormulaireTest chapitreId={c.id} onCree={charger} />
+              </div>
+              <div className="mt-1 space-y-1">
+                {(testsParChapitre[c.id] || []).map((t) => (
+                  <div key={t.id} className="flex items-center justify-between text-xs">
+                    <span>{t.titre}</span>
+                    {enConfirmationSuppressionTest === t.id ? (
+                      <span className="flex items-center gap-2">
+                        <span className="text-red-600">Confirmer ?</span>
+                        <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className="underline text-red-600 disabled:opacity-50">
+                          {enCoursSuppressionTest.has(t.id) ? "Suppression..." : "Oui, supprimer"}
+                        </button>
+                        <button onClick={() => setEnConfirmationSuppressionTest(null)} className="underline text-slate-500">Annuler</button>
+                      </span>
+                    ) : (
+                      <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className="underline text-red-600">Supprimer</button>
+                    )}
+                  </div>
+                ))}
+                {(testsParChapitre[c.id] || []).length === 0 && <p className="text-slate-400 text-xs">Aucun test pour ce chapitre.</p>}
+              </div>
+            </div>
           ))}
         </div>
       )}
-
       {formOuvert && (
         <form onSubmit={importerDocument} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2">
           <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
@@ -181,7 +238,6 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
           </button>
         </form>
       )}
-
       <div className="space-y-2">
         {documents.map((d) => (
           <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">

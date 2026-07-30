@@ -5,6 +5,7 @@ import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
 import { modifierDevoir, supprimerDevoir } from "@/lib/devoirsSupabase";
 import { soumettrePhotoExercice, noterExercice, urlSigneePhotoExercice } from "@/lib/reponsesExercicesSupabase";
+import { chargerTestsChapitre, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
 
 const LABEL_TYPE = { revision: "Réviser le cours", exercice: "Exercices", test: "Test" };
 const TYPES_DEVOIR = [
@@ -54,6 +55,13 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [enCoursNote, setEnCoursNote] = useState(false);
   const [erreurNote, setErreurNote] = useState("");
 
+  const [testDisponible, setTestDisponible] = useState(null);
+  const [resultatTest, setResultatTest] = useState(null);
+  const [enPassageTest, setEnPassageTest] = useState(false);
+  const [reponsesTest, setReponsesTest] = useState([]);
+  const [enEnvoiTest, setEnEnvoiTest] = useState(false);
+  const [erreurTest, setErreurTest] = useState("");
+
   useEffect(() => {
     if (!matiereId) {
       setChapitres([]);
@@ -64,6 +72,23 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setChapitres(data || []);
     })();
   }, [matiereId]);
+
+  useEffect(() => {
+    if (devoir.type !== "test" || !devoir.chapitreId || !devoir.enfantId) return;
+    (async () => {
+      try {
+        const tests = await chargerTestsChapitre(devoir.chapitreId);
+        const t = tests[0] || null;
+        setTestDisponible(t);
+        if (t) {
+          const r = await chargerResultatTest(t.id, devoir.enfantId);
+          setResultatTest(r);
+        }
+      } catch {
+        // silencieux : ne bloque pas l'affichage du devoir
+      }
+    })();
+  }, [devoir.type, devoir.chapitreId, devoir.enfantId]);
 
   function commencerEdition() {
     setMatiereId(devoir.matiereId || "");
@@ -147,6 +172,38 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setErreurNote(err.message);
     } finally {
       setEnCoursNote(false);
+    }
+  }
+
+  function commencerTest() {
+    if (!testDisponible) return;
+    setReponsesTest(new Array(testDisponible.questions.length).fill(null));
+    setErreurTest("");
+    setEnPassageTest(true);
+  }
+
+  function choisirReponse(indexQuestion, indexChoix) {
+    setReponsesTest((prev) => prev.map((r, i) => (i === indexQuestion ? indexChoix : r)));
+  }
+
+  async function validerTest() {
+    if (!testDisponible || !devoir.enfantId) return;
+    setErreurTest("");
+    setEnEnvoiTest(true);
+    try {
+      const total = testDisponible.questions.length;
+      let correct = 0;
+      testDisponible.questions.forEach((q, i) => {
+        if (reponsesTest[i] === q.bonne_reponse) correct += 1;
+      });
+      const noteCalculee = Math.round((correct / total) * 20 * 100) / 100;
+      await soumettreResultatTest({ testId: testDisponible.id, enfantId: devoir.enfantId, reponses: reponsesTest, note: noteCalculee });
+      setResultatTest({ note: noteCalculee, reponses: reponsesTest });
+      setEnPassageTest(false);
+    } catch (err) {
+      setErreurTest(err.message);
+    } finally {
+      setEnEnvoiTest(false);
     }
   }
 
@@ -236,6 +293,44 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               </p>
             )}
           </div>
+        )}
+
+        {devoir.type === "test" && onToggle && testDisponible && (
+          <div className="mt-2 text-xs space-y-2">
+            {erreurTest && <p className="text-red-600">{erreurTest}</p>}
+            {resultatTest ? (
+              <p className="text-green-700 dark:text-green-400 font-medium">Note : {resultatTest.note}/20</p>
+            ) : enPassageTest ? (
+              <div className="space-y-3 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
+                <p className="font-medium text-sm">{testDisponible.titre}</p>
+                {testDisponible.questions.map((q, i) => (
+                  <div key={i} className="space-y-1">
+                    <p className="text-sm">{q.question}</p>
+                    {q.choix.map((choixTexte, j) => (
+                      <label key={j} className="flex items-center gap-2 text-sm">
+                        <input type="radio" name={`q-${devoir.id}-${i}`} checked={reponsesTest[i] === j} onChange={() => choisirReponse(i, j)} />
+                        {choixTexte}
+                      </label>
+                    ))}
+                  </div>
+                ))}
+                <button
+                  onClick={validerTest}
+                  disabled={enEnvoiTest || reponsesTest.some((r) => r === null)}
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                  style={{ background: "#91CAFF" }}
+                >
+                  {enEnvoiTest ? "Envoi..." : "Valider le test"}
+                </button>
+              </div>
+            ) : (
+              <button onClick={commencerTest} className="underline font-medium text-blue-600">Passer le test</button>
+            )}
+          </div>
+        )}
+
+        {devoir.type === "test" && matieres && resultatTest && (
+          <p className="mt-2 text-xs text-green-700 dark:text-green-400 font-medium">Note : {resultatTest.note}/20</p>
         )}
       </div>
       <div className="flex items-center gap-3 shrink-0">
