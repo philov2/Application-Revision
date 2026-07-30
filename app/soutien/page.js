@@ -94,7 +94,7 @@ function Contenu() {
             <FormulaireDevoir enfantId={enfantId} compteId={compteId} matieres={matieres} onCree={() => recharger(enfantId)} />
           </div>
           <div className="space-y-3">
-            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} onChange={() => recharger(enfantId)} />)}
+            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfantId)} />)}
             {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
           </div>
         </section>
@@ -102,7 +102,7 @@ function Contenu() {
         <section>
           <h2 className="font-semibold mb-3">Devoirs faits</h2>
           <div className="space-y-3">
-            {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} onChange={() => recharger(enfantId)} />)}
+            {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfantId)} />)}
           </div>
         </section>
 
