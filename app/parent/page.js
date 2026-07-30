@@ -169,14 +169,14 @@ function Contenu() {
                 <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
               </div>
               <div className="space-y-3">
-                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} onChange={() => recharger(enfant.id)} />)}
+                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfant.id)} />)}
               </div>
             </section>
 
             <section>
               <h2 className="font-semibold mb-3">Devoirs faits</h2>
               <div className="space-y-3">
-                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} onChange={() => recharger(enfant.id)} />)}
+                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfant.id)} />)}
               </div>
             </section>
           </>
