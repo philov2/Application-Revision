@@ -65,6 +65,7 @@ create table devoirs (
   matiere_id uuid references matieres(id),
   chapitre_id uuid references chapitres(id),
   document_id uuid references documents(id),
+  titre text, -- nom donné au devoir (optionnel) ; voir Jalon "titre + creation matiere/chapitre + IA"
   type type_devoir not null,
   date_echeance date,
   cree_par uuid references comptes(id) not null,

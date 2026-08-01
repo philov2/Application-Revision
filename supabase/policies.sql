@@ -173,3 +173,20 @@ for insert with check (
   and enfant_id is not null
   and exists (select 1 from liens_parent_enfant l where l.enfant_id = documents.enfant_id and l.parent_id = auth.uid())
 );
+
+-- Jalon "titre + creation matiere/chapitre + generation IA" (suite au
+-- signalement : impossible de nommer un devoir, de créer une nouvelle matière
+-- ou un nouveau chapitre depuis un compte Parent ou Soutien). La colonne
+-- devoirs.titre est ajoutée dans schema.sql. Décision retenue : Parent,
+-- Soutien et Admin peuvent tous créer une matière ou un chapitre (référentiel
+-- commun, pas de restriction par rattachement pour la création — seule la
+-- lecture reste ouverte à tout compte actif comme avant).
+create policy "creation matieres par parent soutien ou admin" on matieres
+for insert with check (
+  exists (select 1 from comptes c where c.id = auth.uid() and c.role in ('parent', 'soutien', 'admin'))
+);
+
+create policy "creation chapitres par parent ou admin" on chapitres
+for insert with check (
+  exists (select 1 from comptes c where c.id = auth.uid() and c.role in ('parent', 'soutien', 'admin'))
+);
