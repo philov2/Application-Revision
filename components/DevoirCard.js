@@ -44,6 +44,8 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [chapitres, setChapitres] = useState([]);
   const [type, setType] = useState(devoir.type);
   const [dateEcheance, setDateEcheance] = useState(devoir.echeance);
+  const [documentsEdition, setDocumentsEdition] = useState([]);
+  const [documentIdEdition, setDocumentIdEdition] = useState(devoir.document?.id || "");
 
   const [enEnvoiPhoto, setEnEnvoiPhoto] = useState(false);
   const [erreurPhoto, setErreurPhoto] = useState("");
@@ -54,6 +56,9 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [commentaire, setCommentaire] = useState("");
   const [enCoursNote, setEnCoursNote] = useState(false);
   const [erreurNote, setErreurNote] = useState("");
+
+  const [enChargementDocument, setEnChargementDocument] = useState(false);
+  const [erreurDocument, setErreurDocument] = useState("");
 
   const [testDisponible, setTestDisponible] = useState(null);
   const [resultatTest, setResultatTest] = useState(null);
@@ -72,6 +77,19 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setChapitres(data || []);
     })();
   }, [matiereId]);
+
+  useEffect(() => {
+    if (!enEdition || !matiereId || !enfantId) {
+      setDocumentsEdition([]);
+      return;
+    }
+    (async () => {
+      let requete = supabase.from("documents").select("id, nom, type").eq("matiere_id", matiereId).eq("enfant_id", enfantId);
+      if (chapitreId) requete = requete.eq("chapitre_id", chapitreId);
+      const { data } = await requete.order("created_at", { ascending: false });
+      setDocumentsEdition(data || []);
+    })();
+  }, [enEdition, matiereId, chapitreId, enfantId]);
 
   useEffect(() => {
     if (devoir.type !== "test" || !devoir.chapitreId || !devoir.enfantId) return;
@@ -95,6 +113,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     setChapitreId(devoir.chapitreId || "");
     setType(devoir.type);
     setDateEcheance(devoir.echeance);
+    setDocumentIdEdition(devoir.document?.id || "");
     setErreur("");
     setEnEdition(true);
   }
@@ -103,7 +122,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     setErreur("");
     setEnCours(true);
     try {
-      await modifierDevoir(devoir.id, { matiereId, chapitreId: chapitreId || null, type, dateEcheance });
+      await modifierDevoir(devoir.id, { matiereId, chapitreId: chapitreId || null, documentId: documentIdEdition || null, type, dateEcheance });
       setEnEdition(false);
       onChange?.();
     } catch (err) {
@@ -154,6 +173,21 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setErreurNote(err.message);
     } finally {
       setEnChargementPhoto(false);
+    }
+  }
+
+  async function voirDocument() {
+    if (!devoir.document) return;
+    setErreurDocument("");
+    setEnChargementDocument(true);
+    try {
+      const { data, error } = await supabase.storage.from("documents").createSignedUrl(devoir.document.fichierUrl, 60);
+      if (error) throw error;
+      window.open(data.signedUrl, "_blank");
+    } catch (err) {
+      setErreurDocument(err.message);
+    } finally {
+      setEnChargementDocument(false);
     }
   }
 
@@ -211,11 +245,11 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     return (
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2" style={{ borderLeft: `6px solid ${couleur}` }}>
         {erreur && <p className="text-sm text-red-600">{erreur}</p>}
-        <select value={matiereId} onChange={(e) => { setMatiereId(e.target.value); setChapitreId(""); }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
+        <select value={matiereId} onChange={(e) => { setMatiereId(e.target.value); setChapitreId(""); setDocumentIdEdition(""); }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
           <option value="">Choisir une matière</option>
           {(matieres || []).map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
         </select>
-        <select value={chapitreId} onChange={(e) => setChapitreId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
+        <select value={chapitreId} onChange={(e) => { setChapitreId(e.target.value); setDocumentIdEdition(""); }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
           <option value="">Aucun chapitre</option>
           {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
         </select>
@@ -223,6 +257,12 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           {TYPES_DEVOIR.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
         <input type="date" value={dateEcheance} onChange={(e) => setDateEcheance(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
+        {matiereId && (
+          <select value={documentIdEdition} onChange={(e) => setDocumentIdEdition(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
+            <option value="">Aucun document</option>
+            {documentsEdition.map((d) => <option key={d.id} value={d.id}>{d.nom}</option>)}
+          </select>
+        )}
         <div className="flex items-center gap-2">
           <button onClick={enregistrer} disabled={enCours} className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
             {enCours ? "Enregistrement..." : "Enregistrer"}
@@ -250,6 +290,18 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           </span>
         </div>
         {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
+
+        {devoir.document && (
+          <div className="mt-2 text-xs">
+            {erreurDocument && <p className="text-red-600 mb-1">{erreurDocument}</p>}
+            <button onClick={voirDocument} disabled={enChargementDocument} className="underline font-medium text-blue-600 disabled:opacity-50">
+              {enChargementDocument ? "Ouverture..." : `Ouvrir le document : ${devoir.document.nom}`}
+            </button>
+          </div>
+        )}
+        {!devoir.document && devoir.type === "revision" && (
+          <p className="mt-2 text-xs text-slate-400">Aucun document associé à ce devoir. Cliquez sur « Modifier » pour en choisir ou en importer un.</p>
+        )}
 
         {devoir.type === "exercice" && onToggle && (
           <div className="mt-2 text-xs">
