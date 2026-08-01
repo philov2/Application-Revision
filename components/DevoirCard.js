@@ -39,6 +39,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [enConfirmationSuppression, setEnConfirmationSuppression] = useState(false);
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
+  const [titre, setTitre] = useState(devoir.titre || "");
   const [matiereId, setMatiereId] = useState(devoir.matiereId || "");
   const [chapitreId, setChapitreId] = useState(devoir.chapitreId || "");
   const [chapitres, setChapitres] = useState([]);
@@ -109,6 +110,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   }, [devoir.type, devoir.chapitreId, devoir.enfantId]);
 
   function commencerEdition() {
+    setTitre(devoir.titre || "");
     setMatiereId(devoir.matiereId || "");
     setChapitreId(devoir.chapitreId || "");
     setType(devoir.type);
@@ -122,7 +124,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     setErreur("");
     setEnCours(true);
     try {
-      await modifierDevoir(devoir.id, { matiereId, chapitreId: chapitreId || null, documentId: documentIdEdition || null, type, dateEcheance });
+      await modifierDevoir(devoir.id, { matiereId, chapitreId: chapitreId || null, documentId: documentIdEdition || null, titre: titre || null, type, dateEcheance });
       setEnEdition(false);
       onChange?.();
     } catch (err) {
@@ -245,6 +247,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     return (
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2" style={{ borderLeft: `6px solid ${couleur}` }}>
         {erreur && <p className="text-sm text-red-600">{erreur}</p>}
+        <input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Nom du devoir (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
         <select value={matiereId} onChange={(e) => { setMatiereId(e.target.value); setChapitreId(""); setDocumentIdEdition(""); }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
           <option value="">Choisir une matière</option>
           {(matieres || []).map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
@@ -280,7 +283,8 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     >
       <div>
         <p className="text-xs uppercase tracking-wide text-slate-500">{devoir.matiere} · {devoir.chapitre}</p>
-        <p className="font-medium">{LABEL_TYPE[devoir.type] || devoir.type}</p>
+        <p className="font-medium">{devoir.titre || LABEL_TYPE[devoir.type] || devoir.type}</p>
+        {devoir.titre && <p className="text-xs text-slate-400">{LABEL_TYPE[devoir.type] || devoir.type}</p>}
         <div className="flex items-center gap-2 mt-2">
           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
             {dateLabel}
@@ -379,6 +383,10 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               <button onClick={commencerTest} className="underline font-medium text-blue-600">Passer le test</button>
             )}
           </div>
+        )}
+
+        {devoir.type === "test" && onToggle && !testDisponible && (
+          <p className="mt-2 text-xs text-slate-400">Aucun test n&apos;est encore rattaché à ce chapitre.</p>
         )}
 
         {devoir.type === "test" && matieres && resultatTest && (

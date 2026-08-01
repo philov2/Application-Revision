@@ -23,6 +23,8 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState("");
   const [enCoursSynthese, setEnCoursSynthese] = useState(new Set());
+  const [enCoursExercices, setEnCoursExercices] = useState(new Set());
+  const [enCoursTestIA, setEnCoursTestIA] = useState(new Set());
   const [enCoursSuppression, setEnCoursSuppression] = useState(new Set());
   const [enConfirmationSuppression, setEnConfirmationSuppression] = useState(null);
   const [enConfirmationSuppressionTest, setEnConfirmationSuppressionTest] = useState(null);
@@ -38,7 +40,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
 
     const { data: docs } = await supabase
       .from("documents")
-      .select("id, nom, type, fichier_url, chapitre:chapitres(nom)")
+      .select("id, nom, type, fichier_url, chapitre_id, chapitre:chapitres(nom)")
       .eq("matiere_id", matiere.id)
       .eq("enfant_id", enfantId)
       .order("created_at", { ascending: false });
@@ -121,6 +123,41 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       setMessage(err.message);
     } finally {
       setEnCoursSynthese((prev) => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
+    }
+  }
+
+  async function genererExercices(documentId) {
+    setEnCoursExercices((prev) => new Set(prev).add(documentId));
+    setMessage("");
+    try {
+      await authFetch(`/api/documents/${documentId}/exercices`, { method: "POST" });
+      charger();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursExercices((prev) => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
+    }
+  }
+
+  async function genererTestIA(documentId) {
+    setEnCoursTestIA((prev) => new Set(prev).add(documentId));
+    setMessage("");
+    try {
+      await authFetch(`/api/documents/${documentId}/test-ia`, { method: "POST" });
+      charger();
+      setMessage("Test généré par IA — visible dans la liste des tests du chapitre ci-dessus.");
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursTestIA((prev) => {
         const next = new Set(prev);
         next.delete(documentId);
         return next;
@@ -240,16 +277,29 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       )}
       <div className="space-y-2">
         {documents.map((d) => (
-          <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
+          <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2">
             <div>
               <p className="font-medium">{d.nom}</p>
               <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}{d.chapitre?.nom ? ` · ${d.chapitre.nom}` : ""}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               {d.type === "cours" && (
-                <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
-                  {enCoursSynthese.has(d.id) ? "Generation..." : "Generer une synthese"}
-                </button>
+                <>
+                  <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
+                    {enCoursSynthese.has(d.id) ? "Generation..." : "Générer une synthèse"}
+                  </button>
+                  <button onClick={() => genererExercices(d.id)} disabled={enCoursExercices.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
+                    {enCoursExercices.has(d.id) ? "Generation..." : "Générer des exercices"}
+                  </button>
+                  <button
+                    onClick={() => genererTestIA(d.id)}
+                    disabled={enCoursTestIA.has(d.id) || !d.chapitre_id}
+                    title={!d.chapitre_id ? "Rattachez d'abord ce document à un chapitre" : undefined}
+                    className="text-xs font-medium underline disabled:opacity-50"
+                  >
+                    {enCoursTestIA.has(d.id) ? "Generation..." : "Générer un test (QCM)"}
+                  </button>
+                </>
               )}
               <button onClick={() => telecharger(d.fichier_url)} className="text-xs font-medium underline">Ouvrir</button>
               {enConfirmationSuppression === d.id ? (
