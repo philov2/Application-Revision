@@ -35,6 +35,11 @@ function Contenu() {
   const [enfantId, setEnfantId] = useState(null);
   const [compteId, setCompteId] = useState(null);
   const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
+  const [nouvelleMatiereOuvert, setNouvelleMatiereOuvert] = useState(false);
+  const [nomNouvelleMatiere, setNomNouvelleMatiere] = useState("");
+  const [enCoursMatiere, setEnCoursMatiere] = useState(false);
+  const [message, setMessage] = useState("");
+
   useEffect(() => {
     if (!supabaseConfigured) return;
     (async () => {
@@ -78,6 +83,24 @@ function Contenu() {
     setDevoirs(liste);
   }
 
+  async function creerNouvelleMatiere(e) {
+    e.preventDefault();
+    if (!nomNouvelleMatiere.trim()) return;
+    setMessage("");
+    setEnCoursMatiere(true);
+    try {
+      const { data, error } = await supabase.from("matieres").insert({ nom: nomNouvelleMatiere.trim() }).select().single();
+      if (error) throw error;
+      setNomNouvelleMatiere("");
+      setNouvelleMatiereOuvert(false);
+      setMessage(`Matière « ${data.nom} » créée. Demandez à un parent de vous y rattacher pour la gérer ici.`);
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursMatiere(false);
+    }
+  }
+
   const devoirsVisibles = devoirs.filter((d) => matieresSuivies.includes(d.matiere));
   const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
   const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsVisibles);
@@ -86,6 +109,7 @@ function Contenu() {
       <DemoBanner />
       <Navbar role="soutien" nom="Viviane" />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
+        {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
         <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
         <StatsDevoirs devoirs={devoirsVisibles} />
         <section>
@@ -94,7 +118,7 @@ function Contenu() {
             <FormulaireDevoir enfantId={enfantId} compteId={compteId} matieres={matieres} onCree={() => recharger(enfantId)} />
           </div>
           <div className="space-y-3">
-            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfantId)} />)}
+            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
             {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
           </div>
         </section>
@@ -102,18 +126,35 @@ function Contenu() {
         <section>
           <h2 className="font-semibold mb-3">Devoirs faits</h2>
           <div className="space-y-3">
-            {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfantId)} />)}
+            {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
           </div>
         </section>
 
-        {enfantId && compteId && matieres.length > 0 && (
+        {enfantId && compteId && (
           <section>
-            <h2 className="font-semibold mb-3">Chapitres et documents</h2>
-            <div className="space-y-4">
-              {matieres.map((m) => (
-                <MatiereDocuments key={m.id} matiere={m} enfantId={enfantId} compteId={compteId} />
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Chapitres et documents</h2>
+              <button onClick={() => setNouvelleMatiereOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
+                + Nouvelle matière
+              </button>
             </div>
+            {nouvelleMatiereOuvert && (
+              <form onSubmit={creerNouvelleMatiere} className="flex items-center gap-2 mb-3">
+                <input value={nomNouvelleMatiere} onChange={(e) => setNomNouvelleMatiere(e.target.value)} placeholder="Nom de la nouvelle matière" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
+                <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                  {enCoursMatiere ? "..." : "Ajouter"}
+                </button>
+              </form>
+            )}
+            {matieres.length > 0 ? (
+              <div className="space-y-4">
+                {matieres.map((m) => (
+                  <MatiereDocuments key={m.id} matiere={m} enfantId={enfantId} compteId={compteId} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 text-xs">Aucune matière ne vous est encore confiée.</p>
+            )}
           </section>
         )}
       </main>
