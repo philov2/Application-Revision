@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
+import MatiereDocuments from "@/components/MatiereDocuments";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
@@ -27,6 +28,9 @@ function Contenu() {
   const [enfantSelectionne, setEnfantSelectionne] = useState(enfantsDemo[0]?.id);
   const [formEnfantOuvert, setFormEnfantOuvert] = useState(false);
   const [formSoutienOuvert, setFormSoutienOuvert] = useState(false);
+  const [nouvelleMatiereOuvert, setNouvelleMatiereOuvert] = useState(false);
+  const [nomNouvelleMatiere, setNomNouvelleMatiere] = useState("");
+  const [enCoursMatiere, setEnCoursMatiere] = useState(false);
   const [message, setMessage] = useState("");
   const [nomParent, setNomParent] = useState("");
   const [compteId, setCompteId] = useState(null);
@@ -57,7 +61,7 @@ function Contenu() {
           await recharger(listeEnfants[0].id);
         }
 
-        const { data: mats } = await supabase.from("matieres").select("id, nom, couleur");
+        const { data: mats } = await supabase.from("matieres").select("id, nom, couleur").order("nom");
         if (mats) setMatieres(mats);
         return;
       }
@@ -80,7 +84,7 @@ function Contenu() {
         await recharger(listeEnfants[0].id);
       }
 
-      const { data: mats } = await supabase.from("matieres").select("id, nom, couleur");
+      const { data: mats } = await supabase.from("matieres").select("id, nom, couleur").order("nom");
       if (mats) setMatieres(mats);
     })();
   }, []);
@@ -144,6 +148,24 @@ function Contenu() {
     }
   }
 
+  async function creerNouvelleMatiere(e) {
+    e.preventDefault();
+    if (!nomNouvelleMatiere.trim()) return;
+    setMessage("");
+    setEnCoursMatiere(true);
+    try {
+      const { data, error } = await supabase.from("matieres").insert({ nom: nomNouvelleMatiere.trim() }).select().single();
+      if (error) throw error;
+      setMatieres((prev) => [...prev, data].sort((a, b) => a.nom.localeCompare(b.nom)));
+      setNomNouvelleMatiere("");
+      setNouvelleMatiereOuvert(false);
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursMatiere(false);
+    }
+  }
+
   const devoirsAFaireTries = [...devoirs].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
   const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
   return (
@@ -189,16 +211,41 @@ function Contenu() {
                 <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
               </div>
               <div className="space-y-3">
-                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfant.id)} />)}
+                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
               </div>
             </section>
 
             <section>
               <h2 className="font-semibold mb-3">Devoirs faits</h2>
               <div className="space-y-3">
-                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} onChange={() => recharger(enfant.id)} />)}
+                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
               </div>
             </section>
+
+            {compteId && (
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-semibold">Chapitres et documents</h2>
+                  <button onClick={() => setNouvelleMatiereOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
+                    + Nouvelle matière
+                  </button>
+                </div>
+                {nouvelleMatiereOuvert && (
+                  <form onSubmit={creerNouvelleMatiere} className="flex items-center gap-2 mb-3">
+                    <input value={nomNouvelleMatiere} onChange={(e) => setNomNouvelleMatiere(e.target.value)} placeholder="Nom de la nouvelle matière" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
+                    <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                      {enCoursMatiere ? "..." : "Ajouter"}
+                    </button>
+                  </form>
+                )}
+                <div className="space-y-4">
+                  {matieres.map((m) => (
+                    <MatiereDocuments key={m.id} matiere={m} enfantId={enfant.id} compteId={compteId} />
+                  ))}
+                  {matieres.length === 0 && <p className="text-slate-500 text-xs">Aucune matière pour l&apos;instant.</p>}
+                </div>
+              </section>
+            )}
           </>
         )}
 
