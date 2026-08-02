@@ -35,6 +35,7 @@ function Contenu() {
   const [nomParent, setNomParent] = useState("");
   const [compteId, setCompteId] = useState(null);
   const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
+  const [onglet, setOnglet] = useState("devoirs"); // "devoirs" | "documents"
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -204,35 +205,54 @@ function Contenu() {
 
         {enfant && (
           <>
-            <StatsDevoirs devoirs={devoirs} />
+            <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setOnglet("devoirs")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+              >
+                Devoir de {enfant.nom}
+              </button>
+              <button
+                onClick={() => setOnglet("documents")}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+              >
+                Chapitres et documents
+              </button>
+            </div>
 
-            {devoirsACorriger.length > 0 && (
-              <section>
-                <h2 className="font-semibold mb-3">À corriger</h2>
-                <div className="space-y-3">
-                  {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
-                </div>
-              </section>
+            {onglet === "devoirs" && (
+              <>
+                <StatsDevoirs devoirs={devoirs} />
+
+                {devoirsACorriger.length > 0 && (
+                  <section>
+                    <h2 className="font-semibold mb-3">À corriger</h2>
+                    <div className="space-y-3">
+                      {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+                    </div>
+                  </section>
+                )}
+
+                <section>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
+                    <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
+                  </div>
+                  <div className="space-y-3">
+                    {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+                  </div>
+                </section>
+
+                <section>
+                  <h2 className="font-semibold mb-3">Devoirs faits</h2>
+                  <div className="space-y-3">
+                    {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+                  </div>
+                </section>
+              </>
             )}
 
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
-                <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
-              </div>
-              <div className="space-y-3">
-                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
-              </div>
-            </section>
-
-            <section>
-              <h2 className="font-semibold mb-3">Devoirs faits</h2>
-              <div className="space-y-3">
-                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
-              </div>
-            </section>
-
-            {compteId && (
+            {onglet === "documents" && compteId && (
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-semibold">Chapitres et documents</h2>
