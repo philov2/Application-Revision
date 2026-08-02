@@ -10,7 +10,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
-import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
+import { filtrerDevoirsFaitsRecents, filtrerDevoirsEnAttenteCorrection } from "@/lib/devoirsStats";
 import { chargerDevoirs } from "@/lib/devoirsSupabase";
 import FormulaireDevoir from "@/components/FormulaireDevoir";
 
@@ -167,6 +167,7 @@ function Contenu() {
   }
 
   const devoirsAFaireTries = [...devoirs].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+  const devoirsEnAttenteCorrection = filtrerDevoirsEnAttenteCorrection(devoirs);
   const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
@@ -214,6 +215,15 @@ function Contenu() {
                 {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
               </div>
             </section>
+
+            {devoirsEnAttenteCorrection.length > 0 && (
+              <section>
+                <h2 className="font-semibold mb-3">Faits - en attente de correction</h2>
+                <div className="space-y-3">
+                  {devoirsEnAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+                </div>
+              </section>
+            )}
 
             <section>
               <h2 className="font-semibold mb-3">Devoirs faits</h2>
