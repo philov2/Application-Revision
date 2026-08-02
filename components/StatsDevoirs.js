@@ -6,7 +6,7 @@ export default function StatsDevoirs({ devoirs }) {
   const stats = calculerStatsDevoirs(devoirs || []);
   const cases = [
     { label: "devoirs a faire aujourd'hui", valeur: stats.aFaireAujourdhui },
-    { label: "total devoirs a faire", valeur: stats.totalAFaire },
+    { label: "Total des devoirs à faire", valeur: stats.totalAFaire },
     { label: "devoirs en retard", valeur: stats.enRetard },
     { label: "realises dans les delais", valeur: stats.realisesDansLesDelais },
     { label: "retard de plus d'une semaine", valeur: stats.retardPlusUneSemaine },
