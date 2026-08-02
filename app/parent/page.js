@@ -210,7 +210,7 @@ function Contenu() {
                 onClick={() => setOnglet("devoirs")}
                 className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
               >
-                Devoir de {enfant.nom}
+                Devoirs de {enfant.nom}
               </button>
               <button
                 onClick={() => setOnglet("documents")}
