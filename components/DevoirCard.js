@@ -292,16 +292,21 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       style={{ borderLeft: `6px solid ${couleur}` }}
     >
       <div>
-        <p className="text-xs uppercase tracking-wide text-slate-500">{devoir.matiere} · {devoir.chapitre}</p>
-        <p className="font-medium">{devoir.titre || LABEL_TYPE[devoir.type] || devoir.type}</p>
-        {devoir.titre && <p className="text-xs text-slate-400">{LABEL_TYPE[devoir.type] || devoir.type}</p>}
-        <div className="flex items-center gap-2 mt-2">
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
-            {dateLabel}
-          </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
-            {devoir.origine}
-          </span>
+        <p className="font-semibold text-sm">
+          {devoir.matiere}
+          {devoir.chapitre ? ` · ${devoir.chapitre}` : ""}
+        </p>
+        <div className="flex items-start justify-between gap-3 mt-0.5 flex-wrap">
+          <p className="text-xs text-slate-500">
+            {LABEL_TYPE[devoir.type] || devoir.type}
+            {devoir.titre ? ` · ${devoir.titre}` : ""}
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
+              {dateLabel}
+            </span>
+            <span className="text-xs text-slate-500">{devoir.origine}</span>
+          </div>
         </div>
         {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
 
