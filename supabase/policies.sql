@@ -190,3 +190,21 @@ create policy "creation chapitres par parent ou admin" on chapitres
 for insert with check (
   exists (select 1 from comptes c where c.id = auth.uid() and c.role in ('parent', 'soutien', 'admin'))
 );
+
+-- Jalon "fichiers multiples + statut en attente de correction" : la reponse
+-- d'exercice envoyee par l'enfant echouait avec "new row violates row-level
+-- security policy" une fois passee au nouveau format (fichiers_urls au lieu
+-- de photo_url). Regle explicite et redondante (permissive, donc sans risque
+-- de conflit avec une policy existante) : l'enfant proprietaire du devoir,
+-- ou l'administrateur, peut inserer une reponse d'exercice.
+create policy "enfant ou admin envoie une reponse d'exercice" on reponses_exercices
+for insert with check (
+  exists (
+    select 1 from devoirs d
+    where d.id = reponses_exercices.devoir_id
+    and (
+      d.enfant_id = auth.uid()
+      or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+    )
+  )
+);
