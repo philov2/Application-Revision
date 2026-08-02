@@ -333,10 +333,10 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           {devoir.chapitre ? ` · ${devoir.chapitre}` : ""}
         </p>
         <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-slate-500">{devoir.origine}</span>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
             {dateLabel}
           </span>
-          <span className="text-xs text-slate-500">{devoir.origine}</span>
         </div>
       </div>
 
