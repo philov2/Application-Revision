@@ -167,7 +167,7 @@ function Contenu() {
   }
 
   const devoirsAFaireTries = [...devoirs].filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-  const devoirsEnAttenteCorrection = filtrerDevoirsEnAttenteCorrection(devoirs);
+  const devoirsACorriger = filtrerDevoirsEnAttenteCorrection(devoirs);
   const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
@@ -206,6 +206,15 @@ function Contenu() {
           <>
             <StatsDevoirs devoirs={devoirs} />
 
+            {devoirsACorriger.length > 0 && (
+              <section>
+                <h2 className="font-semibold mb-3">À corriger</h2>
+                <div className="space-y-3">
+                  {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+                </div>
+              </section>
+            )}
+
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Devoirs a faire de {enfant.nom}</h2>
@@ -215,15 +224,6 @@ function Contenu() {
                 {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
               </div>
             </section>
-
-            {devoirsEnAttenteCorrection.length > 0 && (
-              <section>
-                <h2 className="font-semibold mb-3">Faits - en attente de correction</h2>
-                <div className="space-y-3">
-                  {devoirsEnAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
-                </div>
-              </section>
-            )}
 
             <section>
               <h2 className="font-semibold mb-3">Devoirs faits</h2>
