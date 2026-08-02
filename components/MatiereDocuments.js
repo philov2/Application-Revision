@@ -29,6 +29,8 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [enConfirmationSuppression, setEnConfirmationSuppression] = useState(null);
   const [enConfirmationSuppressionTest, setEnConfirmationSuppressionTest] = useState(null);
   const [enCoursSuppressionTest, setEnCoursSuppressionTest] = useState(new Set());
+  const [enConfirmationSuppressionChapitre, setEnConfirmationSuppressionChapitre] = useState(null);
+  const [enCoursSuppressionChapitre, setEnCoursSuppressionChapitre] = useState(new Set());
 
   async function charger() {
     const { data: chaps } = await supabase
@@ -74,6 +76,24 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     }
     setNouveauChapitre("");
     charger();
+  }
+
+  async function supprimerChapitre(chapitreId) {
+    setEnCoursSuppressionChapitre((prev) => new Set(prev).add(chapitreId));
+    setMessage("");
+    try {
+      await authFetch(`/api/chapitres/${chapitreId}`, { method: "DELETE" });
+      setEnConfirmationSuppressionChapitre(null);
+      charger();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursSuppressionChapitre((prev) => {
+        const next = new Set(prev);
+        next.delete(chapitreId);
+        return next;
+      });
+    }
   }
 
   async function importerDocument(e) {
@@ -232,9 +252,22 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
         <div className="space-y-2">
           {chapitres.map((c) => (
             <div key={c.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{c.nom}</span>
-                <FormulaireTest chapitreId={c.id} onCree={charger} />
+                <div className="flex items-center gap-2">
+                  <FormulaireTest chapitreId={c.id} onCree={charger} />
+                  {enConfirmationSuppressionChapitre === c.id ? (
+                    <span className="flex items-center gap-2 text-xs">
+                      <span className="text-red-600">Confirmer ?</span>
+                      <button onClick={() => supprimerChapitre(c.id)} disabled={enCoursSuppressionChapitre.has(c.id)} className="underline text-red-600 disabled:opacity-50">
+                        {enCoursSuppressionChapitre.has(c.id) ? "Suppression..." : "Oui, supprimer"}
+                      </button>
+                      <button onClick={() => setEnConfirmationSuppressionChapitre(null)} className="underline text-slate-500">Annuler</button>
+                    </span>
+                  ) : (
+                    <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className="text-xs font-medium underline text-red-600">Supprimer</button>
+                  )}
+                </div>
               </div>
               <div className="mt-1 space-y-1">
                 {(testsParChapitre[c.id] || []).map((t) => (
