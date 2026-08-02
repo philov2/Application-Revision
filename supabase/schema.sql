@@ -77,7 +77,8 @@ create table devoirs (
 create table reponses_exercices (
   id uuid primary key default gen_random_uuid(),
   devoir_id uuid references devoirs(id) on delete cascade,
-  photo_url text not null,
+  photo_url text, -- ancien champ (une seule photo), conservé pour compatibilité avec les réponses déjà envoyées
+  fichiers_urls text[] not null default '{}', -- liste des fichiers envoyés (photo, PDF, Word...) ; voir Jalon "fichiers multiples + statut en attente de correction"
   date_soumission timestamptz not null default now(),
   note numeric(4,2),
   note_par uuid references comptes(id),
