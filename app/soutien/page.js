@@ -9,7 +9,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
-import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
+import { filtrerDevoirsFaitsRecents, filtrerDevoirsEnAttenteCorrection } from "@/lib/devoirsStats";
 import { chargerDevoirs } from "@/lib/devoirsSupabase";
 import FormulaireDevoir from "@/components/FormulaireDevoir";
 
@@ -103,6 +103,7 @@ function Contenu() {
 
   const devoirsVisibles = devoirs.filter((d) => matieresSuivies.includes(d.matiere));
   const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+  const devoirsEnAttenteCorrection = filtrerDevoirsEnAttenteCorrection(devoirsVisibles);
   const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsVisibles);
   return (
     <>
@@ -122,6 +123,15 @@ function Contenu() {
             {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
           </div>
         </section>
+
+        {devoirsEnAttenteCorrection.length > 0 && (
+          <section>
+            <h2 className="font-semibold mb-3">Faits - en attente de correction</h2>
+            <div className="space-y-3">
+              {devoirsEnAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="font-semibold mb-3">Devoirs faits</h2>
