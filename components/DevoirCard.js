@@ -253,6 +253,30 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     }
   }
 
+  // Modifier / Supprimer : actions sur le devoir entier (pas sur un fichier en
+  // particulier). N'apparaît qu'une seule fois par carte, accolé à la première
+  // ligne de contenu (document, fichier envoyé, ou test) — jamais répété.
+  // Invisible côté Enfant (matieres n'est fourni que côté Parent/Soutien).
+  function ActionsModifierSupprimer() {
+    if (!matieres) return null;
+    return (
+      <div className="flex items-center gap-2 shrink-0">
+        <button onClick={commencerEdition} className="text-xs font-medium underline">Modifier</button>
+        {enConfirmationSuppression ? (
+          <>
+            <span className="text-xs text-red-600">Confirmer ?</span>
+            <button onClick={supprimer} disabled={enCours} className="text-xs font-medium underline text-red-600 disabled:opacity-50">
+              {enCours ? "Suppression..." : "Oui, supprimer"}
+            </button>
+            <button onClick={() => setEnConfirmationSuppression(false)} className="text-xs font-medium underline text-slate-500">Annuler</button>
+          </>
+        ) : (
+          <button onClick={() => setEnConfirmationSuppression(true)} className="text-xs font-medium underline text-red-600">Supprimer</button>
+        )}
+      </div>
+    );
+  }
+
   if (enEdition) {
     return (
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2" style={{ borderLeft: `6px solid ${couleur}` }}>
@@ -286,115 +310,154 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     );
   }
 
+  // Case à cocher (Enfant, révision/test) ou badge de statut (exercice),
+  // affiché à droite de la ligne « Type - Nom du devoir ».
+  const statutIndicator =
+    devoir.type === "exercice" ? (
+      <span className="text-xs font-medium text-slate-500">
+        {!devoir.reponseExercice ? "À faire" : devoir.reponseExercice.note == null ? "En attente de correction" : "Fait — corrigé"}
+      </span>
+    ) : onToggle ? (
+      <label className="flex items-center gap-2 text-xs">
+        <input type="checkbox" checked={fait} onChange={() => onToggle?.(devoir.id)} className="h-4 w-4" />
+        {fait ? "Fait" : "À faire"}
+      </label>
+    ) : null;
+
   return (
-    <div
-      className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between gap-4 flex-wrap"
-      style={{ borderLeft: `6px solid ${couleur}` }}
-    >
-      <div>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4" style={{ borderLeft: `6px solid ${couleur}` }}>
+      {/* Ligne principale : Matière - Chapitre (gauche) / date - créateur (droite) */}
+      <div className="flex items-start justify-between gap-3">
         <p className="font-semibold text-sm">
           {devoir.matiere}
           {devoir.chapitre ? ` · ${devoir.chapitre}` : ""}
         </p>
-        <div className="flex items-start justify-between gap-3 mt-0.5 flex-wrap">
-          <p className="text-xs text-slate-500">
-            {LABEL_TYPE[devoir.type] || devoir.type}
-            {devoir.titre ? ` · ${devoir.titre}` : ""}
-          </p>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
-              {dateLabel}
-            </span>
-            <span className="text-xs text-slate-500">{devoir.origine}</span>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
+            {dateLabel}
+          </span>
+          <span className="text-xs text-slate-500">{devoir.origine}</span>
         </div>
-        {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
+      </div>
 
-        {devoir.document && (
-          <div className="mt-2 text-xs">
-            {erreurDocument && <p className="text-red-600 mb-1">{erreurDocument}</p>}
-            <button onClick={voirDocument} disabled={enChargementDocument} className="underline font-medium text-blue-600 disabled:opacity-50">
-              {enChargementDocument ? "Ouverture..." : `Ouvrir le document : ${devoir.document.nom}`}
-            </button>
-          </div>
-        )}
-        {!devoir.document && devoir.type === "revision" && (
-          <p className="mt-2 text-xs text-slate-400">Aucun document associé à ce devoir. Cliquez sur « Modifier » pour en choisir ou en importer un.</p>
-        )}
+      {/* Type de devoir - Nom du devoir (gauche) / statut (droite) */}
+      <div className="flex items-center justify-between gap-3 mt-0.5 flex-wrap">
+        <p className="text-xs text-slate-500">
+          {LABEL_TYPE[devoir.type] || devoir.type}
+          {devoir.titre ? ` · ${devoir.titre}` : ""}
+        </p>
+        {statutIndicator && <div className="shrink-0">{statutIndicator}</div>}
+      </div>
 
-        {devoir.type === "exercice" && onToggle && (
-          <div className="mt-2 text-xs space-y-1">
-            {erreurFichiers && <p className="text-red-600 mb-1">{erreurFichiers}</p>}
-            {!devoir.reponseExercice && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPT_FICHIERS_EXERCICE}
-                  multiple
-                  onChange={envoyerFichiers}
-                  disabled={enEnvoiFichiers}
-                  className="hidden"
-                  id={`fichiers-${devoir.id}`}
-                />
-                <label htmlFor={`fichiers-${devoir.id}`} className="cursor-pointer underline font-medium text-blue-600">
-                  {enEnvoiFichiers ? "Envoi en cours..." : "Envoyer l'exercice (photo, PDF ou Word — plusieurs fichiers possibles)"}
-                </label>
-              </>
-            )}
-            {devoir.reponseExercice && (
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
-                    <button key={chemin} onClick={() => voirFichier(chemin)} disabled={enChargementFichier} className="underline font-medium text-blue-600 disabled:opacity-50">
-                      Voir fichier {i + 1}
-                    </button>
-                  ))}
-                </div>
-                {devoir.reponseExercice.note == null ? (
-                  <p className="text-slate-500">Réponse envoyée, en attente de correction.</p>
-                ) : (
-                  <p className="text-green-700 dark:text-green-400 font-medium">
-                    Note : {devoir.reponseExercice.note}/20{devoir.reponseExercice.commentaire ? ` — ${devoir.reponseExercice.commentaire}` : ""}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+      {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
 
-        {devoir.type === "exercice" && matieres && devoir.reponseExercice && (
-          <div className="mt-2 text-xs space-y-1">
-            {erreurNote && <p className="text-red-600">{erreurNote}</p>}
-            <div className="flex flex-wrap items-center gap-2">
-              {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
-                <button key={chemin} onClick={() => voirFichier(chemin)} disabled={enChargementFichier} className="underline font-medium text-blue-600 disabled:opacity-50">
-                  Voir fichier {i + 1}
+      <div className="mt-2 text-xs space-y-1">
+        {devoir.type === "revision" && (
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="min-w-0">
+              {erreurDocument && <p className="text-red-600 mb-1">{erreurDocument}</p>}
+              {devoir.document ? (
+                <button onClick={voirDocument} disabled={enChargementDocument} className="underline font-medium text-blue-600 disabled:opacity-50 text-left">
+                  {enChargementDocument ? "Ouverture..." : `Ouvrir le document : ${devoir.document.nom}`}
                 </button>
-              ))}
+              ) : (
+                <p className="text-slate-400">Aucun document associé à ce devoir. Cliquez sur « Modifier » pour en choisir ou en importer un.</p>
+              )}
             </div>
-            {devoir.reponseExercice.note == null ? (
-              <div className="flex items-center gap-2 flex-wrap">
-                <input type="number" min="0" max="20" step="0.5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note /20" className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
-                <input type="text" value={commentaire} onChange={(e) => setCommentaire(e.target.value)} placeholder="Commentaire (optionnel)" className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
-                <button onClick={enregistrerNote} disabled={enCoursNote || note === ""} className="rounded-lg px-3 py-1 font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
-                  {enCoursNote ? "Enregistrement..." : "Enregistrer la note"}
-                </button>
+            <ActionsModifierSupprimer />
+          </div>
+        )}
+
+        {devoir.type === "exercice" && (
+          <div className="space-y-1">
+            {erreurFichiers && <p className="text-red-600">{erreurFichiers}</p>}
+            {!devoir.reponseExercice ? (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                {onToggle ? (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={ACCEPT_FICHIERS_EXERCICE}
+                      multiple
+                      onChange={envoyerFichiers}
+                      disabled={enEnvoiFichiers}
+                      className="hidden"
+                      id={`fichiers-${devoir.id}`}
+                    />
+                    <label htmlFor={`fichiers-${devoir.id}`} className="cursor-pointer underline font-medium text-blue-600">
+                      {enEnvoiFichiers ? "Envoi en cours..." : "Envoyer l'exercice (photo, PDF ou Word — plusieurs fichiers possibles)"}
+                    </label>
+                  </>
+                ) : (
+                  <p className="text-slate-400">En attente d&apos;envoi par l&apos;enfant.</p>
+                )}
+                <ActionsModifierSupprimer />
               </div>
             ) : (
-              <p className="text-green-700 dark:text-green-400 font-medium">
-                Note : {devoir.reponseExercice.note}/20{devoir.reponseExercice.commentaire ? ` — ${devoir.reponseExercice.commentaire}` : ""}
-              </p>
+              <>
+                {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
+                  <div key={chemin} className="flex items-center justify-between gap-3">
+                    <button onClick={() => voirFichier(chemin)} disabled={enChargementFichier} className="underline font-medium text-blue-600 disabled:opacity-50 text-left">
+                      Voir fichier {i + 1}
+                    </button>
+                    {i === 0 && <ActionsModifierSupprimer />}
+                  </div>
+                ))}
+                {erreurNote && <p className="text-red-600">{erreurNote}</p>}
+                {matieres && devoir.reponseExercice.note == null ? (
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <input
+                      type="text"
+                      value={commentaire}
+                      onChange={(e) => setCommentaire(e.target.value)}
+                      placeholder="Commentaire (optionnel)"
+                      className="flex-1 min-w-[8rem] rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1"
+                    />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input type="number" min="0" max="20" step="0.5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note /20" className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
+                      <button onClick={enregistrerNote} disabled={enCoursNote || note === ""} className="rounded-lg px-3 py-1 font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                        {enCoursNote ? "..." : "Enregistrer"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-slate-500">
+                      {devoir.reponseExercice.note == null
+                        ? "Réponse envoyée, en attente de correction."
+                        : devoir.reponseExercice.commentaire || ""}
+                    </p>
+                    {devoir.reponseExercice.note != null && (
+                      <p className="text-green-700 dark:text-green-400 font-medium shrink-0">{devoir.reponseExercice.note}/20</p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
 
-        {devoir.type === "test" && onToggle && testDisponible && (
-          <div className="mt-2 text-xs space-y-2">
+        {devoir.type === "test" && (
+          <div className="space-y-1">
             {erreurTest && <p className="text-red-600">{erreurTest}</p>}
-            {resultatTest ? (
-              <p className="text-green-700 dark:text-green-400 font-medium">Note : {resultatTest.note}/20</p>
-            ) : enPassageTest ? (
+            {!testDisponible && (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-slate-400">Aucun test n&apos;est encore rattaché à ce chapitre.</p>
+                <ActionsModifierSupprimer />
+              </div>
+            )}
+            {testDisponible && !resultatTest && !enPassageTest && (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                {onToggle ? (
+                  <button onClick={commencerTest} className="underline font-medium text-blue-600">Passer le test</button>
+                ) : (
+                  <p className="text-slate-400">Test pas encore passé par l&apos;enfant.</p>
+                )}
+                <ActionsModifierSupprimer />
+              </div>
+            )}
+            {testDisponible && !resultatTest && enPassageTest && (
               <div className="space-y-3 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
                 <p className="font-medium text-sm">{testDisponible.titre}</p>
                 {testDisponible.questions.map((q, i) => (
@@ -417,47 +480,17 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                   {enEnvoiTest ? "Envoi..." : "Valider le test"}
                 </button>
               </div>
-            ) : (
-              <button onClick={commencerTest} className="underline font-medium text-blue-600">Passer le test</button>
+            )}
+            {resultatTest && (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-slate-500">Test terminé.</p>
+                <div className="flex items-center gap-3 shrink-0">
+                  <p className="text-green-700 dark:text-green-400 font-medium">{resultatTest.note}/20</p>
+                  <ActionsModifierSupprimer />
+                </div>
+              </div>
             )}
           </div>
-        )}
-
-        {devoir.type === "test" && onToggle && !testDisponible && (
-          <p className="mt-2 text-xs text-slate-400">Aucun test n&apos;est encore rattaché à ce chapitre.</p>
-        )}
-
-        {devoir.type === "test" && matieres && resultatTest && (
-          <p className="mt-2 text-xs text-green-700 dark:text-green-400 font-medium">Note : {resultatTest.note}/20</p>
-        )}
-      </div>
-      <div className="flex items-center gap-3 shrink-0">
-        {onToggle && devoir.type !== "exercice" && (
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={fait} onChange={() => onToggle?.(devoir.id)} className="h-5 w-5" />
-            {fait ? "Fait" : "À faire"}
-          </label>
-        )}
-        {devoir.type === "exercice" && (
-          <span className="text-xs font-medium text-slate-500">
-            {!devoir.reponseExercice ? "À faire" : devoir.reponseExercice.note == null ? "En attente de correction" : "Fait — corrigé"}
-          </span>
-        )}
-        {matieres && (
-          <>
-            <button onClick={commencerEdition} className="text-xs font-medium underline">Modifier</button>
-            {enConfirmationSuppression ? (
-              <>
-                <span className="text-xs text-red-600">Confirmer ?</span>
-                <button onClick={supprimer} disabled={enCours} className="text-xs font-medium underline text-red-600 disabled:opacity-50">
-                  {enCours ? "Suppression..." : "Oui, supprimer"}
-                </button>
-                <button onClick={() => setEnConfirmationSuppression(false)} className="text-xs font-medium underline text-slate-500">Annuler</button>
-              </>
-            ) : (
-              <button onClick={() => setEnConfirmationSuppression(true)} className="text-xs font-medium underline text-red-600">Supprimer</button>
-            )}
-          </>
         )}
       </div>
     </div>
