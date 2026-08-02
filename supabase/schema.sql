@@ -64,7 +64,7 @@ create table devoirs (
   enfant_id uuid references comptes(id) not null,
   matiere_id uuid references matieres(id),
   chapitre_id uuid references chapitres(id),
-  document_id uuid references documents(id),
+  document_id uuid references documents(id) on delete set null, -- voir Jalon "suppression d'un document référencé par un devoir" : la suppression du document ne doit pas être bloquée, le devoir perd simplement son document associé
   titre text, -- nom donné au devoir (optionnel) ; voir Jalon "titre + creation matiere/chapitre + IA"
   type type_devoir not null,
   date_echeance date,
