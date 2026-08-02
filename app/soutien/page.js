@@ -33,12 +33,14 @@ function Contenu() {
   const [matieresSuivies, setMatieresSuivies] = useState(supabaseConfigured ? [] : MATIERES_DEMO);
   const [matieres, setMatieres] = useState([]);
   const [enfantId, setEnfantId] = useState(null);
+  const [nomEnfant, setNomEnfant] = useState("Rose");
   const [compteId, setCompteId] = useState(null);
   const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
   const [nouvelleMatiereOuvert, setNouvelleMatiereOuvert] = useState(false);
   const [nomNouvelleMatiere, setNomNouvelleMatiere] = useState("");
   const [enCoursMatiere, setEnCoursMatiere] = useState(false);
   const [message, setMessage] = useState("");
+  const [onglet, setOnglet] = useState("devoirs"); // "devoirs" | "documents"
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -55,16 +57,19 @@ function Contenu() {
           setMatieres(toutesMatieres);
           setMatieresSuivies(toutesMatieres.map((m) => m.nom));
         }
-        const { data: enfants } = await supabase.from("comptes").select("id").eq("role", "enfant").limit(1);
+        const { data: enfants } = await supabase.from("comptes").select("id, nom").eq("role", "enfant").limit(1);
         const enfant = enfants && enfants[0];
-        if (enfant) setEnfantId(enfant.id);
+        if (enfant) {
+          setEnfantId(enfant.id);
+          setNomEnfant(enfant.nom);
+        }
         if (enfant) await recharger(enfant.id);
         return;
       }
 
       const { data } = await supabase
         .from("liens_soutien")
-        .select("enfant_id, matiere:matieres!matiere_id (id, nom, couleur)")
+        .select("enfant_id, matiere:matieres!matiere_id (id, nom, couleur), enfant:comptes!enfant_id (nom)")
         .eq("soutien_id", session.user.id);
       const liens = data || [];
       const noms = [...new Set(liens.map((l) => l.matiere?.nom).filter(Boolean))];
@@ -73,6 +78,7 @@ function Contenu() {
         setMatieresSuivies(noms);
         setMatieres(mats);
         setEnfantId(liens[0]?.enfant_id || null);
+        if (liens[0]?.enfant?.nom) setNomEnfant(liens[0].enfant.nom);
         if (liens[0]?.enfant_id) await recharger(liens[0].enfant_id);
       }
     })();
@@ -111,37 +117,57 @@ function Contenu() {
       <Navbar role="soutien" nom="Viviane" />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
         {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
-        <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
-        <StatsDevoirs devoirs={devoirsVisibles} />
+        <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — {nomEnfant}</p>
 
-        {devoirsACorriger.length > 0 && (
-          <section>
-            <h2 className="font-semibold mb-3">À corriger</h2>
-            <div className="space-y-3">
-              {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
-            </div>
-          </section>
+        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+          <button
+            onClick={() => setOnglet("devoirs")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+          >
+            Devoir de {nomEnfant}
+          </button>
+          <button
+            onClick={() => setOnglet("documents")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+          >
+            Chapitres et documents
+          </button>
+        </div>
+
+        {onglet === "devoirs" && (
+          <>
+            <StatsDevoirs devoirs={devoirsVisibles} />
+
+            {devoirsACorriger.length > 0 && (
+              <section>
+                <h2 className="font-semibold mb-3">À corriger</h2>
+                <div className="space-y-3">
+                  {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+                </div>
+              </section>
+            )}
+
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold">Devoirs a faire</h2>
+                <FormulaireDevoir enfantId={enfantId} compteId={compteId} matieres={matieres} onCree={() => recharger(enfantId)} />
+              </div>
+              <div className="space-y-3">
+                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+                {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="font-semibold mb-3">Devoirs faits</h2>
+              <div className="space-y-3">
+                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+              </div>
+            </section>
+          </>
         )}
 
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Devoirs a faire</h2>
-            <FormulaireDevoir enfantId={enfantId} compteId={compteId} matieres={matieres} onCree={() => recharger(enfantId)} />
-          </div>
-          <div className="space-y-3">
-            {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
-            {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="font-semibold mb-3">Devoirs faits</h2>
-          <div className="space-y-3">
-            {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
-          </div>
-        </section>
-
-        {enfantId && compteId && (
+        {onglet === "documents" && enfantId && compteId && (
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold">Chapitres et documents</h2>
