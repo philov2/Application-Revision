@@ -103,7 +103,7 @@ function Contenu() {
 
   const devoirsVisibles = devoirs.filter((d) => matieresSuivies.includes(d.matiere));
   const devoirsAFaireTries = devoirsVisibles.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
-  const devoirsEnAttenteCorrection = filtrerDevoirsEnAttenteCorrection(devoirsVisibles);
+  const devoirsACorriger = filtrerDevoirsEnAttenteCorrection(devoirsVisibles);
   const devoirsFaits = filtrerDevoirsFaitsRecents(devoirsVisibles);
   return (
     <>
@@ -113,6 +113,16 @@ function Contenu() {
         {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
         <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — Rose</p>
         <StatsDevoirs devoirs={devoirsVisibles} />
+
+        {devoirsACorriger.length > 0 && (
+          <section>
+            <h2 className="font-semibold mb-3">À corriger</h2>
+            <div className="space-y-3">
+              {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+            </div>
+          </section>
+        )}
+
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Devoirs a faire</h2>
@@ -123,15 +133,6 @@ function Contenu() {
             {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
           </div>
         </section>
-
-        {devoirsEnAttenteCorrection.length > 0 && (
-          <section>
-            <h2 className="font-semibold mb-3">Faits - en attente de correction</h2>
-            <div className="space-y-3">
-              {devoirsEnAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
-            </div>
-          </section>
-        )}
 
         <section>
           <h2 className="font-semibold mb-3">Devoirs faits</h2>
