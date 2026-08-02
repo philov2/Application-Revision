@@ -7,7 +7,7 @@ import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
-import { filtrerDevoirsFaitsRecents } from "@/lib/devoirsStats";
+import { filtrerDevoirsFaitsRecents, filtrerDevoirsEnAttenteCorrection } from "@/lib/devoirsStats";
 
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { chargerDevoirs, basculerStatutDevoir } from "@/lib/devoirsSupabase";
@@ -69,6 +69,7 @@ function Contenu() {
   }
 
   const aFaire = devoirs.filter((d) => d.statut === "a_faire").sort((a, b) => a.echeance.localeCompare(b.echeance));
+  const enAttenteCorrection = filtrerDevoirsEnAttenteCorrection(devoirs);
   const faits = filtrerDevoirsFaitsRecents(devoirs);
   return (
     <>
@@ -83,6 +84,14 @@ function Contenu() {
             {aFaire.length === 0 && <p className="text-slate-500 text-sm">Rien à faire pour le moment, bravo !</p>}
           </div>
         </section>
+        {enAttenteCorrection.length > 0 && (
+          <section>
+            <h2 className="font-semibold mb-3">Fait - en attente de correction ({enAttenteCorrection.length})</h2>
+            <div className="space-y-3">
+              {enAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+            </div>
+          </section>
+        )}
         <section>
           <h2 className="font-semibold mb-3">Déjà fait ({faits.length})</h2>
           <div className="space-y-3">
