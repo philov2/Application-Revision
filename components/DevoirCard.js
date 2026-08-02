@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
-import { modifierDevoir, supprimerDevoir } from "@/lib/devoirsSupabase";
-import { soumettrePhotoExercice, noterExercice, urlSigneePhotoExercice } from "@/lib/reponsesExercicesSupabase";
+import { modifierDevoir, supprimerDevoir, basculerStatutDevoir } from "@/lib/devoirsSupabase";
+import { soumettreReponseExercice, noterExercice, urlSigneeFichierExercice } from "@/lib/reponsesExercicesSupabase";
 import { chargerTestsChapitre, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
 
 const LABEL_TYPE = { revision: "Réviser le cours", exercice: "Exercices", test: "Test" };
@@ -13,6 +13,12 @@ const TYPES_DEVOIR = [
   { value: "exercice", label: "Exercices" },
   { value: "test", label: "Test" },
 ];
+
+// Formats acceptés pour l'envoi d'une réponse d'exercice : photo, PDF ou
+// document Word. Plusieurs fichiers peuvent être envoyés en une fois (par
+// exemple une photo par page).
+const ACCEPT_FICHIERS_EXERCICE =
+  "image/*,.pdf,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 function statutDate(dateStr) {
   const today = new Date();
@@ -48,11 +54,11 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [documentsEdition, setDocumentsEdition] = useState([]);
   const [documentIdEdition, setDocumentIdEdition] = useState(devoir.document?.id || "");
 
-  const [enEnvoiPhoto, setEnEnvoiPhoto] = useState(false);
-  const [erreurPhoto, setErreurPhoto] = useState("");
+  const [enEnvoiFichiers, setEnEnvoiFichiers] = useState(false);
+  const [erreurFichiers, setErreurFichiers] = useState("");
   const fileInputRef = useRef(null);
 
-  const [enChargementPhoto, setEnChargementPhoto] = useState(false);
+  const [enChargementFichier, setEnChargementFichier] = useState(false);
   const [note, setNote] = useState("");
   const [commentaire, setCommentaire] = useState("");
   const [enCoursNote, setEnCoursNote] = useState(false);
@@ -148,33 +154,37 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     }
   }
 
-  async function envoyerPhoto(e) {
-    const fichier = e.target.files?.[0];
-    if (!fichier || !enfantId) return;
-    setErreurPhoto("");
-    setEnEnvoiPhoto(true);
+  async function envoyerFichiers(e) {
+    const fichiers = e.target.files;
+    if (!fichiers || fichiers.length === 0 || !enfantId) return;
+    setErreurFichiers("");
+    setEnEnvoiFichiers(true);
     try {
-      await soumettrePhotoExercice(devoir.id, enfantId, fichier);
+      await soumettreReponseExercice(devoir.id, enfantId, fichiers);
+      // La réponse envoyée marque automatiquement le devoir comme "fait" —
+      // il reste "en attente de correction" tant qu'aucune note n'est donnée.
+      if (devoir.statut !== "fait") {
+        await basculerStatutDevoir(devoir.id, "fait");
+      }
       onChange?.();
     } catch (err) {
-      setErreurPhoto(err.message);
+      setErreurFichiers(err.message);
     } finally {
-      setEnEnvoiPhoto(false);
+      setEnEnvoiFichiers(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
-  async function voirPhoto() {
-    if (!devoir.reponseExercice) return;
+  async function voirFichier(chemin) {
     setErreurNote("");
-    setEnChargementPhoto(true);
+    setEnChargementFichier(true);
     try {
-      const url = await urlSigneePhotoExercice(devoir.reponseExercice.photoUrl);
+      const url = await urlSigneeFichierExercice(chemin);
       window.open(url, "_blank");
     } catch (err) {
       setErreurNote(err.message);
     } finally {
-      setEnChargementPhoto(false);
+      setEnChargementFichier(false);
     }
   }
 
@@ -308,23 +318,42 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         )}
 
         {devoir.type === "exercice" && onToggle && (
-          <div className="mt-2 text-xs">
-            {erreurPhoto && <p className="text-red-600 mb-1">{erreurPhoto}</p>}
+          <div className="mt-2 text-xs space-y-1">
+            {erreurFichiers && <p className="text-red-600 mb-1">{erreurFichiers}</p>}
             {!devoir.reponseExercice && (
               <>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={envoyerPhoto} disabled={enEnvoiPhoto} className="hidden" id={`photo-${devoir.id}`} />
-                <label htmlFor={`photo-${devoir.id}`} className="cursor-pointer underline font-medium text-blue-600">
-                  {enEnvoiPhoto ? "Envoi en cours..." : "Envoyer une photo de l'exercice"}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPT_FICHIERS_EXERCICE}
+                  multiple
+                  onChange={envoyerFichiers}
+                  disabled={enEnvoiFichiers}
+                  className="hidden"
+                  id={`fichiers-${devoir.id}`}
+                />
+                <label htmlFor={`fichiers-${devoir.id}`} className="cursor-pointer underline font-medium text-blue-600">
+                  {enEnvoiFichiers ? "Envoi en cours..." : "Envoyer l'exercice (photo, PDF ou Word — plusieurs fichiers possibles)"}
                 </label>
               </>
             )}
-            {devoir.reponseExercice && devoir.reponseExercice.note == null && (
-              <p className="text-slate-500">Photo envoyée, en attente de correction.</p>
-            )}
-            {devoir.reponseExercice && devoir.reponseExercice.note != null && (
-              <p className="text-green-700 dark:text-green-400 font-medium">
-                Note : {devoir.reponseExercice.note}/20{devoir.reponseExercice.commentaire ? ` — ${devoir.reponseExercice.commentaire}` : ""}
-              </p>
+            {devoir.reponseExercice && (
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
+                    <button key={chemin} onClick={() => voirFichier(chemin)} disabled={enChargementFichier} className="underline font-medium text-blue-600 disabled:opacity-50">
+                      Voir fichier {i + 1}
+                    </button>
+                  ))}
+                </div>
+                {devoir.reponseExercice.note == null ? (
+                  <p className="text-slate-500">Réponse envoyée, en attente de correction.</p>
+                ) : (
+                  <p className="text-green-700 dark:text-green-400 font-medium">
+                    Note : {devoir.reponseExercice.note}/20{devoir.reponseExercice.commentaire ? ` — ${devoir.reponseExercice.commentaire}` : ""}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -332,9 +361,13 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         {devoir.type === "exercice" && matieres && devoir.reponseExercice && (
           <div className="mt-2 text-xs space-y-1">
             {erreurNote && <p className="text-red-600">{erreurNote}</p>}
-            <button onClick={voirPhoto} disabled={enChargementPhoto} className="underline font-medium text-blue-600 disabled:opacity-50">
-              {enChargementPhoto ? "Ouverture..." : "Voir la photo envoyée"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
+                <button key={chemin} onClick={() => voirFichier(chemin)} disabled={enChargementFichier} className="underline font-medium text-blue-600 disabled:opacity-50">
+                  Voir fichier {i + 1}
+                </button>
+              ))}
+            </div>
             {devoir.reponseExercice.note == null ? (
               <div className="flex items-center gap-2 flex-wrap">
                 <input type="number" min="0" max="20" step="0.5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note /20" className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
@@ -394,11 +427,16 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         )}
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        {onToggle && (
+        {onToggle && devoir.type !== "exercice" && (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={fait} onChange={() => onToggle?.(devoir.id)} className="h-5 w-5" />
             {fait ? "Fait" : "À faire"}
           </label>
+        )}
+        {devoir.type === "exercice" && (
+          <span className="text-xs font-medium text-slate-500">
+            {!devoir.reponseExercice ? "À faire" : devoir.reponseExercice.note == null ? "En attente de correction" : "Fait — corrigé"}
+          </span>
         )}
         {matieres && (
           <>
