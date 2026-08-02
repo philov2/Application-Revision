@@ -208,3 +208,26 @@ for insert with check (
     )
   )
 );
+
+-- Meme jalon : le televersement du fichier lui-meme (avant l'insertion dans
+-- reponses_exercices) passe par le bucket Storage "documents", dont la
+-- policy existante limite l'upload au dossier de l'utilisateur connecte
+-- (auth.uid() = premier segment du chemin). Ca bloque un admin qui teste ou
+-- agit au nom d'un enfant. Regle additionnelle et sans risque (permissive) :
+-- l'admin peut televerser dans le bucket "documents", quel que soit le
+-- dossier cible.
+create policy "admin televerse dans le bucket documents" on storage.objects
+for insert with check (
+  bucket_id = 'documents'
+  and exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+);
+
+-- Jalon "suppression de chapitres obsolètes" : la suppression d'un chapitre
+-- passe par une route API dédiée (app/api/chapitres/[id]/route.js) utilisant
+-- la clé de service Supabase, qui contourne les RLS ; l'autorisation
+-- (parent, soutien ou admin) est vérifiée côté route et non via une policy
+-- RLS ici — même principe que la suppression d'un document (voir Jalon
+-- "suppression d'un document référencé par un devoir"). Aucune nouvelle
+-- policy n'est donc nécessaire pour cette fonctionnalité ; seules les
+-- contraintes de clé étrangère chapitre_id (documents, devoirs, tests) sont
+-- passées en "on delete set null" dans schema.sql.

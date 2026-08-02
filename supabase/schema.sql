@@ -49,7 +49,7 @@ create table documents (
   nom text not null,
   type type_document not null,
   matiere_id uuid references matieres(id),
-  chapitre_id uuid references chapitres(id),
+  chapitre_id uuid references chapitres(id) on delete set null, -- voir Jalon "suppression de chapitres obsolètes" : un document ne doit pas empêcher la suppression de son chapitre
   enfant_id uuid references comptes(id), -- null tant que non attribué
   cree_par uuid references comptes(id) not null,
   fichier_url text not null,
@@ -63,7 +63,7 @@ create table devoirs (
   id uuid primary key default gen_random_uuid(),
   enfant_id uuid references comptes(id) not null,
   matiere_id uuid references matieres(id),
-  chapitre_id uuid references chapitres(id),
+  chapitre_id uuid references chapitres(id) on delete set null, -- voir Jalon "suppression de chapitres obsolètes"
   document_id uuid references documents(id) on delete set null, -- voir Jalon "suppression d'un document référencé par un devoir" : la suppression du document ne doit pas être bloquée, le devoir perd simplement son document associé
   titre text, -- nom donné au devoir (optionnel) ; voir Jalon "titre + creation matiere/chapitre + IA"
   type type_devoir not null,
@@ -87,7 +87,7 @@ create table reponses_exercices (
 
 create table tests (
   id uuid primary key default gen_random_uuid(),
-  chapitre_id uuid references chapitres(id),
+  chapitre_id uuid references chapitres(id) on delete set null, -- voir Jalon "suppression de chapitres obsolètes"
   titre text not null,
   questions jsonb not null -- [{ question, choix: [...], bonne_reponse }]
 );
