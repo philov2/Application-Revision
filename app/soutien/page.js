@@ -149,7 +149,7 @@ function Contenu() {
 
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Devoirs a faire</h2>
+                <h2 className="font-semibold">Devoirs de {nomEnfant}</h2>
                 <FormulaireDevoir enfantId={enfantId} compteId={compteId} matieres={matieres} onCree={() => recharger(enfantId)} />
               </div>
               <div className="space-y-3">
