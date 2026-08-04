@@ -1,10 +1,27 @@
 // Petit moteur de rendu Markdown -> JSX, volontairement minimal (pas de
 // dépendance npm supplémentaire à installer). Il couvre ce que Claude produit
 // habituellement pour une synthèse de cours ou une liste d'exercices :
-// titres (#, ##, ###), listes à puces / numérotées, gras/italique, citations
-// (>), séparateurs (---) et paragraphes. Tout ce qui n'est pas reconnu est
-// simplement affiché comme un paragraphe normal, donc rien n'est perdu.
+// titres (#, ##, ###), listes à puces / numérotées, tableaux, gras/italique,
+// citations (>), séparateurs (---) et paragraphes. Tout ce qui n'est pas
+// reconnu est simplement affiché comme un paragraphe normal, donc rien n'est
+// perdu.
 "use client";
+
+// Une ligne de tableau markdown ressemble à "| a | b | c |" (les barres de
+// début/fin sont optionnelles). La ligne de séparation ressemble à
+// "|---|:---:|---:|".
+function estLigneTableau(t) {
+  return /^\|?.+\|.*\|?$/.test(t) && t.includes("|");
+}
+function estLigneSeparationTableau(t) {
+  return /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?$/.test(t);
+}
+function celluleDeLigne(t) {
+  let s = t.trim();
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|")) s = s.slice(0, -1);
+  return s.split("|").map((c) => c.trim());
+}
 
 function renduInline(texte, cleBase) {
   // Découpe une ligne en morceaux gras / italique / code, dans cet ordre.
@@ -116,6 +133,49 @@ export function MarkdownDoc({ texte }) {
         listeCourante = { type: "ol", items: [] };
       }
       listeCourante.items.push(numero[1]);
+      continue;
+    }
+
+    if (estLigneTableau(t) && i + 1 < lignes.length && estLigneSeparationTableau(lignes[i + 1].trim())) {
+      fermerListe();
+      const enTetes = celluleDeLigne(t);
+      const lignesTableau = [];
+      let j = i + 2;
+      while (j < lignes.length && estLigneTableau(lignes[j].trim()) && lignes[j].trim() !== "") {
+        lignesTableau.push(celluleDeLigne(lignes[j]));
+        j++;
+      }
+      const cleTableau = cleBloc++;
+      blocs.push(
+        <div key={`tbl-wrap-${cleTableau}`} className="mb-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/70">
+                {enTetes.map((c, ci) => (
+                  <th
+                    key={ci}
+                    className="text-left font-semibold text-slate-700 dark:text-slate-200 px-3 py-2 border-b border-slate-200 dark:border-slate-700"
+                  >
+                    {renduInline(c, `tbl-${cleTableau}-h-${ci}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {lignesTableau.map((ligneCells, li) => (
+                <tr key={li} className={li % 2 === 1 ? "bg-slate-50/60 dark:bg-slate-800/30" : undefined}>
+                  {ligneCells.map((c, ci) => (
+                    <td key={ci} className="px-3 py-1.5 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">
+                      {renduInline(c, `tbl-${cleTableau}-${li}-${ci}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      i = j - 1;
       continue;
     }
 
