@@ -7,6 +7,7 @@ const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingm
 // Genere des exercices d'entrainement par IA a partir d'un document de type "cours" deja importe.
 // - Telecharge le fichier original depuis le Storage
 // - Envoie son contenu a Claude (API Anthropic) avec une consigne de generation d'exercices
+//   (eventuellement completee par une consigne personnalisee fournie par l'utilisateur)
 // - Enregistre le resultat comme un nouveau document de type "exercice"
 export async function POST(request, { params }) {
   if (!supabaseAdminConfigured) {
@@ -22,6 +23,9 @@ export async function POST(request, { params }) {
   }
 
   const { id } = await params;
+
+  const corps = await request.json().catch(() => ({}));
+  const consigne = (corps?.consigne || "").trim();
 
   const { data: document, error: documentError } = await supabaseAdmin
     .from("documents")
@@ -73,6 +77,10 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Format de fichier non pris en charge pour la generation d'exercices : ${mime || "inconnu"}` }, { status: 400 });
   }
 
+  const consigneSysteme = consigne
+    ? `Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes, en francais. Adapte la difficulte au contenu du cours. Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}`
+    : "Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes, en francais. Adapte la difficulte au contenu du cours.";
+
   let reponseClaude;
   try {
     reponseClaude = await fetch("https://api.anthropic.com/v1/messages", {
@@ -85,7 +93,7 @@ export async function POST(request, { params }) {
       body: JSON.stringify({
         model: "claude-sonnet-5",
         max_tokens: 4096,
-        system: "Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes, en francais. Adapte la difficulte au contenu du cours.",
+        system: consigneSysteme,
         messages: [
           {
             role: "user",
