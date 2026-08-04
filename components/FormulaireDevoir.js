@@ -36,6 +36,25 @@ const ROUTES_IA_PROMPT = {
   test: "/api/generation/test-ia",
 };
 
+const MODES_DOCUMENT = [
+  { value: "existant", label: "Document existant" },
+  { value: "import", label: "Importer un fichier" },
+  { value: "ia", label: "Générer par IA" },
+];
+
+// Champ de formulaire réutilisable : libellé au-dessus, style commun.
+function Champ({ label, children }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="block text-xs font-semibold text-slate-600 dark:text-slate-300">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const CLASSE_INPUT =
+  "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800/60 px-3.5 py-2.5 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#91CAFF] focus:border-transparent";
+
 export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree }) {
   const [ouvert, setOuvert] = useState(false);
 
@@ -53,6 +72,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
   const [enCoursChapitre, setEnCoursChapitre] = useState(false);
 
   const [type, setType] = useState("revision");
+  const [titre, setTitre] = useState("");
+  const [dateEcheance, setDateEcheance] = useState("");
 
   const [documents, setDocuments] = useState([]);
   const [documentId, setDocumentId] = useState("");
@@ -60,6 +81,20 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState("");
+
+  function fermer() {
+    setOuvert(false);
+    setMessage("");
+  }
+
+  useEffect(() => {
+    if (!ouvert) return;
+    function onKeyDown(e) {
+      if (e.key === "Escape") fermer();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [ouvert]);
 
   useEffect(() => {
     if (!matiereId) {
@@ -217,7 +252,9 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
       setDocumentId("");
       setModeDocument("existant");
       setType("revision");
-      setOuvert(false);
+      setTitre("");
+      setDateEcheance("");
+      fermer();
       onCree?.();
     } catch (err) {
       setMessage(err.message);
@@ -228,130 +265,288 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
   return (
     <div>
-      <button onClick={() => setOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5" style={{ background: "#91CAFF" }}>
+      <button
+        onClick={() => setOuvert(true)}
+        className="text-sm font-medium rounded-lg px-3.5 py-1.5 text-slate-900 shadow-sm transition hover:brightness-95 active:brightness-90"
+        style={{ background: "#91CAFF" }}
+      >
         + Nouveau devoir
       </button>
+
       {ouvert && (
-        <form onSubmit={soumettre} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3 mt-3">
-          {message && <p className="text-sm text-red-600">{message}</p>}
-
-          <input name="titre" placeholder="Nom du devoir (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-
-          <div className="space-y-1">
-            {!nouvelleMatiereOuvert ? (
-              <>
-                <select name="matiere_id" required value={matiereId} onChange={(e) => { setMatiereId(e.target.value); setChapitreId(""); }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-                  <option value="">Choisir une matiere</option>
-                  {matieresLocales.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
-                </select>
-                <button type="button" onClick={() => setNouvelleMatiereOuvert(true)} className="text-xs font-medium underline text-blue-600">
-                  + Créer une nouvelle matière
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input value={nomNouvelleMatiere} onChange={(e) => setNomNouvelleMatiere(e.target.value)} placeholder="Nom de la nouvelle matière" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                <button type="button" onClick={creerNouvelleMatiere} disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
-                  {enCoursMatiere ? "..." : "Ajouter"}
-                </button>
-                <button type="button" onClick={() => { setNouvelleMatiereOuvert(false); setNomNouvelleMatiere(""); }} className="text-xs text-slate-500">Annuler</button>
+        <div
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
+          onClick={fermer}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg my-6 sm:my-0 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 flex flex-col max-h-[92vh] overflow-hidden"
+          >
+            {/* En-tête */}
+            <div
+              className="px-5 py-4 flex items-start justify-between gap-3 shrink-0"
+              style={{ background: "linear-gradient(135deg, #91CAFF, #c3e0ff)" }}
+            >
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Nouveau devoir</h2>
+                <p className="text-xs text-slate-700/80 mt-0.5">Créez un devoir de révision, d&apos;exercices ou de test.</p>
               </div>
-            )}
-          </div>
-
-          {matiereId && (
-            <div className="space-y-1">
-              {!nouveauChapitreOuvert ? (
-                <>
-                  <select name="chapitre_id" value={chapitreId} onChange={(e) => setChapitreId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-                    <option value="">Aucun chapitre</option>
-                    {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
-                  </select>
-                  <button type="button" onClick={() => setNouveauChapitreOuvert(true)} className="text-xs font-medium underline text-blue-600">
-                    + Créer un nouveau chapitre
-                  </button>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <input value={nomNouveauChapitre} onChange={(e) => setNomNouveauChapitre(e.target.value)} placeholder="Nom du nouveau chapitre" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                  <button type="button" onClick={creerNouveauChapitre} disabled={enCoursChapitre || !nomNouveauChapitre.trim()} className="rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
-                    {enCoursChapitre ? "..." : "Ajouter"}
-                  </button>
-                  <button type="button" onClick={() => { setNouveauChapitreOuvert(false); setNomNouveauChapitre(""); }} className="text-xs text-slate-500">Annuler</button>
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={fermer}
+                aria-label="Fermer"
+                className="shrink-0 rounded-full h-7 w-7 flex items-center justify-center text-slate-700 bg-white/60 hover:bg-white transition"
+              >
+                ×
+              </button>
             </div>
-          )}
 
-          <select name="type" required value={type} onChange={(e) => setType(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-            {TYPES_DEVOIR.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-          <input name="date_echeance" type="date" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
+            {/* Corps du formulaire */}
+            <form id="formulaire-nouveau-devoir" onSubmit={soumettre} className="px-5 py-4 space-y-4 overflow-y-auto">
+              {message && (
+                <p className="text-sm text-red-700 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-lg px-3 py-2">
+                  {message}
+                </p>
+              )}
 
-          {matiereId && (
-            <div className="rounded-lg border border-slate-200 dark:border-slate-600 p-3 space-y-2">
-              <p className="text-xs font-medium text-slate-500">Document à utiliser (optionnel)</p>
+              <Champ label="Titre (optionnel)">
+                <input
+                  name="titre"
+                  value={titre}
+                  onChange={(e) => setTitre(e.target.value)}
+                  placeholder="Nom du devoir"
+                  className={CLASSE_INPUT}
+                />
+              </Champ>
 
-              <div className="flex gap-3 text-xs">
-                <label className="flex items-center gap-1">
-                  <input type="radio" checked={modeDocument === "existant"} onChange={() => setModeDocument("existant")} />
-                  Document existant
-                </label>
-                <label className="flex items-center gap-1">
-                  <input type="radio" checked={modeDocument === "import"} onChange={() => setModeDocument("import")} />
-                  Importer un fichier
-                </label>
-                <label className="flex items-center gap-1">
-                  <input type="radio" checked={modeDocument === "ia"} onChange={() => setModeDocument("ia")} />
-                  Générer par IA
-                </label>
-              </div>
-
-              {modeDocument === "existant" && (
-                documents.length > 0 ? (
-                  <select value={documentId} onChange={(e) => setDocumentId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-                    <option value="">Aucun document</option>
-                    {documents.map((d) => <option key={d.id} value={d.id}>{d.nom}</option>)}
-                  </select>
+              <Champ label="Matière">
+                {!nouvelleMatiereOuvert ? (
+                  <div className="space-y-1.5">
+                    <select
+                      name="matiere_id"
+                      required
+                      value={matiereId}
+                      onChange={(e) => {
+                        setMatiereId(e.target.value);
+                        setChapitreId("");
+                      }}
+                      className={CLASSE_INPUT}
+                    >
+                      <option value="">Choisir une matiere</option>
+                      {matieresLocales.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.nom}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => setNouvelleMatiereOuvert(true)} className="text-xs font-medium text-blue-600 hover:underline">
+                      + Créer une nouvelle matière
+                    </button>
+                  </div>
                 ) : (
-                  <p className="text-xs text-slate-400">Aucun document déjà importé pour cette matière{chapitreId ? " / ce chapitre" : ""}.</p>
-                )
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={nomNouvelleMatiere}
+                      onChange={(e) => setNomNouvelleMatiere(e.target.value)}
+                      placeholder="Nom de la nouvelle matière"
+                      className={`flex-1 ${CLASSE_INPUT}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={creerNouvelleMatiere}
+                      disabled={enCoursMatiere || !nomNouvelleMatiere.trim()}
+                      className="rounded-xl px-3 py-2.5 text-xs font-medium disabled:opacity-50 shadow-sm"
+                      style={{ background: "#91CAFF" }}
+                    >
+                      {enCoursMatiere ? "..." : "Ajouter"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNouvelleMatiereOuvert(false);
+                        setNomNouvelleMatiere("");
+                      }}
+                      className="text-xs text-slate-500 hover:underline"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                )}
+              </Champ>
+
+              {matiereId && (
+                <Champ label="Chapitre (optionnel)">
+                  {!nouveauChapitreOuvert ? (
+                    <div className="space-y-1.5">
+                      <select name="chapitre_id" value={chapitreId} onChange={(e) => setChapitreId(e.target.value)} className={CLASSE_INPUT}>
+                        <option value="">Aucun chapitre</option>
+                        {chapitres.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nom}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" onClick={() => setNouveauChapitreOuvert(true)} className="text-xs font-medium text-blue-600 hover:underline">
+                        + Créer un nouveau chapitre
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={nomNouveauChapitre}
+                        onChange={(e) => setNomNouveauChapitre(e.target.value)}
+                        placeholder="Nom du nouveau chapitre"
+                        className={`flex-1 ${CLASSE_INPUT}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={creerNouveauChapitre}
+                        disabled={enCoursChapitre || !nomNouveauChapitre.trim()}
+                        className="rounded-xl px-3 py-2.5 text-xs font-medium disabled:opacity-50 shadow-sm"
+                        style={{ background: "#91CAFF" }}
+                      >
+                        {enCoursChapitre ? "..." : "Ajouter"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNouveauChapitreOuvert(false);
+                          setNomNouveauChapitre("");
+                        }}
+                        className="text-xs text-slate-500 hover:underline"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  )}
+                </Champ>
               )}
 
-              {modeDocument === "import" && (
-                <div className="space-y-2">
-                  <input name="nom_fichier" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                  <select name="type_fichier" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-                    {TYPES_DOCUMENT.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                  <input name="fichier" type="file" className="w-full text-sm" />
+              <Champ label="Type de devoir">
+                <div className="grid grid-cols-3 gap-2">
+                  {TYPES_DEVOIR.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => setType(t.value)}
+                      className={`rounded-xl px-2 py-2 text-xs font-medium border transition ${
+                        type === t.value
+                          ? "border-transparent text-slate-900 shadow-sm"
+                          : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400"
+                      }`}
+                      style={type === t.value ? { background: "#91CAFF" } : undefined}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </Champ>
 
-              {modeDocument === "ia" && (
-                <div className="space-y-2">
-                  <p className="text-xs text-slate-500">{LABEL_IA_PAR_TYPE[type]} — importez un cours source, ou décrivez ce que vous voulez sans fichier.</p>
-                  <input name="nom_fichier" placeholder="Nom du cours source (optionnel, si vous importez un fichier)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                  <input name="fichier_source" type="file" className="w-full text-sm" />
-                  <p className="text-xs text-slate-400 text-center">— ou —</p>
-                  <textarea
-                    name="prompt_ia"
-                    rows={3}
-                    placeholder="Décrivez ce que l'IA doit générer, sans fichier (ex. « synthèse sur les fractions, niveau 6ème » ou « 8 exercices progressifs sur la conjugaison du présent »)"
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm"
-                  />
-                  {type === "test" && !chapitreId && (
-                    <p className="text-xs text-red-600">Choisissez ou créez d&apos;abord un chapitre ci-dessus : un test généré par IA doit être rattaché à un chapitre.</p>
+              <Champ label="Date limite">
+                <input
+                  name="date_echeance"
+                  type="date"
+                  required
+                  value={dateEcheance}
+                  onChange={(e) => setDateEcheance(e.target.value)}
+                  className={CLASSE_INPUT}
+                />
+              </Champ>
+
+              {matiereId && (
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3.5 space-y-3 bg-slate-50 dark:bg-slate-800/40">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Document à utiliser (optionnel)</p>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {MODES_DOCUMENT.map((m) => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => setModeDocument(m.value)}
+                        className={`rounded-lg px-2 py-1.5 text-xs font-medium border transition ${
+                          modeDocument === m.value
+                            ? "border-transparent text-slate-900 shadow-sm"
+                            : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400 bg-white dark:bg-slate-800"
+                        }`}
+                        style={modeDocument === m.value ? { background: "#91CAFF" } : undefined}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {modeDocument === "existant" &&
+                    (documents.length > 0 ? (
+                      <select value={documentId} onChange={(e) => setDocumentId(e.target.value)} className={CLASSE_INPUT}>
+                        <option value="">Aucun document</option>
+                        {documents.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.nom}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-xs text-slate-400">
+                        Aucun document déjà importé pour cette matière{chapitreId ? " / ce chapitre" : ""}.
+                      </p>
+                    ))}
+
+                  {modeDocument === "import" && (
+                    <div className="space-y-2">
+                      <input name="nom_fichier" placeholder="Nom du document (optionnel)" className={CLASSE_INPUT} />
+                      <select name="type_fichier" className={CLASSE_INPUT}>
+                        {TYPES_DOCUMENT.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input name="fichier" type="file" className="w-full text-xs" />
+                    </div>
+                  )}
+
+                  {modeDocument === "ia" && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-500">
+                        {LABEL_IA_PAR_TYPE[type]} — importez un cours source, ou décrivez ce que vous voulez sans fichier.
+                      </p>
+                      <input name="nom_fichier" placeholder="Nom du cours source (optionnel, si vous importez un fichier)" className={CLASSE_INPUT} />
+                      <input name="fichier_source" type="file" className="w-full text-xs" />
+                      <p className="text-xs text-slate-400 text-center">— ou —</p>
+                      <textarea
+                        name="prompt_ia"
+                        rows={3}
+                        placeholder="Décrivez ce que l'IA doit générer, sans fichier (ex. « synthèse sur les fractions, niveau 6ème » ou « 8 exercices progressifs sur la conjugaison du présent »)"
+                        className={CLASSE_INPUT}
+                      />
+                      {type === "test" && !chapitreId && (
+                        <p className="text-xs text-red-600">
+                          Choisissez ou créez d&apos;abord un chapitre ci-dessus : un test généré par IA doit être rattaché à un chapitre.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
+            </form>
 
-          <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
-            {envoi ? (modeDocument === "ia" ? "Génération en cours..." : "Creation...") : "Creer le devoir"}
-          </button>
-        </form>
+            {/* Pied — actions */}
+            <div className="px-5 py-3.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2 shrink-0">
+              <button type="button" onClick={fermer} className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">
+                Annuler
+              </button>
+              <button
+                type="submit"
+                form="formulaire-nouveau-devoir"
+                disabled={envoi}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm disabled:opacity-50 transition hover:brightness-95"
+                style={{ background: "#91CAFF" }}
+              >
+                {envoi ? (modeDocument === "ia" ? "Génération en cours..." : "Création...") : "Créer le devoir"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

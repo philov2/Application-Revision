@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { supprimerTest } from "@/lib/testsSupabase";
@@ -15,6 +16,7 @@ const TYPES_DOCUMENT = [
 ];
 
 export default function MatiereDocuments({ matiere, enfantId, compteId }) {
+  const router = useRouter();
   const [chapitres, setChapitres] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [testsParChapitre, setTestsParChapitre] = useState({});
@@ -42,7 +44,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
 
     const { data: docs } = await supabase
       .from("documents")
-      .select("id, nom, type, fichier_url, chapitre_id, chapitre:chapitres(nom)")
+      .select("id, nom, type, fichier_url, chapitre_id, genere_par_ia, format, chapitre:chapitres(nom)")
       .eq("matiere_id", matiere.id)
       .eq("enfant_id", enfantId)
       .order("created_at", { ascending: false });
@@ -230,6 +232,18 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     window.open(data.signedUrl, "_blank");
   }
 
+  // Les documents générés par IA (synthèse/exercices, fichiers .md) s'ouvrent
+  // dans la page de lecture stylisée de l'application ; les documents
+  // importés (PDF, image, Word...) s'ouvrent tels quels, comme avant.
+  function ouvrir(doc) {
+    const estMarkdownIA = doc.genere_par_ia && (doc.format || "").includes("markdown");
+    if (estMarkdownIA) {
+      router.push(`/documents/${doc.id}`);
+      return;
+    }
+    telecharger(doc.fichier_url);
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-4" style={{ borderLeft: `6px solid ${matiere.couleur}` }}>
       <div className="flex items-center justify-between">
@@ -334,7 +348,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
                   </button>
                 </>
               )}
-              <button onClick={() => telecharger(d.fichier_url)} className="text-xs font-medium underline">Ouvrir</button>
+              <button onClick={() => ouvrir(d)} className="text-xs font-medium underline">Ouvrir</button>
               {enConfirmationSuppression === d.id ? (
                 <>
                   <span className="text-xs text-red-600">Confirmer ?</span>

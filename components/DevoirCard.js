@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
 import { modifierDevoir, supprimerDevoir, basculerStatutDevoir } from "@/lib/devoirsSupabase";
@@ -35,6 +36,7 @@ const COULEUR_DATE = {
 };
 
 export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId }) {
+  const router = useRouter();
   const couleur = matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
   const fait = devoir.statut === "fait";
   const [, month, day] = devoir.echeance.split("-");
@@ -190,6 +192,17 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
 
   async function voirDocument() {
     if (!devoir.document) return;
+
+    // Un document généré par IA (synthèse/exercices, fichier .md) s'ouvre
+    // dans la page de lecture stylisée de l'application plutôt que comme
+    // fichier texte brut ; les documents importés (PDF, image...) s'ouvrent
+    // tels quels, comme avant.
+    const estMarkdownIA = devoir.document.generePasIA && (devoir.document.format || "").includes("markdown");
+    if (estMarkdownIA) {
+      router.push(`/documents/${devoir.document.id}`);
+      return;
+    }
+
     setErreurDocument("");
     setEnChargementDocument(true);
     try {
