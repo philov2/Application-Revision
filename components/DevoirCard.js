@@ -42,6 +42,12 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [, month, day] = devoir.echeance.split("-");
   const dateLabel = `${day}/${month}`;
   const statut = statutDate(devoir.echeance);
+  const dateRealisationLabel = devoir.date_realisation
+    ? (() => {
+        const [, m, d] = devoir.date_realisation.split("-");
+        return `${d}/${m}`;
+      })()
+    : null;
 
   const [enEdition, setEnEdition] = useState(false);
   const [enConfirmationSuppression, setEnConfirmationSuppression] = useState(false);
@@ -323,13 +329,35 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     );
   }
 
+  // Badge de statut coloré (à faire / en attente / fait), utilisé à la fois
+  // dans la liste "à faire" et dans la liste "Devoirs faits" — c'est ce badge
+  // vert bien visible, combiné à la teinte de la carte ci-dessous, qui rend
+  // un devoir marqué comme fait immédiatement reconnaissable.
+  function BadgeStatut({ children, tonalite = "neutre" }) {
+    if (tonalite === "neutre") {
+      return <span className="text-xs font-medium text-slate-500">{children}</span>;
+    }
+    const classes =
+      tonalite === "vert"
+        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+    return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${classes}`}>{children}</span>;
+  }
+
   // Case à cocher (Enfant, révision/test) ou badge de statut (exercice),
-  // affiché à droite de la ligne « Type - Nom du devoir ».
+  // affiché à droite de la ligne « Type - Nom du devoir ». Pour la révision
+  // et le test côté Parent/Soutien, le badge vert "✓ Fait le JJ/MM" affiché
+  // en haut de la carte (voir plus bas) suffit déjà à rendre le statut
+  // évident, donc pas besoin de le répéter ici.
   const statutIndicator =
     devoir.type === "exercice" ? (
-      <span className="text-xs font-medium text-slate-500">
-        {!devoir.reponseExercice ? "À faire" : devoir.reponseExercice.note == null ? "En attente de correction" : "Fait — corrigé"}
-      </span>
+      !devoir.reponseExercice ? (
+        <BadgeStatut>À faire</BadgeStatut>
+      ) : devoir.reponseExercice.note == null ? (
+        <BadgeStatut tonalite="orange">En attente de correction</BadgeStatut>
+      ) : (
+        <BadgeStatut tonalite="vert">✓ Fait — corrigé</BadgeStatut>
+      )
     ) : onToggle ? (
       <label className="flex items-center gap-2 text-xs">
         <input type="checkbox" checked={fait} onChange={() => onToggle?.(devoir.id)} className="h-4 w-4" />
@@ -338,7 +366,12 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     ) : null;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4" style={{ borderLeft: `6px solid ${couleur}` }}>
+    <div
+      className={`rounded-xl border p-4 transition-colors ${
+        fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
+      }`}
+      style={{ borderLeft: `6px solid ${couleur}` }}
+    >
       {/* Ligne principale : Matière - Chapitre (gauche) / date - créateur (droite) */}
       <div className="flex items-start justify-between gap-3">
         <p className="font-semibold text-sm">
@@ -347,9 +380,15 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-slate-500">{devoir.origine}</span>
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
-            {dateLabel}
-          </span>
+          {fait ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+              {dateRealisationLabel ? `✓ Fait le ${dateRealisationLabel}` : "✓ Fait"}
+            </span>
+          ) : (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
+              {dateLabel}
+            </span>
+          )}
         </div>
       </div>
 
