@@ -23,6 +23,9 @@ export async function POST(request, { params }) {
 
   const { id } = await params;
 
+  const corps = await request.json().catch(() => ({}));
+  const consigne = (corps?.consigne || "").trim();
+
   const { data: document, error: documentError } = await supabaseAdmin
     .from("documents")
     .select("*")
@@ -82,6 +85,8 @@ export async function POST(request, { params }) {
     "Le champ bonne_reponse est l'indice (0, 1, 2 ou 3) de la bonne reponse dans le tableau choix. " +
     "Genere entre 5 et 8 questions, fideles au contenu du cours, en francais, avec 4 choix par question.";
 
+  const consigneUtilisateur = consigne ? ` Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}` : "";
+
   let reponseClaude;
   try {
     reponseClaude = await fetch("https://api.anthropic.com/v1/messages", {
@@ -94,7 +99,7 @@ export async function POST(request, { params }) {
       body: JSON.stringify({
         model: "claude-sonnet-5",
         max_tokens: 4096,
-        system: `Tu es un assistant pedagogique qui cree des tests a choix multiples (QCM) pour des eleves de college et lycee, a partir d'un cours fourni. ${consigneFormat}`,
+        system: `Tu es un assistant pedagogique qui cree des tests a choix multiples (QCM) pour des eleves de college et lycee, a partir d'un cours fourni. ${consigneFormat}${consigneUtilisateur}`,
         messages: [
           {
             role: "user",
