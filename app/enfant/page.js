@@ -93,7 +93,9 @@ function Contenu() {
           </section>
         )}
         <section>
-          <h2 className="font-semibold mb-3">Déjà fait ({faits.length})</h2>
+          <h2 className="font-semibold mb-3 flex items-center gap-1.5 text-green-700 dark:text-green-400">
+            <span aria-hidden="true">✓</span> Déjà fait ({faits.length})
+          </h2>
           <div className="space-y-3">
             {faits.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
           </div>
