@@ -159,7 +159,9 @@ function Contenu() {
             </section>
 
             <section>
-              <h2 className="font-semibold mb-3">Devoirs faits</h2>
+              <h2 className="font-semibold mb-3 flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                <span aria-hidden="true">✓</span> Devoirs faits
+              </h2>
               <div className="space-y-3">
                 {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
               </div>
