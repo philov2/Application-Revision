@@ -25,6 +25,7 @@ function Contenu() {
 const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
 const [enfantId, setEnfantId] = useState(null);
 const [nomEnfant, setNomEnfant] = useState("Rose");
+const [compteId, setCompteId] = useState(null);
 const [onglet, setOnglet] = useState("devoirs"); // "devoirs" | "messages"
 const [nonLus, setNonLus] = useState(0);
 
@@ -38,6 +39,7 @@ if (!supabaseConfigured) return;
 (async () => {
 const { data: { session } } = await supabase.auth.getSession();
 if (!session) return;
+setCompteId(session.user.id);
 const { data: compte } = await supabase.from("comptes").select("nom, role").eq("id", session.user.id).single();
 
 if (compte?.role === "admin") {
@@ -58,14 +60,14 @@ await recharger(session.user.id);
 }, []);
 
 useEffect(() => {
-if (!supabaseConfigured || !enfantId) {
+if (!supabaseConfigured || !enfantId || !compteId) {
 setNonLus(0);
 return;
 }
 let annule = false;
 async function rafraichirNonLus() {
 try {
-const n = await compterNonLus(enfantId, enfantId);
+const n = await compterNonLus(enfantId, compteId);
 if (!annule) setNonLus(n);
 } catch {
 // ignore
@@ -77,7 +79,7 @@ return () => {
 annule = true;
 clearInterval(intervalle);
 };
-}, [enfantId, onglet]);
+}, [enfantId, compteId, onglet]);
 
 async function toggle(id) {
 if (supabaseConfigured && enfantId) {
@@ -151,9 +153,9 @@ Messages
 </>
 )}
 
-{onglet === "messages" && enfantId && (
+{onglet === "messages" && enfantId && compteId && (
 <section>
-<MessagerieFamille enfantId={enfantId} compteId={enfantId} titre="Messages" />
+<MessagerieFamille enfantId={enfantId} compteId={compteId} titre="Messages" />
 </section>
 )}
 </main>
