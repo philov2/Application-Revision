@@ -35,6 +35,16 @@ const COULEUR_DATE = {
   aujourdhui: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
+// Couleur du badge de note (test ou exercice corrigé) : vert si bonne note,
+// orange si moyenne, rouge si faible — pour que la note saute aux yeux
+// immédiatement, sans avoir à la lire attentivement.
+function classeNote(note) {
+  if (note == null) return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+  if (note >= 14) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+  if (note >= 10) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+  return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+}
+
 export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId }) {
   const router = useRouter();
   const couleur = matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
@@ -81,6 +91,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [reponsesTest, setReponsesTest] = useState([]);
   const [enEnvoiTest, setEnEnvoiTest] = useState(false);
   const [erreurTest, setErreurTest] = useState("");
+  const [correctionOuverte, setCorrectionOuverte] = useState(false);
 
   useEffect(() => {
     if (!matiereId) {
@@ -534,12 +545,61 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               </div>
             )}
             {resultatTest && (
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <p className="text-slate-500">Test terminé.</p>
-                <div className="flex items-center gap-3 shrink-0">
-                  <p className="text-green-700 dark:text-green-400 font-medium">{resultatTest.note}/20</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-sm font-bold ${classeNote(resultatTest.note)}`}>
+                      Note : {resultatTest.note}/20
+                    </span>
+                    {testDisponible && (
+                      <button
+                        onClick={() => setCorrectionOuverte((v) => !v)}
+                        className="text-xs font-medium underline text-blue-600"
+                      >
+                        {correctionOuverte ? "Masquer la correction" : "Voir la correction"}
+                      </button>
+                    )}
+                  </div>
                   <ActionsModifierSupprimer />
                 </div>
+
+                {correctionOuverte && testDisponible && (
+                  <div className="space-y-3 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
+                    {testDisponible.questions.map((q, i) => {
+                      const choixDonne = resultatTest.reponses ? resultatTest.reponses[i] : null;
+                      const estCorrect = choixDonne === q.bonne_reponse;
+                      return (
+                        <div key={i} className="space-y-1">
+                          <p className="text-sm font-medium flex items-start gap-1.5">
+                            <span className={estCorrect ? "text-green-600" : "text-red-600"}>{estCorrect ? "✓" : "✗"}</span>
+                            <span>{i + 1}. {q.question}</span>
+                          </p>
+                          <div className="space-y-0.5 pl-5">
+                            {q.choix.map((choixTexte, j) => {
+                              const estBonneReponse = j === q.bonne_reponse;
+                              const estChoixDonne = j === choixDonne;
+                              return (
+                                <p
+                                  key={j}
+                                  className={
+                                    estBonneReponse
+                                      ? "text-green-700 dark:text-green-400 font-medium"
+                                      : estChoixDonne
+                                      ? "text-red-600 dark:text-red-400"
+                                      : "text-slate-500"
+                                  }
+                                >
+                                  {estBonneReponse ? "✓" : estChoixDonne ? "✗" : "·"} {choixTexte}
+                                  {estBonneReponse ? " (bonne réponse)" : estChoixDonne ? " (réponse donnée)" : ""}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
