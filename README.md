@@ -29,10 +29,10 @@ Puis ouvrir http://localhost:3000
 3. Copier `.env.local.example` en `.env.local` et renseigner les trois valeurs trouvées dans Settings > API : le "Project URL", la "publishable key" et la "secret key" (voir avertissement dans le fichier — la secret key ne doit jamais être exposée au navigateur).
 4. Dans Supabase > Authentication > URL Configuration, renseigner l'URL de l'application une fois déployée (ex. https://application-revision.vercel.app), pour que les emails d'invitation redirigent au bon endroit.
 5. Créer le tout premier compte administrateur (Philippe) : Authentication > Users > "Add user", puis dans le SQL Editor :
-   ```sql
-   insert into comptes (id, email, nom, role, statut)
-   values ('<uuid-affiché-dans-Users>', '<email-de-philippe>', 'Philippe', 'admin', 'actif');
-   ```
+```sql
+insert into comptes (id, email, nom, role, statut)
+values ('<uuid-affiché-dans-Users>', '<email-de-philippe>', 'Philippe', 'admin', 'actif');
+```
 6. Redémarrer `npm run dev` (ou redéployer) : le bandeau « mode démonstration » disparaît.
 
 ## Parcours de création des comptes (Jalon 1)
@@ -52,7 +52,7 @@ Note sur les emails : Supabase envoie ces invitations avec son service intégré
 - Jalon 3 : création des devoirs, tableaux de bord connectés aux vraies données
 - Jalon 4 : exercices (photo + notation) et tests QCM auto-notés
 - Jalon 5 : mise en ligne (Vercel + Supabase)
-- Jalon 6 (V2) : génération de contenu par IA, messagerie interne, notifications push
+- Jalon 6 (V2) : génération de contenu par IA (fait), messagerie interne (fait — un fil de discussion par enfant, partagé entre parents, soutien(s) et administrateur, avec badge de messages non lus), notifications push (à faire)
 
 ## Icônes de l'application
 
