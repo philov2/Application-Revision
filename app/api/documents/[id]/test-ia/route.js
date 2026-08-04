@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+
+const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Genere un test a choix multiples (QCM) par IA a partir d'un document de type
 // "cours" deja importe, et l'enregistre directement dans la table "tests"
@@ -52,6 +55,23 @@ export async function POST(request, { params }) {
     contenu = { type: "image", source: { type: "base64", media_type: mime, data: base64 } };
   } else if (mime.startsWith("text/")) {
     contenu = { type: "text", text: Buffer.from(arrayBuffer).toString("utf-8") };
+  } else if (mime === MIME_DOCX) {
+    // Fichier Word moderne (.docx) : l'API Claude ne prend pas en charge les
+    // fichiers Word directement (contrairement aux PDF), donc on extrait le
+    // texte brut avec mammoth et on l'envoie comme un simple bloc de texte.
+    let texteExtrait;
+    try {
+      const resultatExtraction = await mammoth.extractRawText({ buffer: Buffer.from(arrayBuffer) });
+      texteExtrait = resultatExtraction.value;
+    } catch (err) {
+      return NextResponse.json({ error: `Impossible de lire ce fichier Word : ${err.message}` }, { status: 400 });
+    }
+    if (!texteExtrait || !texteExtrait.trim()) {
+      return NextResponse.json({ error: "Ce fichier Word ne contient pas de texte exploitable." }, { status: 400 });
+    }
+    contenu = { type: "text", text: texteExtrait };
+  } else if (mime === "application/msword") {
+    return NextResponse.json({ error: "Les anciens fichiers Word (.doc) ne sont pas pris en charge. Enregistrez le document au format .docx ou PDF, puis reessayez." }, { status: 400 });
   } else {
     return NextResponse.json({ error: `Format de fichier non pris en charge pour la generation de test : ${mime || "inconnu"}` }, { status: 400 });
   }
