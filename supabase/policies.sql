@@ -231,3 +231,35 @@ for insert with check (
 -- policy n'est donc nécessaire pour cette fonctionnalité ; seules les
 -- contraintes de clé étrangère chapitre_id (documents, devoirs, tests) sont
 -- passées en "on delete set null" dans schema.sql.
+
+-- Jalon 6 (V2) : messagerie interne par famille. Un seul fil de discussion
+-- par enfant (voir schema.sql : table messages), accessible a l'enfant
+-- concerne, son ou ses parents, tout soutien qui lui est rattache (quelle
+-- que soit la matiere - la messagerie n'est pas decoupee par matiere,
+-- contrairement aux documents) et l'administrateur.
+alter table messages enable row level security;
+alter table messages_lectures enable row level security;
+
+create policy "acces messages famille" on messages
+for select using (
+  enfant_id = auth.uid()
+  or exists (select 1 from liens_parent_enfant l where l.enfant_id = messages.enfant_id and l.parent_id = auth.uid())
+  or exists (select 1 from liens_soutien s where s.enfant_id = messages.enfant_id and s.soutien_id = auth.uid())
+  or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+);
+
+create policy "envoi messages famille" on messages
+for insert with check (
+  auteur_id = auth.uid()
+  and (
+    enfant_id = auth.uid()
+    or exists (select 1 from liens_parent_enfant l where l.enfant_id = messages.enfant_id and l.parent_id = auth.uid())
+    or exists (select 1 from liens_soutien s where s.enfant_id = messages.enfant_id and s.soutien_id = auth.uid())
+    or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  )
+);
+
+-- Suivi de lecture (badge de messages non lus) : chacun ne gere que sa propre ligne.
+create policy "gestion de sa propre lecture de messages" on messages_lectures
+for all using (compte_id = auth.uid())
+with check (compte_id = auth.uid());

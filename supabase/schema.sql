@@ -118,3 +118,25 @@ create table demandes_comptes (
   statut text not null default 'en_attente', -- en_attente | traitee
   date_demande timestamptz not null default now()
 );
+
+-- Jalon 6 (V2) : messagerie interne par famille. Un seul fil de discussion
+-- par enfant, partage entre son ou ses parents, le soutien qui lui est
+-- rattache (toutes matieres confondues - la messagerie n'est pas decoupee
+-- par matiere) et l'administrateur. Meme principe que les devoirs/documents :
+-- tout tourne autour de enfant_id.
+create table messages (
+  id uuid primary key default gen_random_uuid(),
+  enfant_id uuid references comptes(id) not null, -- fil de discussion = la famille de cet enfant
+  auteur_id uuid references comptes(id) not null,
+  contenu text not null,
+  created_at timestamptz not null default now()
+);
+
+-- Derniere lecture du fil, par compte et par enfant : sert uniquement a
+-- calculer le nombre de messages non lus (badge dans l'onglet Messages).
+create table messages_lectures (
+  compte_id uuid references comptes(id) not null,
+  enfant_id uuid references comptes(id) not null,
+  derniere_lecture timestamptz not null default now(),
+  primary key (compte_id, enfant_id)
+);
