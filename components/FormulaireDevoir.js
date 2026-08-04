@@ -19,9 +19,9 @@ const TYPES_DOCUMENT = [
 ];
 
 const LABEL_IA_PAR_TYPE = {
-  revision: "Générer une synthèse du cours par IA",
-  exercice: "Générer des exercices par IA",
-  test: "Générer un test (QCM) par IA",
+  revision: "une synthèse du cours",
+  exercice: "des exercices",
+  test: "un test (QCM)",
 };
 
 const ROUTES_IA_AVEC_DOCUMENT = {
@@ -40,6 +40,11 @@ const MODES_DOCUMENT = [
   { value: "existant", label: "Document existant" },
   { value: "import", label: "Importer un fichier" },
   { value: "ia", label: "Générer par IA" },
+];
+
+const SOURCES_IA = [
+  { value: "prompt", label: "1. À partir d'une description" },
+  { value: "fichier", label: "2. À partir d'un fichier" },
 ];
 
 // Champ de formulaire réutilisable : libellé au-dessus, style commun.
@@ -78,6 +83,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
   const [documents, setDocuments] = useState([]);
   const [documentId, setDocumentId] = useState("");
   const [modeDocument, setModeDocument] = useState("existant"); // "existant" | "import" | "ia"
+  const [sourceIA, setSourceIA] = useState("prompt"); // "prompt" | "fichier"
 
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState("");
@@ -202,22 +208,32 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
           throw new Error("Choisissez ou créez d'abord un chapitre : un test généré par IA doit être rattaché à un chapitre.");
         }
 
-        const fichierSource = form.get("fichier_source");
-        const promptIA = (form.get("prompt_ia") || "").trim();
-
-        if (fichierSource && fichierSource.size > 0) {
-          // Génération à partir d'un cours importé (comportement existant).
+        if (sourceIA === "fichier") {
+          const fichierSource = form.get("fichier_source");
+          if (!fichierSource || fichierSource.size === 0) {
+            throw new Error("Importez un fichier de cours à partir duquel générer le document.");
+          }
+          const consigne = (form.get("consigne_ia") || "").trim();
           const coursSource = await importerDocument(fichierSource, form.get("nom_fichier") || fichierSource.name, "cours");
           const route = ROUTES_IA_AVEC_DOCUMENT[type];
           if (type === "test") {
-            await authFetch(`/api/documents/${coursSource.id}/${route}`, { method: "POST" });
+            await authFetch(`/api/documents/${coursSource.id}/${route}`, {
+              method: "POST",
+              body: JSON.stringify({ consigne }),
+            });
             documentIdAEnvoyer = coursSource.id;
           } else {
-            const resultat = await authFetch(`/api/documents/${coursSource.id}/${route}`, { method: "POST" });
+            const resultat = await authFetch(`/api/documents/${coursSource.id}/${route}`, {
+              method: "POST",
+              body: JSON.stringify({ consigne }),
+            });
             documentIdAEnvoyer = resultat.document.id;
           }
-        } else if (promptIA) {
-          // Génération directement à partir d'un prompt, sans document source.
+        } else {
+          const promptIA = (form.get("prompt_ia") || "").trim();
+          if (!promptIA) {
+            throw new Error("Décrivez ce que l'IA doit générer.");
+          }
           if (type === "test") {
             await authFetch(ROUTES_IA_PROMPT.test, {
               method: "POST",
@@ -231,8 +247,6 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
             });
             documentIdAEnvoyer = resultat.document.id;
           }
-        } else {
-          throw new Error("Importez un fichier de cours ou décrivez ce que vous voulez générer par IA.");
         }
       }
 
@@ -251,6 +265,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
       setChapitreId("");
       setDocumentId("");
       setModeDocument("existant");
+      setSourceIA("prompt");
       setType("revision");
       setTitre("");
       setDateEcheance("");
@@ -506,19 +521,61 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                   )}
 
                   {modeDocument === "ia" && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-500">
-                        {LABEL_IA_PAR_TYPE[type]} — importez un cours source, ou décrivez ce que vous voulez sans fichier.
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-600 dark:text-slate-300">
+                        L&apos;IA va générer <strong>{LABEL_IA_PAR_TYPE[type]}</strong> (d&apos;après le type de devoir choisi ci-dessus).
+                        Choisissez comment lui fournir la matière première :
                       </p>
-                      <input name="nom_fichier" placeholder="Nom du cours source (optionnel, si vous importez un fichier)" className={CLASSE_INPUT} />
-                      <input name="fichier_source" type="file" className="w-full text-xs" />
-                      <p className="text-xs text-slate-400 text-center">— ou —</p>
-                      <textarea
-                        name="prompt_ia"
-                        rows={3}
-                        placeholder="Décrivez ce que l'IA doit générer, sans fichier (ex. « synthèse sur les fractions, niveau 6ème » ou « 8 exercices progressifs sur la conjugaison du présent »)"
-                        className={CLASSE_INPUT}
-                      />
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {SOURCES_IA.map((s) => (
+                          <button
+                            key={s.value}
+                            type="button"
+                            onClick={() => setSourceIA(s.value)}
+                            className={`rounded-lg px-2 py-2 text-xs font-medium border transition text-left ${
+                              sourceIA === s.value
+                                ? "border-transparent text-slate-900 shadow-sm"
+                                : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400 bg-white dark:bg-slate-800"
+                            }`}
+                            style={sourceIA === s.value ? { background: "#91CAFF" } : undefined}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {sourceIA === "prompt" ? (
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-slate-500">
+                            Aucun fichier : décrivez simplement ce que vous voulez, l&apos;IA rédige {LABEL_IA_PAR_TYPE[type]} à partir de votre texte.
+                          </p>
+                          <textarea
+                            name="prompt_ia"
+                            rows={3}
+                            placeholder="Ex. « synthèse sur les fractions, niveau 6ème » ou « 8 exercices progressifs sur la conjugaison du présent »"
+                            className={CLASSE_INPUT}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-xs text-slate-500">
+                            Étape 1 : importez le fichier de cours (PDF, Word ou image) qui servira de base.
+                          </p>
+                          <input name="nom_fichier" placeholder="Nom du cours source (optionnel)" className={CLASSE_INPUT} />
+                          <input name="fichier_source" type="file" className="w-full text-xs" />
+                          <p className="text-xs text-slate-500 pt-1">
+                            Étape 2 (optionnelle) : précisez une consigne pour orienter {LABEL_IA_PAR_TYPE[type]}.
+                          </p>
+                          <textarea
+                            name="consigne_ia"
+                            rows={2}
+                            placeholder="Ex. « insiste sur les dates clés » ou « questions faciles uniquement » — laissez vide pour une génération standard"
+                            className={CLASSE_INPUT}
+                          />
+                        </div>
+                      )}
+
                       {type === "test" && !chapitreId && (
                         <p className="text-xs text-red-600">
                           Choisissez ou créez d&apos;abord un chapitre ci-dessus : un test généré par IA doit être rattaché à un chapitre.
