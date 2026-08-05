@@ -6,7 +6,8 @@ import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import MessagerieFamille from "@/components/MessagerieFamille";
-import { devoirsEnfant } from "@/lib/sampleData";
+import MatiereDocuments from "@/components/MatiereDocuments";
+import { devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
 import { filtrerDevoirsFaitsRecents, filtrerDevoirsEnAttenteCorrection } from "@/lib/devoirsStats";
 
@@ -30,7 +31,8 @@ function Contenu() {
   const [enfantId, setEnfantId] = useState(null);
   const [nomEnfant, setNomEnfant] = useState("Rose");
   const [compteId, setCompteId] = useState(null);
-  const [onglet, setOnglet] = useState("devoirs"); // "devoirs" | "messages"
+  const [matieres, setMatieres] = useState(supabaseConfigured ? [] : matieresDemo);
+  const [onglet, setOnglet] = useState("devoirs"); // "devoirs" | "documents" | "messages"
   const [nonLus, setNonLus] = useState(0);
   const devoirsRef = useRef(null);
   const nonLusRef = useRef(null);
@@ -72,6 +74,9 @@ function Contenu() {
       if (!session) return;
       setCompteId(session.user.id);
       const { data: compte } = await supabase.from("comptes").select("nom, role").eq("id", session.user.id).single();
+
+      const { data: mats } = await supabase.from("matieres").select("id, nom, couleur").order("nom");
+      if (mats) setMatieres(mats);
 
       if (compte?.role === "admin") {
         const { data: enfants } = await supabase.from("comptes").select("id, nom").eq("role", "enfant").limit(1);
@@ -159,6 +164,12 @@ function Contenu() {
             Mes devoirs
           </button>
           <button
+            onClick={() => setOnglet("documents")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+          >
+            Chapitres et documents
+          </button>
+          <button
             onClick={() => setOnglet("messages")}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
           >
@@ -198,6 +209,18 @@ function Contenu() {
               </div>
             </section>
           </>
+        )}
+
+        {onglet === "documents" && enfantId && (
+          <section>
+            <h2 className="font-semibold mb-3">Chapitres et documents</h2>
+            <div className="space-y-4">
+              {matieres.map((m) => (
+                <MatiereDocuments key={m.id} matiere={m} enfantId={enfantId} compteId={compteId} lectureSeule />
+              ))}
+              {matieres.length === 0 && <p className="text-slate-500 text-xs">Aucune matière pour l&apos;instant.</p>}
+            </div>
+          </section>
         )}
 
         {onglet === "messages" && enfantId && compteId && (
