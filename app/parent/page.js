@@ -7,7 +7,6 @@ import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import MatiereDocuments from "@/components/MatiereDocuments";
 import MessagerieFamille from "@/components/MessagerieFamille";
-import ContactsFamille from "@/components/ContactsFamille";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
@@ -199,7 +198,7 @@ const devoirsFaits = filtrerDevoirsFaitsRecents(devoirs);
 return (
 <>
 <DemoBanner />
-<Navbar role="parent" nom={nomParent || "Parent"}/>
+<Navbar role="parent" nom={nomParent || "Parent"} enfantId={enfant?.id} compteId={compteId} />
 <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-6">
 {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
 
@@ -218,8 +217,6 @@ style={e.id === enfantSelectionne ? { background: "#91CAFF" } : {}}
 + Ajouter un enfant
 </button>
 </div>
-
-{enfant && compteId && <ContactsFamille enfantId={enfant.id} compteId={compteId} />}
 
 {formEnfantOuvert && (
 <form onSubmit={ajouterEnfant} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
