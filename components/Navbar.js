@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
+import ContactsFamille from "@/components/ContactsFamille";
 
 const TABLEAUX = [
   { role: "admin", chemin: "/admin", label: "Administrateur" },
@@ -12,7 +13,7 @@ const TABLEAUX = [
   { role: "soutien", chemin: "/soutien", label: "Soutien" },
 ];
 
-export default function Navbar({ role, nom }) {
+export default function Navbar({ role, nom, enfantId, compteId }) {
   const router = useRouter();
   const pathname = usePathname();
   const roleLabel = { parent: "Parent", enfant: "Enfant", soutien: "Soutien", admin: "Administrateur" }[role] || "";
@@ -38,7 +39,7 @@ export default function Navbar({ role, nom }) {
   }
 
   return (
-    <header className="border-b border-slate-200 dark:border-slate-700">
+    <header className="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-4xl mx-auto flex items-center justify-between px-4 py-3 gap-4 flex-wrap">
         <Link href="/" className="font-semibold text-lg" style={{ color: "#2E75B6" }}>
           Application de révision
@@ -78,6 +79,11 @@ export default function Navbar({ role, nom }) {
           )}
         </div>
       </div>
+      {enfantId && compteId && (
+        <div className="max-w-4xl mx-auto px-4 pb-3">
+          <ContactsFamille enfantId={enfantId} compteId={compteId} />
+        </div>
+      )}
     </header>
   );
 }
