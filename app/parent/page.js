@@ -7,6 +7,7 @@ import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import MatiereDocuments from "@/components/MatiereDocuments";
 import MessagerieFamille from "@/components/MessagerieFamille";
+import ContactsFamille from "@/components/ContactsFamille";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { enfants as enfantsDemo, devoirsEnfant, matieres as matieresDemo } from "@/lib/sampleData";
@@ -217,6 +218,8 @@ style={e.id === enfantSelectionne ? { background: "#91CAFF" } : {}}
 + Ajouter un enfant
 </button>
 </div>
+
+{enfant && compteId && <ContactsFamille enfantId={enfant.id} compteId={compteId} />}
 
 {formEnfantOuvert && (
 <form onSubmit={ajouterEnfant} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
