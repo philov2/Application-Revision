@@ -6,6 +6,7 @@ import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
 import MatiereDocuments from "@/components/MatiereDocuments";
 import MessagerieFamille from "@/components/MessagerieFamille";
+import ContactsFamille from "@/components/ContactsFamille";
 import AuthGuard from "@/components/AuthGuard";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { devoirsEnfant } from "@/lib/sampleData";
@@ -143,6 +144,8 @@ return (
 <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
 {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
 <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — {nomEnfant}</p>
+
+{enfantId && compteId && <ContactsFamille enfantId={enfantId} compteId={compteId} />}
 
 <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
 <button
