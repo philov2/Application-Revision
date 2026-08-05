@@ -6,7 +6,6 @@ import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
 import AuthGuard from "@/components/AuthGuard";
 import MessagerieFamille from "@/components/MessagerieFamille";
-import ContactsFamille from "@/components/ContactsFamille";
 import { devoirsEnfant } from "@/lib/sampleData";
 import StatsDevoirs from "@/components/StatsDevoirs";
 import { filtrerDevoirsFaitsRecents, filtrerDevoirsEnAttenteCorrection } from "@/lib/devoirsStats";
@@ -103,9 +102,8 @@ const faits = filtrerDevoirsFaitsRecents(devoirs);
 return (
 <>
 <DemoBanner />
-<Navbar role="enfant" nom={nomEnfant} />
+<Navbar role="enfant" nom={nomEnfant} enfantId={enfantId} compteId={compteId} />
 <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
-{enfantId && compteId && <ContactsFamille enfantId={enfantId} compteId={compteId} />}
 <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
 <button
 onClick={() => setOnglet("devoirs")}
