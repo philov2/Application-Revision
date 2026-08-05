@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { supprimerTest } from "@/lib/testsSupabase";
+import { creerDevoir } from "@/lib/devoirsSupabase";
 import FormulaireTest from "@/components/FormulaireTest";
 
 const TYPES_DOCUMENT = [
@@ -193,53 +194,81 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
     setFormOuvertPourChapitre((v) => (v === chapitreId ? null : chapitreId));
   }
 
-  async function genererSynthese(documentId) {
-    setEnCoursSynthese((prev) => new Set(prev).add(documentId));
+  // Crée automatiquement un devoir pour l'enfant après une génération IA
+  // réussie (synthèse, exercices ou test), pour que le nouveau contenu
+  // n'existe pas seulement dans l'onglet Chapitres et documents mais
+  // apparaisse aussi dans "Mes devoirs" côté Enfant. Échéance par défaut :
+  // aujourd'hui — modifiable ensuite via le bouton "✎ Modif." du devoir,
+  // comme pour tout devoir créé manuellement.
+  async function creerDevoirAuto({ type, chapitreId, documentId }) {
+    try {
+      await creerDevoir({
+        enfantId,
+        matiereId: matiere.id,
+        chapitreId: chapitreId || null,
+        documentId: documentId || null,
+        titre: null,
+        type,
+        dateEcheance: new Date().toISOString().slice(0, 10),
+        creePar: compteId,
+      });
+    } catch (err) {
+      setMessage(`Contenu généré, mais échec de la création du devoir : ${err.message}`);
+    }
+  }
+
+  async function genererSynthese(d) {
+    setEnCoursSynthese((prev) => new Set(prev).add(d.id));
     setMessage("");
     try {
-      await authFetch(`/api/documents/${documentId}/synthese`, { method: "POST" });
+      const resultat = await authFetch(`/api/documents/${d.id}/synthese`, { method: "POST" });
+      await creerDevoirAuto({ type: "revision", chapitreId: d.chapitre_id, documentId: resultat?.document?.id });
       charger();
     } catch (err) {
       setMessage(err.message);
     } finally {
       setEnCoursSynthese((prev) => {
         const next = new Set(prev);
-        next.delete(documentId);
+        next.delete(d.id);
         return next;
       });
     }
   }
 
-  async function genererExercices(documentId) {
-    setEnCoursExercices((prev) => new Set(prev).add(documentId));
+  async function genererExercices(d) {
+    setEnCoursExercices((prev) => new Set(prev).add(d.id));
     setMessage("");
     try {
-      await authFetch(`/api/documents/${documentId}/exercices`, { method: "POST" });
+      const resultat = await authFetch(`/api/documents/${d.id}/exercices`, { method: "POST" });
+      await creerDevoirAuto({ type: "exercice", chapitreId: d.chapitre_id, documentId: resultat?.document?.id });
       charger();
     } catch (err) {
       setMessage(err.message);
     } finally {
       setEnCoursExercices((prev) => {
         const next = new Set(prev);
-        next.delete(documentId);
+        next.delete(d.id);
         return next;
       });
     }
   }
 
-  async function genererTestIA(documentId) {
-    setEnCoursTestIA((prev) => new Set(prev).add(documentId));
+  async function genererTestIA(d) {
+    setEnCoursTestIA((prev) => new Set(prev).add(d.id));
     setMessage("");
     try {
-      await authFetch(`/api/documents/${documentId}/test-ia`, { method: "POST" });
+      await authFetch(`/api/documents/${d.id}/test-ia`, { method: "POST" });
+      // Le test lui-même n'est pas un "document" (table tests à part), donc
+      // le devoir référence le cours source plutôt qu'un document généré.
+      await creerDevoirAuto({ type: "test", chapitreId: d.chapitre_id, documentId: d.id });
       charger();
-      setMessage("Test généré par IA — visible dans la liste des tests du chapitre ci-dessus.");
+      setMessage("Test généré par IA et ajouté aux devoirs de l'enfant.");
     } catch (err) {
       setMessage(err.message);
     } finally {
       setEnCoursTestIA((prev) => {
         const next = new Set(prev);
-        next.delete(documentId);
+        next.delete(d.id);
         return next;
       });
     }
@@ -350,16 +379,16 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
         <div className="flex items-center gap-1.5 flex-wrap">
           {!lectureSeule && d.type === "cours" && (
             <>
-              <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className={PILL_IA}>
+              <button onClick={() => genererSynthese(d)} disabled={enCoursSynthese.has(d.id)} className={PILL_IA} title="Génère une synthèse et crée automatiquement un devoir pour l'enfant">
                 ✨ {enCoursSynthese.has(d.id) ? "Génération..." : "Synthèse"}
               </button>
-              <button onClick={() => genererExercices(d.id)} disabled={enCoursExercices.has(d.id)} className={PILL_IA}>
+              <button onClick={() => genererExercices(d)} disabled={enCoursExercices.has(d.id)} className={PILL_IA} title="Génère des exercices et crée automatiquement un devoir pour l'enfant">
                 ✨ {enCoursExercices.has(d.id) ? "Génération..." : "Exercices"}
               </button>
               <button
-                onClick={() => genererTestIA(d.id)}
+                onClick={() => genererTestIA(d)}
                 disabled={enCoursTestIA.has(d.id) || !d.chapitre_id}
-                title={!d.chapitre_id ? "Rattachez d'abord ce document à un chapitre" : undefined}
+                title={!d.chapitre_id ? "Rattachez d'abord ce document à un chapitre" : "Génère un test QCM et crée automatiquement un devoir pour l'enfant"}
                 className={PILL_IA}
               >
                 ✨ {enCoursTestIA.has(d.id) ? "Génération..." : "Test QCM"}
