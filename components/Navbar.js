@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import ContactsFamille from "@/components/ContactsFamille";
+import ActivateNotifications from "@/components/ActivateNotifications";
 
 const TABLEAUX = [
   { role: "admin", chemin: "/admin", label: "Administrateur" },
@@ -69,6 +70,7 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
           <span className="text-sm text-slate-500 dark:text-slate-400">
             {nom ? `${nom} · ${roleLabel}` : roleLabel}
           </span>
+          {supabaseConfigured && <ActivateNotifications />}
           {supabaseConfigured && (
             <button
               onClick={deconnexion}
