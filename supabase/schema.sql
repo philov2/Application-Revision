@@ -129,6 +129,7 @@ create table messages (
   enfant_id uuid references comptes(id) not null, -- fil de discussion = la famille de cet enfant
   auteur_id uuid references comptes(id) not null,
   contenu text not null,
+  destinataire_id uuid references comptes(id), -- a qui le message est adresse ; null = tout le monde (voir ajustement "destinataire du message")
   created_at timestamptz not null default now()
 );
 

@@ -263,3 +263,53 @@ for insert with check (
 create policy "gestion de sa propre lecture de messages" on messages_lectures
 for all using (compte_id = auth.uid())
 with check (compte_id = auth.uid());
+
+-- Jalon 6 (ajustement "destinataire du message") : la colonne
+-- messages.destinataire_id (voir schema.sql) permet d'indiquer a qui un
+-- message est adresse (null = tout le monde, comme avant). Pour construire
+-- la liste des destinataires possibles dans le formulaire d'envoi, et pour
+-- que le nom de l'auteur d'un message s'affiche correctement pour un vrai
+-- compte Parent/Enfant/Soutien (et non plus seulement pour l'administrateur,
+-- qui voit deja tous les comptes), il faut que les membres d'une meme
+-- famille (l'enfant, son ou ses parents, son ou ses soutiens) puissent voir
+-- les comptes des autres membres de cette meme famille.
+create policy "comptes de la meme famille se voient entre eux" on comptes
+for select using (
+  exists (select 1 from liens_parent_enfant l where l.enfant_id = auth.uid() and l.parent_id = comptes.id)
+  or exists (select 1 from liens_soutien s where s.enfant_id = auth.uid() and s.soutien_id = comptes.id)
+  or exists (select 1 from liens_soutien s where s.soutien_id = auth.uid() and s.enfant_id = comptes.id)
+  or exists (select 1 from liens_parent_enfant l where l.parent_id = auth.uid() and l.enfant_id = comptes.id)
+  or exists (
+    select 1 from liens_parent_enfant lp
+    join liens_soutien ls on ls.enfant_id = lp.enfant_id
+    where lp.parent_id = auth.uid() and ls.soutien_id = comptes.id
+  )
+  or exists (
+    select 1 from liens_soutien ls
+    join liens_parent_enfant lp on lp.enfant_id = ls.enfant_id
+    where ls.soutien_id = auth.uid() and lp.parent_id = comptes.id
+  )
+  or exists (
+    select 1 from liens_parent_enfant lp1
+    join liens_parent_enfant lp2 on lp2.enfant_id = lp1.enfant_id
+    where lp1.parent_id = auth.uid() and lp2.parent_id = comptes.id
+  )
+);
+
+-- Meme ajustement : un soutien doit pouvoir lire les liens parent-enfant de
+-- "son" enfant (pour voir qui sont les parents), et un co-parent ou un autre
+-- soutien doit pouvoir lire tous les liens soutien de l'enfant (les policies
+-- existantes ci-dessus couvraient deja la plupart des cas ; on complete
+-- uniquement les cas manquants : co-parent, et soutien voyant un autre
+-- soutien du meme enfant).
+create policy "famille voit tous les liens parent-enfant de leur enfant" on liens_parent_enfant
+for select using (
+  exists (select 1 from liens_soutien s where s.enfant_id = liens_parent_enfant.enfant_id and s.soutien_id = auth.uid())
+  or exists (select 1 from liens_parent_enfant l2 where l2.enfant_id = liens_parent_enfant.enfant_id and l2.parent_id = auth.uid())
+);
+
+create policy "famille voit tous les liens soutien de leur enfant" on liens_soutien
+for select using (
+  exists (select 1 from liens_parent_enfant l where l.enfant_id = liens_soutien.enfant_id and l.parent_id = auth.uid())
+  or exists (select 1 from liens_soutien s2 where s2.enfant_id = liens_soutien.enfant_id and s2.soutien_id = auth.uid())
+);
