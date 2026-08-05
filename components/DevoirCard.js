@@ -287,21 +287,46 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // particulier). N'apparaît qu'une seule fois par carte, accolé à la première
   // ligne de contenu (document, fichier envoyé, ou test) — jamais répété.
   // Invisible côté Enfant (matieres n'est fourni que côté Parent/Soutien).
+  // Présentées comme des pastilles courtes (icône + texte raccourci), dans le
+  // même style que le badge de date, plutôt que des liens soulignés.
   function ActionsModifierSupprimer() {
     if (!matieres) return null;
     return (
-      <div className="flex items-center gap-2 shrink-0">
-        <button onClick={commencerEdition} className="text-xs font-medium underline">Modifier</button>
+      <div className="flex items-center gap-1.5 shrink-0">
         {enConfirmationSuppression ? (
           <>
-            <span className="text-xs text-red-600">Confirmer ?</span>
-            <button onClick={supprimer} disabled={enCours} className="text-xs font-medium underline text-red-600 disabled:opacity-50">
-              {enCours ? "Suppression..." : "Oui, supprimer"}
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+              Sûr ?
+            </span>
+            <button
+              onClick={supprimer}
+              disabled={enCours}
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {enCours ? "..." : "Oui"}
             </button>
-            <button onClick={() => setEnConfirmationSuppression(false)} className="text-xs font-medium underline text-slate-500">Annuler</button>
+            <button
+              onClick={() => setEnConfirmationSuppression(false)}
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              Annuler
+            </button>
           </>
         ) : (
-          <button onClick={() => setEnConfirmationSuppression(true)} className="text-xs font-medium underline text-red-600">Supprimer</button>
+          <>
+            <button
+              onClick={commencerEdition}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              ✎ Modif.
+            </button>
+            <button
+              onClick={() => setEnConfirmationSuppression(true)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
+            >
+              🗑 Suppr.
+            </button>
+          </>
         )}
       </div>
     );
