@@ -45,14 +45,20 @@ values ('<uuid-affiché-dans-Users>', '<email-de-philippe>', 'Philippe', 'admin'
 
 Note sur les emails : Supabase envoie ces invitations avec son service intégré, suffisant pour le volume d'une famille (quelques emails). Si les emails n'arrivent pas, vérifier le dossier spam et l'étape 4 ci-dessus (URL Configuration).
 
-## Prochaines étapes (voir Note technique, section 4)
+## Jalons (voir Note technique, section 4)
 
 - ~~Jalon 1 : authentification réelle + validation des comptes par l'administrateur~~ (fait)
-- Jalon 2 : gestion des matières / chapitres / documents (import de fichiers)
-- Jalon 3 : création des devoirs, tableaux de bord connectés aux vraies données
-- Jalon 4 : exercices (photo + notation) et tests QCM auto-notés
-- Jalon 5 : mise en ligne (Vercel + Supabase)
-- Jalon 6 (V2) : génération de contenu par IA (fait), messagerie interne (fait — un fil de discussion par enfant, partagé entre parents, soutien(s) et administrateur, avec badge de messages non lus), notifications push (à faire)
+- ~~Jalon 2 : gestion des matières / chapitres / documents (import de fichiers)~~ (fait)
+- ~~Jalon 3 : création des devoirs, tableaux de bord connectés aux vraies données~~ (fait)
+- ~~Jalon 4 : exercices (photo + notation) et tests QCM auto-notés~~ (fait)
+- ~~Jalon 5 : mise en ligne (Vercel + Supabase)~~ (fait — https://application-revision.vercel.app)
+- ~~Jalon 6 (V2) : génération de contenu par IA, messagerie interne (un fil par enfant, partagé entre parents, soutien(s) et administrateur, avec badge de non-lus et choix du destinataire), notifications navigateur (nouveaux messages, nouveaux devoirs, corrections)~~ (fait)
+
+Tous les jalons prévus au DCF sont livrés et en ligne. Au-delà des jalons, plusieurs ajustements de confort ont aussi été ajoutés en continu (icônes d'appel/SMS pour contacter la famille, redesign des cartes de devoirs, etc.) — voir l'historique des commits pour le détail.
+
+### Limite connue des notifications
+
+Les notifications actuelles sont des notifications **navigateur** (Web Notification API) : elles fonctionnent tant que l'onglet de l'appli reste ouvert (même en arrière-plan), mais pas si le navigateur est complètement fermé. Passer à de vraies notifications **push** (reçues même appli fermée) demanderait une infrastructure supplémentaire (service worker, clés VAPID, abonnement par appareil) — à envisager si besoin.
 
 ## Icônes de l'application
 
