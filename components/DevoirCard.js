@@ -258,6 +258,16 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     setEnPassageTest(true);
   }
 
+  // Permet de refermer la carte de test sans valider — l'enfant peut avoir
+  // cliqué "Passer le test" par erreur, ou vouloir y revenir plus tard.
+  // Les réponses déjà cochées sont abandonnées, comme pour l'annulation de
+  // suppression ou de modification ailleurs dans ce composant.
+  function annulerTest() {
+    setEnPassageTest(false);
+    setReponsesTest([]);
+    setErreurTest("");
+  }
+
   function choisirReponse(indexQuestion, indexChoix) {
     setReponsesTest((prev) => prev.map((r, i) => (i === indexQuestion ? indexChoix : r)));
   }
@@ -547,7 +557,12 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
             )}
             {testDisponible && !resultatTest && enPassageTest && (
               <div className="space-y-3 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
-                <p className="font-medium text-sm">{testDisponible.titre}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium text-sm">{testDisponible.titre}</p>
+                  <button onClick={annulerTest} className="text-xs font-medium underline text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 shrink-0">
+                    Annuler
+                  </button>
+                </div>
                 {testDisponible.questions.map((q, i) => (
                   <div key={i} className="space-y-1">
                     <p className="text-sm">{q.question}</p>
@@ -559,14 +574,17 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                     ))}
                   </div>
                 ))}
-                <button
-                  onClick={validerTest}
-                  disabled={enEnvoiTest || reponsesTest.some((r) => r === null)}
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-                  style={{ background: "#91CAFF" }}
-                >
-                  {enEnvoiTest ? "Envoi..." : "Valider le test"}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={validerTest}
+                    disabled={enEnvoiTest || reponsesTest.some((r) => r === null)}
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                    style={{ background: "#91CAFF" }}
+                  >
+                    {enEnvoiTest ? "Envoi..." : "Valider le test"}
+                  </button>
+                  <button onClick={annulerTest} className="text-sm text-slate-500">Annuler</button>
+                </div>
               </div>
             )}
             {resultatTest && (
