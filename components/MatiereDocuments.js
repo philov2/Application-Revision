@@ -30,7 +30,13 @@ const PILL_AVERTISSEMENT =
 const PILL_IA =
   "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 disabled:opacity-50";
 
-export default function MatiereDocuments({ matiere, enfantId, compteId }) {
+// lectureSeule masque toutes les actions qui modifient les données (créer,
+// importer, générer par IA, supprimer, rattacher un document orphelin à un
+// chapitre) — utilisé côté Enfant, qui doit pouvoir consulter la structure
+// Matière > Chapitre > Documents et ouvrir les documents, sans pouvoir la
+// modifier. Le repli/dépli reste disponible dans les deux cas : ce n'est pas
+// une action sur les données.
+export default function MatiereDocuments({ matiere, enfantId, compteId, lectureSeule = false }) {
   const router = useRouter();
   const [chapitres, setChapitres] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -342,7 +348,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
           <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {d.type === "cours" && (
+          {!lectureSeule && d.type === "cours" && (
             <>
               <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className={PILL_IA}>
                 ✨ {enCoursSynthese.has(d.id) ? "Génération..." : "Synthèse"}
@@ -361,16 +367,18 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
             </>
           )}
           <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
-          {enConfirmationSuppression === d.id ? (
-            <>
-              <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
-              <button onClick={() => supprimerDocument(d.id)} disabled={enCoursSuppression.has(d.id)} className={PILL_DANGER_SOLIDE}>
-                {enCoursSuppression.has(d.id) ? "..." : "Oui"}
-              </button>
-              <button onClick={() => setEnConfirmationSuppression(null)} className={PILL_NEUTRE}>Annuler</button>
-            </>
-          ) : (
-            <button onClick={() => setEnConfirmationSuppression(d.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+          {!lectureSeule && (
+            enConfirmationSuppression === d.id ? (
+              <>
+                <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                <button onClick={() => supprimerDocument(d.id)} disabled={enCoursSuppression.has(d.id)} className={PILL_DANGER_SOLIDE}>
+                  {enCoursSuppression.has(d.id) ? "..." : "Oui"}
+                </button>
+                <button onClick={() => setEnConfirmationSuppression(null)} className={PILL_NEUTRE}>Annuler</button>
+              </>
+            ) : (
+              <button onClick={() => setEnConfirmationSuppression(d.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+            )
           )}
         </div>
       </div>
@@ -393,19 +401,23 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
         <>
           {message && <p className="text-sm text-red-600">{message}</p>}
 
-          <form onSubmit={ajouterChapitre} className="flex gap-2">
-            <input
-              value={nouveauChapitre}
-              onChange={(e) => setNouveauChapitre(e.target.value)}
-              placeholder="+ Nouveau chapitre"
-              className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-1.5 text-sm"
-            />
-            <button type="submit" className={PILL_NEUTRE}>+ Ajouter</button>
-          </form>
+          {!lectureSeule && (
+            <form onSubmit={ajouterChapitre} className="flex gap-2">
+              <input
+                value={nouveauChapitre}
+                onChange={(e) => setNouveauChapitre(e.target.value)}
+                placeholder="+ Nouveau chapitre"
+                className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-1.5 text-sm"
+              />
+              <button type="submit" className={PILL_NEUTRE}>+ Ajouter</button>
+            </form>
+          )}
 
           {chapitres.length === 0 && (
             <p className="text-slate-400 text-xs">
-              Aucun chapitre pour cette matière. Créez-en un ci-dessus : les documents s&apos;importent ensuite à l&apos;intérieur d&apos;un chapitre.
+              {lectureSeule
+                ? "Aucun chapitre pour cette matière."
+                : "Aucun chapitre pour cette matière. Créez-en un ci-dessus : les documents s'importent ensuite à l'intérieur d'un chapitre."}
             </p>
           )}
 
@@ -426,26 +438,28 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
                         {testsChapitre.length > 0 ? `, ${testsChapitre.length} test${testsChapitre.length !== 1 ? "s" : ""}` : ""})
                       </span>
                     </button>
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => ouvrirImportPourChapitre(c.id)} className={PILL_NEUTRE}>📄+ Document</button>
-                      <FormulaireTest chapitreId={c.id} onCree={charger} className={PILL_NEUTRE} label="📝+ Test" onOuvrir={() => deplierChapitre(c.id)} />
-                      {enConfirmationSuppressionChapitre === c.id ? (
-                        <span className="flex items-center gap-1.5">
-                          <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
-                          <button onClick={() => supprimerChapitre(c.id)} disabled={enCoursSuppressionChapitre.has(c.id)} className={PILL_DANGER_SOLIDE}>
-                            {enCoursSuppressionChapitre.has(c.id) ? "..." : "Oui"}
-                          </button>
-                          <button onClick={() => setEnConfirmationSuppressionChapitre(null)} className={PILL_NEUTRE}>Annuler</button>
-                        </span>
-                      ) : (
-                        <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className={PILL_DANGER}>🗑 Suppr.</button>
-                      )}
-                    </div>
+                    {!lectureSeule && (
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => ouvrirImportPourChapitre(c.id)} className={PILL_NEUTRE}>📄+ Document</button>
+                        <FormulaireTest chapitreId={c.id} onCree={charger} className={PILL_NEUTRE} label="📝+ Test" onOuvrir={() => deplierChapitre(c.id)} />
+                        {enConfirmationSuppressionChapitre === c.id ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                            <button onClick={() => supprimerChapitre(c.id)} disabled={enCoursSuppressionChapitre.has(c.id)} className={PILL_DANGER_SOLIDE}>
+                              {enCoursSuppressionChapitre.has(c.id) ? "..." : "Oui"}
+                            </button>
+                            <button onClick={() => setEnConfirmationSuppressionChapitre(null)} className={PILL_NEUTRE}>Annuler</button>
+                          </span>
+                        ) : (
+                          <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {!estReduit && (
                     <>
-                      {formOuvertPourChapitre === c.id && (
+                      {!lectureSeule && formOuvertPourChapitre === c.id && (
                         <form onSubmit={(e) => importerDocument(e, c.id)} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 bg-white dark:bg-slate-900">
                           <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
                           <select name="type" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
@@ -466,16 +480,18 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
                           {testsChapitre.map((t) => (
                             <div key={t.id} className="flex items-center justify-between text-xs">
                               <span>📝 {t.titre}</span>
-                              {enConfirmationSuppressionTest === t.id ? (
-                                <span className="flex items-center gap-1.5">
-                                  <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
-                                  <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className={PILL_DANGER_SOLIDE}>
-                                    {enCoursSuppressionTest.has(t.id) ? "..." : "Oui"}
-                                  </button>
-                                  <button onClick={() => setEnConfirmationSuppressionTest(null)} className={PILL_NEUTRE}>Annuler</button>
-                                </span>
-                              ) : (
-                                <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+                              {!lectureSeule && (
+                                enConfirmationSuppressionTest === t.id ? (
+                                  <span className="flex items-center gap-1.5">
+                                    <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                                    <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className={PILL_DANGER_SOLIDE}>
+                                      {enCoursSuppressionTest.has(t.id) ? "..." : "Oui"}
+                                    </button>
+                                    <button onClick={() => setEnConfirmationSuppressionTest(null)} className={PILL_NEUTRE}>Annuler</button>
+                                  </span>
+                                ) : (
+                                  <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+                                )
                               )}
                             </div>
                           ))}
@@ -495,7 +511,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
             })}
           </div>
 
-          {documentsSansChapitre.length > 0 && (
+          {!lectureSeule && documentsSansChapitre.length > 0 && (
             <div className="rounded-lg border-2 border-dashed border-yellow-300 dark:border-yellow-700 p-3 space-y-2 bg-yellow-50/50 dark:bg-yellow-900/10">
               <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-400">
                 ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun :
@@ -519,6 +535,17 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {lectureSeule && documentsSansChapitre.length > 0 && (
+            <div className="space-y-1.5">
+              {documentsSansChapitre.map((d) => (
+                <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
+                  <p className="font-medium">📄 {d.nom}</p>
+                  <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
+                </div>
+              ))}
             </div>
           )}
         </>
