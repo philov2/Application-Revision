@@ -21,7 +21,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [documents, setDocuments] = useState([]);
   const [testsParChapitre, setTestsParChapitre] = useState({});
   const [nouveauChapitre, setNouveauChapitre] = useState("");
-  const [formOuvert, setFormOuvert] = useState(false);
+  const [formOuvertPourChapitre, setFormOuvertPourChapitre] = useState(null);
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState("");
   const [enCoursSynthese, setEnCoursSynthese] = useState(new Set());
@@ -33,6 +33,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [enCoursSuppressionTest, setEnCoursSuppressionTest] = useState(new Set());
   const [enConfirmationSuppressionChapitre, setEnConfirmationSuppressionChapitre] = useState(null);
   const [enCoursSuppressionChapitre, setEnCoursSuppressionChapitre] = useState(new Set());
+  const [enCoursAssignation, setEnCoursAssignation] = useState(new Set());
 
   async function charger() {
     const { data: chaps } = await supabase
@@ -98,7 +99,14 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     }
   }
 
-  async function importerDocument(e) {
+  // Un document appartient toujours à un chapitre, qui appartient lui-même à
+  // une matière — c'est cette structure à 3 niveaux (Matière > Chapitre >
+  // Documents) qui organise tout cet écran. chapitreId est donc obligatoire
+  // ici : le formulaire d'import n'existe qu'à l'intérieur de la carte d'un
+  // chapitre précis (voir plus bas), jamais au niveau de la matière — il n'y
+  // a donc plus moyen d'importer un document sans d'abord choisir son
+  // chapitre.
+  async function importerDocument(e, chapitreId) {
     e.preventDefault();
     setMessage("");
     const form = new FormData(e.target);
@@ -117,7 +125,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
         nom: form.get("nom") || fichier.name,
         type: form.get("type"),
         matiere_id: matiere.id,
-        chapitre_id: form.get("chapitre_id") || null,
+        chapitre_id: chapitreId,
         enfant_id: enfantId,
         cree_par: compteId,
         fichier_url: chemin,
@@ -126,7 +134,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
       });
       if (insertError) throw insertError;
       e.target.reset();
-      setFormOuvert(false);
+      setFormOuvertPourChapitre(null);
       charger();
     } catch (err) {
       setMessage(err.message);
@@ -223,6 +231,29 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     }
   }
 
+  // Rattache à un chapitre un document importé avant l'introduction de cette
+  // règle (donc encore orphelin, chapitre_id vide) — permet de régulariser
+  // progressivement les anciens documents plutôt que de les laisser hors
+  // structure indéfiniment.
+  async function assignerChapitre(documentId, chapitreId) {
+    if (!chapitreId) return;
+    setEnCoursAssignation((prev) => new Set(prev).add(documentId));
+    setMessage("");
+    try {
+      const { error } = await supabase.from("documents").update({ chapitre_id: chapitreId }).eq("id", documentId);
+      if (error) throw error;
+      charger();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursAssignation((prev) => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
+    }
+  }
+
   async function telecharger(chemin) {
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(chemin, 60);
     if (error) {
@@ -244,31 +275,115 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     telecharger(doc.fichier_url);
   }
 
+  // Regroupe les documents par chapitre pour l'affichage imbriqué Matière >
+  // Chapitre > Documents. Les documents importés avant la règle du chapitre
+  // obligatoire (chapitre_id encore vide) sont isolés à part, avec un moyen
+  // de les rattacher a posteriori (voir assignerChapitre ci-dessus).
+  const documentsParChapitre = {};
+  const documentsSansChapitre = [];
+  documents.forEach((d) => {
+    if (d.chapitre_id) {
+      if (!documentsParChapitre[d.chapitre_id]) documentsParChapitre[d.chapitre_id] = [];
+      documentsParChapitre[d.chapitre_id].push(d);
+    } else {
+      documentsSansChapitre.push(d);
+    }
+  });
+
+  function DocumentRow({ d }) {
+    return (
+      <div className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
+        <div>
+          <p className="font-medium">📄 {d.nom}</p>
+          <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}</p>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          {d.type === "cours" && (
+            <>
+              <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
+                {enCoursSynthese.has(d.id) ? "Generation..." : "Générer une synthèse"}
+              </button>
+              <button onClick={() => genererExercices(d.id)} disabled={enCoursExercices.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
+                {enCoursExercices.has(d.id) ? "Generation..." : "Générer des exercices"}
+              </button>
+              <button
+                onClick={() => genererTestIA(d.id)}
+                disabled={enCoursTestIA.has(d.id) || !d.chapitre_id}
+                title={!d.chapitre_id ? "Rattachez d'abord ce document à un chapitre" : undefined}
+                className="text-xs font-medium underline disabled:opacity-50"
+              >
+                {enCoursTestIA.has(d.id) ? "Generation..." : "Générer un test (QCM)"}
+              </button>
+            </>
+          )}
+          <button onClick={() => ouvrir(d)} className="text-xs font-medium underline">Ouvrir</button>
+          {enConfirmationSuppression === d.id ? (
+            <>
+              <span className="text-xs text-red-600">Confirmer ?</span>
+              <button
+                onClick={() => supprimerDocument(d.id)}
+                disabled={enCoursSuppression.has(d.id)}
+                className="text-xs font-medium underline text-red-600 disabled:opacity-50"
+              >
+                {enCoursSuppression.has(d.id) ? "Suppression..." : "Oui, supprimer"}
+              </button>
+              <button onClick={() => setEnConfirmationSuppression(null)} className="text-xs font-medium underline text-slate-500">Annuler</button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEnConfirmationSuppression(d.id)}
+              className="text-xs font-medium underline text-red-600"
+            >
+              Supprimer
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-4" style={{ borderLeft: `6px solid ${matiere.couleur}` }}>
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{matiere.nom}</h3>
-        <button onClick={() => setFormOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
-          + Importer un document
-        </button>
+        <h3 className="font-semibold text-base">{matiere.nom}</h3>
+        <span className="text-xs text-slate-400">{chapitres.length} chapitre{chapitres.length > 1 ? "s" : ""}</span>
       </div>
       {message && <p className="text-sm text-red-600">{message}</p>}
+
       <form onSubmit={ajouterChapitre} className="flex gap-2">
         <input
           value={nouveauChapitre}
           onChange={(e) => setNouveauChapitre(e.target.value)}
-          placeholder="Nouveau chapitre"
+          placeholder="+ Nouveau chapitre"
           className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-1.5 text-sm"
         />
         <button type="submit" className="rounded-lg px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600">Ajouter</button>
       </form>
-      {chapitres.length > 0 && (
-        <div className="space-y-2">
-          {chapitres.map((c) => (
-            <div key={c.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2">
+
+      {chapitres.length === 0 && (
+        <p className="text-slate-400 text-xs">
+          Aucun chapitre pour cette matière. Créez-en un ci-dessus : les documents s&apos;importent ensuite à l&apos;intérieur d&apos;un chapitre.
+        </p>
+      )}
+
+      <div className="space-y-3">
+        {chapitres.map((c) => {
+          const docsChapitre = documentsParChapitre[c.id] || [];
+          const testsChapitre = testsParChapitre[c.id] || [];
+          return (
+            <div key={c.id} className="rounded-lg border-2 border-slate-200 dark:border-slate-600 p-3 space-y-2.5 bg-slate-50/60 dark:bg-slate-800/20">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{c.nom}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm">📂</span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{c.nom}</span>
+                </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setFormOuvertPourChapitre((v) => (v === c.id ? null : c.id))}
+                    className="text-xs font-medium rounded-lg px-2 py-1 border border-dashed border-slate-400"
+                  >
+                    + Document
+                  </button>
                   <FormulaireTest chapitreId={c.id} onCree={charger} />
                   {enConfirmationSuppressionChapitre === c.id ? (
                     <span className="flex items-center gap-2 text-xs">
@@ -283,97 +398,81 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
                   )}
                 </div>
               </div>
-              <div className="mt-1 space-y-1">
-                {(testsParChapitre[c.id] || []).map((t) => (
-                  <div key={t.id} className="flex items-center justify-between text-xs">
-                    <span>{t.titre}</span>
-                    {enConfirmationSuppressionTest === t.id ? (
-                      <span className="flex items-center gap-2">
-                        <span className="text-red-600">Confirmer ?</span>
-                        <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className="underline text-red-600 disabled:opacity-50">
-                          {enCoursSuppressionTest.has(t.id) ? "Suppression..." : "Oui, supprimer"}
-                        </button>
-                        <button onClick={() => setEnConfirmationSuppressionTest(null)} className="underline text-slate-500">Annuler</button>
-                      </span>
-                    ) : (
-                      <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className="underline text-red-600">Supprimer</button>
-                    )}
+
+              {formOuvertPourChapitre === c.id && (
+                <form onSubmit={(e) => importerDocument(e, c.id)} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 bg-white dark:bg-slate-900">
+                  <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
+                  <select name="type" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
+                    {TYPES_DOCUMENT.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                  <input name="fichier" type="file" required className="w-full text-sm" />
+                  <div className="flex items-center gap-2">
+                    <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                      {envoi ? "Envoi..." : `Importer dans « ${c.nom} »`}
+                    </button>
+                    <button type="button" onClick={() => setFormOuvertPourChapitre(null)} className="text-sm text-slate-500">Annuler</button>
                   </div>
-                ))}
-                {(testsParChapitre[c.id] || []).length === 0 && <p className="text-slate-400 text-xs">Aucun test pour ce chapitre.</p>}
+                </form>
+              )}
+
+              {testsChapitre.length > 0 && (
+                <div className="space-y-1 pl-1">
+                  {testsChapitre.map((t) => (
+                    <div key={t.id} className="flex items-center justify-between text-xs">
+                      <span>📝 {t.titre}</span>
+                      {enConfirmationSuppressionTest === t.id ? (
+                        <span className="flex items-center gap-2">
+                          <span className="text-red-600">Confirmer ?</span>
+                          <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className="underline text-red-600 disabled:opacity-50">
+                            {enCoursSuppressionTest.has(t.id) ? "Suppression..." : "Oui, supprimer"}
+                          </button>
+                          <button onClick={() => setEnConfirmationSuppressionTest(null)} className="underline text-slate-500">Annuler</button>
+                        </span>
+                      ) : (
+                        <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className="underline text-red-600">Supprimer</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-1.5 pl-1">
+                {docsChapitre.map((d) => <DocumentRow key={d.id} d={d} />)}
+                {docsChapitre.length === 0 && testsChapitre.length === 0 && (
+                  <p className="text-slate-400 text-xs">Aucun document ni test dans ce chapitre pour l&apos;instant.</p>
+                )}
               </div>
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {documentsSansChapitre.length > 0 && (
+        <div className="rounded-lg border-2 border-dashed border-yellow-300 dark:border-yellow-700 p-3 space-y-2 bg-yellow-50/50 dark:bg-yellow-900/10">
+          <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-400">
+            ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun :
+          </p>
+          <div className="space-y-1.5">
+            {documentsSansChapitre.map((d) => (
+              <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
+                <p className="font-medium">📄 {d.nom}</p>
+                <div className="flex items-center gap-2">
+                  <select
+                    disabled={enCoursAssignation.has(d.id) || chapitres.length === 0}
+                    onChange={(e) => assignerChapitre(d.id, e.target.value)}
+                    defaultValue=""
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs"
+                  >
+                    <option value="" disabled>Choisir un chapitre</option>
+                    {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                  </select>
+                  <button onClick={() => ouvrir(d)} className="text-xs font-medium underline">Ouvrir</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-      {formOuvert && (
-        <form onSubmit={importerDocument} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2">
-          <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-          <select name="type" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-            {TYPES_DOCUMENT.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-          <select name="chapitre_id" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-            <option value="">Aucun chapitre</option>
-            {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
-          </select>
-          <input name="fichier" type="file" required className="w-full text-sm" />
-          <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
-            {envoi ? "Envoi..." : "Importer"}
-          </button>
-        </form>
-      )}
-      <div className="space-y-2">
-        {documents.map((d) => (
-          <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2">
-            <div>
-              <p className="font-medium">{d.nom}</p>
-              <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}{d.chapitre?.nom ? ` · ${d.chapitre.nom}` : ""}</p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {d.type === "cours" && (
-                <>
-                  <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
-                    {enCoursSynthese.has(d.id) ? "Generation..." : "Générer une synthèse"}
-                  </button>
-                  <button onClick={() => genererExercices(d.id)} disabled={enCoursExercices.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
-                    {enCoursExercices.has(d.id) ? "Generation..." : "Générer des exercices"}
-                  </button>
-                  <button
-                    onClick={() => genererTestIA(d.id)}
-                    disabled={enCoursTestIA.has(d.id) || !d.chapitre_id}
-                    title={!d.chapitre_id ? "Rattachez d'abord ce document à un chapitre" : undefined}
-                    className="text-xs font-medium underline disabled:opacity-50"
-                  >
-                    {enCoursTestIA.has(d.id) ? "Generation..." : "Générer un test (QCM)"}
-                  </button>
-                </>
-              )}
-              <button onClick={() => ouvrir(d)} className="text-xs font-medium underline">Ouvrir</button>
-              {enConfirmationSuppression === d.id ? (
-                <>
-                  <span className="text-xs text-red-600">Confirmer ?</span>
-                  <button
-                    onClick={() => supprimerDocument(d.id)}
-                    disabled={enCoursSuppression.has(d.id)}
-                    className="text-xs font-medium underline text-red-600 disabled:opacity-50"
-                  >
-                    {enCoursSuppression.has(d.id) ? "Suppression..." : "Oui, supprimer"}
-                  </button>
-                  <button onClick={() => setEnConfirmationSuppression(null)} className="text-xs font-medium underline text-slate-500">Annuler</button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setEnConfirmationSuppression(d.id)}
-                  className="text-xs font-medium underline text-red-600"
-                >
-                  Supprimer
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-        {documents.length === 0 && <p className="text-slate-500 text-xs">Aucun document pour cette matière.</p>}
-      </div>
     </div>
   );
 }
