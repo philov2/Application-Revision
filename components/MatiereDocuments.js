@@ -15,6 +15,21 @@ const TYPES_DOCUMENT = [
   { value: "corrige", label: "Corrigé" },
 ];
 
+// Styles de pastilles réutilisés partout sur cet écran, dans le même esprit
+// que les actions Modifier/Supprimer des cartes de devoirs : de petits
+// boutons courts (icône + texte), plutôt que des liens soulignés, pour que
+// les actions se distinguent clairement de la donnée elle-même.
+const PILL_NEUTRE =
+  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800";
+const PILL_DANGER =
+  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50";
+const PILL_DANGER_SOLIDE =
+  "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50";
+const PILL_AVERTISSEMENT =
+  "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+const PILL_IA =
+  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 disabled:opacity-50";
+
 export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const router = useRouter();
   const [chapitres, setChapitres] = useState([]);
@@ -34,6 +49,30 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
   const [enConfirmationSuppressionChapitre, setEnConfirmationSuppressionChapitre] = useState(null);
   const [enCoursSuppressionChapitre, setEnCoursSuppressionChapitre] = useState(new Set());
   const [enCoursAssignation, setEnCoursAssignation] = useState(new Set());
+
+  // Replier/déplier la matière entière et, indépendamment, chaque chapitre —
+  // pour qu'une fois beaucoup de documents chargés, la liste reste courte et
+  // navigable au lieu de dérouler tout le contenu d'un coup.
+  const [matiereReduite, setMatiereReduite] = useState(false);
+  const [chapitresReduits, setChapitresReduits] = useState(new Set());
+
+  function toggleChapitre(chapitreId) {
+    setChapitresReduits((prev) => {
+      const next = new Set(prev);
+      if (next.has(chapitreId)) next.delete(chapitreId);
+      else next.add(chapitreId);
+      return next;
+    });
+  }
+
+  function deplierChapitre(chapitreId) {
+    setChapitresReduits((prev) => {
+      if (!prev.has(chapitreId)) return prev;
+      const next = new Set(prev);
+      next.delete(chapitreId);
+      return next;
+    });
+  }
 
   async function charger() {
     const { data: chaps } = await supabase
@@ -141,6 +180,11 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
     } finally {
       setEnvoi(false);
     }
+  }
+
+  function ouvrirImportPourChapitre(chapitreId) {
+    deplierChapitre(chapitreId);
+    setFormOuvertPourChapitre((v) => (v === chapitreId ? null : chapitreId));
   }
 
   async function genererSynthese(documentId) {
@@ -297,45 +341,36 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
           <p className="font-medium">📄 {d.nom}</p>
           <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {d.type === "cours" && (
             <>
-              <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
-                {enCoursSynthese.has(d.id) ? "Generation..." : "Générer une synthèse"}
+              <button onClick={() => genererSynthese(d.id)} disabled={enCoursSynthese.has(d.id)} className={PILL_IA}>
+                ✨ {enCoursSynthese.has(d.id) ? "Génération..." : "Synthèse"}
               </button>
-              <button onClick={() => genererExercices(d.id)} disabled={enCoursExercices.has(d.id)} className="text-xs font-medium underline disabled:opacity-50">
-                {enCoursExercices.has(d.id) ? "Generation..." : "Générer des exercices"}
+              <button onClick={() => genererExercices(d.id)} disabled={enCoursExercices.has(d.id)} className={PILL_IA}>
+                ✨ {enCoursExercices.has(d.id) ? "Génération..." : "Exercices"}
               </button>
               <button
                 onClick={() => genererTestIA(d.id)}
                 disabled={enCoursTestIA.has(d.id) || !d.chapitre_id}
                 title={!d.chapitre_id ? "Rattachez d'abord ce document à un chapitre" : undefined}
-                className="text-xs font-medium underline disabled:opacity-50"
+                className={PILL_IA}
               >
-                {enCoursTestIA.has(d.id) ? "Generation..." : "Générer un test (QCM)"}
+                ✨ {enCoursTestIA.has(d.id) ? "Génération..." : "Test QCM"}
               </button>
             </>
           )}
-          <button onClick={() => ouvrir(d)} className="text-xs font-medium underline">Ouvrir</button>
+          <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
           {enConfirmationSuppression === d.id ? (
             <>
-              <span className="text-xs text-red-600">Confirmer ?</span>
-              <button
-                onClick={() => supprimerDocument(d.id)}
-                disabled={enCoursSuppression.has(d.id)}
-                className="text-xs font-medium underline text-red-600 disabled:opacity-50"
-              >
-                {enCoursSuppression.has(d.id) ? "Suppression..." : "Oui, supprimer"}
+              <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+              <button onClick={() => supprimerDocument(d.id)} disabled={enCoursSuppression.has(d.id)} className={PILL_DANGER_SOLIDE}>
+                {enCoursSuppression.has(d.id) ? "..." : "Oui"}
               </button>
-              <button onClick={() => setEnConfirmationSuppression(null)} className="text-xs font-medium underline text-slate-500">Annuler</button>
+              <button onClick={() => setEnConfirmationSuppression(null)} className={PILL_NEUTRE}>Annuler</button>
             </>
           ) : (
-            <button
-              onClick={() => setEnConfirmationSuppression(d.id)}
-              className="text-xs font-medium underline text-red-600"
-            >
-              Supprimer
-            </button>
+            <button onClick={() => setEnConfirmationSuppression(d.id)} className={PILL_DANGER}>🗑 Suppr.</button>
           )}
         </div>
       </div>
@@ -344,134 +379,149 @@ export default function MatiereDocuments({ matiere, enfantId, compteId }) {
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-4" style={{ borderLeft: `6px solid ${matiere.couleur}` }}>
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-base">{matiere.nom}</h3>
-        <span className="text-xs text-slate-400">{chapitres.length} chapitre{chapitres.length > 1 ? "s" : ""}</span>
-      </div>
-      {message && <p className="text-sm text-red-600">{message}</p>}
+      <button type="button" onClick={() => setMatiereReduite((v) => !v)} className="w-full flex items-center justify-between gap-2 text-left">
+        <span className="flex items-center gap-2 min-w-0">
+          <span className="text-xs text-slate-400 shrink-0">{matiereReduite ? "▶" : "▼"}</span>
+          <h3 className="font-semibold text-base truncate">{matiere.nom}</h3>
+        </span>
+        <span className="text-xs text-slate-400 shrink-0">
+          {chapitres.length} chapitre{chapitres.length !== 1 ? "s" : ""} · {documents.length} document{documents.length !== 1 ? "s" : ""}
+        </span>
+      </button>
 
-      <form onSubmit={ajouterChapitre} className="flex gap-2">
-        <input
-          value={nouveauChapitre}
-          onChange={(e) => setNouveauChapitre(e.target.value)}
-          placeholder="+ Nouveau chapitre"
-          className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-1.5 text-sm"
-        />
-        <button type="submit" className="rounded-lg px-3 py-1.5 text-sm font-medium border border-slate-300 dark:border-slate-600">Ajouter</button>
-      </form>
+      {!matiereReduite && (
+        <>
+          {message && <p className="text-sm text-red-600">{message}</p>}
 
-      {chapitres.length === 0 && (
-        <p className="text-slate-400 text-xs">
-          Aucun chapitre pour cette matière. Créez-en un ci-dessus : les documents s&apos;importent ensuite à l&apos;intérieur d&apos;un chapitre.
-        </p>
-      )}
+          <form onSubmit={ajouterChapitre} className="flex gap-2">
+            <input
+              value={nouveauChapitre}
+              onChange={(e) => setNouveauChapitre(e.target.value)}
+              placeholder="+ Nouveau chapitre"
+              className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-1.5 text-sm"
+            />
+            <button type="submit" className={PILL_NEUTRE}>+ Ajouter</button>
+          </form>
 
-      <div className="space-y-3">
-        {chapitres.map((c) => {
-          const docsChapitre = documentsParChapitre[c.id] || [];
-          const testsChapitre = testsParChapitre[c.id] || [];
-          return (
-            <div key={c.id} className="rounded-lg border-2 border-slate-200 dark:border-slate-600 p-3 space-y-2.5 bg-slate-50/60 dark:bg-slate-800/20">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">📂</span>
-                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{c.nom}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setFormOuvertPourChapitre((v) => (v === c.id ? null : c.id))}
-                    className="text-xs font-medium rounded-lg px-2 py-1 border border-dashed border-slate-400"
-                  >
-                    + Document
-                  </button>
-                  <FormulaireTest chapitreId={c.id} onCree={charger} />
-                  {enConfirmationSuppressionChapitre === c.id ? (
-                    <span className="flex items-center gap-2 text-xs">
-                      <span className="text-red-600">Confirmer ?</span>
-                      <button onClick={() => supprimerChapitre(c.id)} disabled={enCoursSuppressionChapitre.has(c.id)} className="underline text-red-600 disabled:opacity-50">
-                        {enCoursSuppressionChapitre.has(c.id) ? "Suppression..." : "Oui, supprimer"}
-                      </button>
-                      <button onClick={() => setEnConfirmationSuppressionChapitre(null)} className="underline text-slate-500">Annuler</button>
-                    </span>
-                  ) : (
-                    <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className="text-xs font-medium underline text-red-600">Supprimer</button>
-                  )}
-                </div>
-              </div>
+          {chapitres.length === 0 && (
+            <p className="text-slate-400 text-xs">
+              Aucun chapitre pour cette matière. Créez-en un ci-dessus : les documents s&apos;importent ensuite à l&apos;intérieur d&apos;un chapitre.
+            </p>
+          )}
 
-              {formOuvertPourChapitre === c.id && (
-                <form onSubmit={(e) => importerDocument(e, c.id)} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 bg-white dark:bg-slate-900">
-                  <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                  <select name="type" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
-                    {TYPES_DOCUMENT.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                  <input name="fichier" type="file" required className="w-full text-sm" />
-                  <div className="flex items-center gap-2">
-                    <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
-                      {envoi ? "Envoi..." : `Importer dans « ${c.nom} »`}
+          <div className="space-y-3">
+            {chapitres.map((c) => {
+              const docsChapitre = documentsParChapitre[c.id] || [];
+              const testsChapitre = testsParChapitre[c.id] || [];
+              const estReduit = chapitresReduits.has(c.id);
+              return (
+                <div key={c.id} className="rounded-lg border-2 border-slate-200 dark:border-slate-600 p-3 space-y-2.5 bg-slate-50/60 dark:bg-slate-800/20">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <button type="button" onClick={() => toggleChapitre(c.id)} className="flex items-center gap-1.5 text-left min-w-0">
+                      <span className="text-xs text-slate-400 shrink-0">{estReduit ? "▶" : "▼"}</span>
+                      <span className="text-sm shrink-0">📂</span>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{c.nom}</span>
+                      <span className="text-xs text-slate-400 shrink-0">
+                        ({docsChapitre.length} doc{docsChapitre.length !== 1 ? "s" : ""}
+                        {testsChapitre.length > 0 ? `, ${testsChapitre.length} test${testsChapitre.length !== 1 ? "s" : ""}` : ""})
+                      </span>
                     </button>
-                    <button type="button" onClick={() => setFormOuvertPourChapitre(null)} className="text-sm text-slate-500">Annuler</button>
-                  </div>
-                </form>
-              )}
-
-              {testsChapitre.length > 0 && (
-                <div className="space-y-1 pl-1">
-                  {testsChapitre.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between text-xs">
-                      <span>📝 {t.titre}</span>
-                      {enConfirmationSuppressionTest === t.id ? (
-                        <span className="flex items-center gap-2">
-                          <span className="text-red-600">Confirmer ?</span>
-                          <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className="underline text-red-600 disabled:opacity-50">
-                            {enCoursSuppressionTest.has(t.id) ? "Suppression..." : "Oui, supprimer"}
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => ouvrirImportPourChapitre(c.id)} className={PILL_NEUTRE}>📄+ Document</button>
+                      <FormulaireTest chapitreId={c.id} onCree={charger} className={PILL_NEUTRE} label="📝+ Test" onOuvrir={() => deplierChapitre(c.id)} />
+                      {enConfirmationSuppressionChapitre === c.id ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                          <button onClick={() => supprimerChapitre(c.id)} disabled={enCoursSuppressionChapitre.has(c.id)} className={PILL_DANGER_SOLIDE}>
+                            {enCoursSuppressionChapitre.has(c.id) ? "..." : "Oui"}
                           </button>
-                          <button onClick={() => setEnConfirmationSuppressionTest(null)} className="underline text-slate-500">Annuler</button>
+                          <button onClick={() => setEnConfirmationSuppressionChapitre(null)} className={PILL_NEUTRE}>Annuler</button>
                         </span>
                       ) : (
-                        <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className="underline text-red-600">Supprimer</button>
+                        <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className={PILL_DANGER}>🗑 Suppr.</button>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
 
-              <div className="space-y-1.5 pl-1">
-                {docsChapitre.map((d) => <DocumentRow key={d.id} d={d} />)}
-                {docsChapitre.length === 0 && testsChapitre.length === 0 && (
-                  <p className="text-slate-400 text-xs">Aucun document ni test dans ce chapitre pour l&apos;instant.</p>
-                )}
+                  {!estReduit && (
+                    <>
+                      {formOuvertPourChapitre === c.id && (
+                        <form onSubmit={(e) => importerDocument(e, c.id)} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 bg-white dark:bg-slate-900">
+                          <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
+                          <select name="type" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
+                            {TYPES_DOCUMENT.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                          </select>
+                          <input name="fichier" type="file" required className="w-full text-sm" />
+                          <div className="flex items-center gap-2">
+                            <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                              {envoi ? "Envoi..." : `Importer dans « ${c.nom} »`}
+                            </button>
+                            <button type="button" onClick={() => setFormOuvertPourChapitre(null)} className="text-sm text-slate-500">Annuler</button>
+                          </div>
+                        </form>
+                      )}
+
+                      {testsChapitre.length > 0 && (
+                        <div className="space-y-1 pl-1">
+                          {testsChapitre.map((t) => (
+                            <div key={t.id} className="flex items-center justify-between text-xs">
+                              <span>📝 {t.titre}</span>
+                              {enConfirmationSuppressionTest === t.id ? (
+                                <span className="flex items-center gap-1.5">
+                                  <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                                  <button onClick={() => retirerTest(t.id)} disabled={enCoursSuppressionTest.has(t.id)} className={PILL_DANGER_SOLIDE}>
+                                    {enCoursSuppressionTest.has(t.id) ? "..." : "Oui"}
+                                  </button>
+                                  <button onClick={() => setEnConfirmationSuppressionTest(null)} className={PILL_NEUTRE}>Annuler</button>
+                                </span>
+                              ) : (
+                                <button onClick={() => setEnConfirmationSuppressionTest(t.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5 pl-1">
+                        {docsChapitre.map((d) => <DocumentRow key={d.id} d={d} />)}
+                        {docsChapitre.length === 0 && testsChapitre.length === 0 && (
+                          <p className="text-slate-400 text-xs">Aucun document ni test dans ce chapitre pour l&apos;instant.</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {documentsSansChapitre.length > 0 && (
+            <div className="rounded-lg border-2 border-dashed border-yellow-300 dark:border-yellow-700 p-3 space-y-2 bg-yellow-50/50 dark:bg-yellow-900/10">
+              <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-400">
+                ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun :
+              </p>
+              <div className="space-y-1.5">
+                {documentsSansChapitre.map((d) => (
+                  <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
+                    <p className="font-medium">📄 {d.nom}</p>
+                    <div className="flex items-center gap-2">
+                      <select
+                        disabled={enCoursAssignation.has(d.id) || chapitres.length === 0}
+                        onChange={(e) => assignerChapitre(d.id, e.target.value)}
+                        defaultValue=""
+                        className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs"
+                      >
+                        <option value="" disabled>Choisir un chapitre</option>
+                        {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                      </select>
+                      <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {documentsSansChapitre.length > 0 && (
-        <div className="rounded-lg border-2 border-dashed border-yellow-300 dark:border-yellow-700 p-3 space-y-2 bg-yellow-50/50 dark:bg-yellow-900/10">
-          <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-400">
-            ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun :
-          </p>
-          <div className="space-y-1.5">
-            {documentsSansChapitre.map((d) => (
-              <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
-                <p className="font-medium">📄 {d.nom}</p>
-                <div className="flex items-center gap-2">
-                  <select
-                    disabled={enCoursAssignation.has(d.id) || chapitres.length === 0}
-                    onChange={(e) => assignerChapitre(d.id, e.target.value)}
-                    defaultValue=""
-                    className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs"
-                  >
-                    <option value="" disabled>Choisir un chapitre</option>
-                    {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
-                  </select>
-                  <button onClick={() => ouvrir(d)} className="text-xs font-medium underline">Ouvrir</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

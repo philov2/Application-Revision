@@ -7,7 +7,13 @@ function questionVide() {
   return { question: "", choix: ["", ""], bonneReponse: 0 };
 }
 
-export default function FormulaireTest({ chapitreId, onCree }) {
+// className / label sont personnalisables : MatiereDocuments.js passe un
+// style "pastille" pour matcher le reste de l'écran Chapitres et documents,
+// alors que d'autres usages éventuels peuvent garder le lien souligné par
+// défaut. onOuvrir est appelé une seule fois, au moment où le formulaire
+// s'ouvre (jamais à la fermeture) — utile pour, par exemple, déplier
+// automatiquement un chapitre replié quand on veut y ajouter un test.
+export default function FormulaireTest({ chapitreId, onCree, className, label, onOuvrir }) {
   const [ouvert, setOuvert] = useState(false);
   const [titre, setTitre] = useState("");
   const [questions, setQuestions] = useState([questionVide()]);
@@ -18,6 +24,14 @@ export default function FormulaireTest({ chapitreId, onCree }) {
     setTitre("");
     setQuestions([questionVide()]);
     setErreur("");
+  }
+
+  function basculerOuvert() {
+    setOuvert((v) => {
+      const nouveauEtat = !v;
+      if (nouveauEtat) onOuvrir?.();
+      return nouveauEtat;
+    });
   }
 
   function modifierQuestion(i, texte) {
@@ -94,8 +108,8 @@ export default function FormulaireTest({ chapitreId, onCree }) {
 
   return (
     <div>
-      <button onClick={() => setOuvert((v) => !v)} className="text-xs font-medium underline">
-        + Test
+      <button type="button" onClick={basculerOuvert} className={className || "text-xs font-medium underline"}>
+        {label || "+ Test"}
       </button>
       {ouvert && (
         <form onSubmit={soumettre} className="mt-2 rounded-lg border border-slate-200 dark:border-slate-600 p-3 space-y-3">
