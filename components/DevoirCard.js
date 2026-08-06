@@ -420,7 +420,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     >
       {/* Ligne principale : Matière - Chapitre (gauche, étiquette secondaire) / date - créateur (droite) */}
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
           {devoir.matiere}
           {devoir.chapitre ? ` · ${devoir.chapitre}` : ""}
         </p>
