@@ -418,9 +418,9 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       }`}
       style={{ borderLeft: `6px solid ${couleur}` }}
     >
-      {/* Ligne principale : Matière - Chapitre (gauche) / date - créateur (droite) */}
+      {/* Ligne principale : Matière - Chapitre (gauche, étiquette secondaire) / date - créateur (droite) */}
       <div className="flex items-start justify-between gap-3">
-        <p className="font-semibold text-sm">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
           {devoir.matiere}
           {devoir.chapitre ? ` · ${devoir.chapitre}` : ""}
         </p>
@@ -438,9 +438,11 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         </div>
       </div>
 
-      {/* Type de devoir - Nom du devoir (gauche) / statut (droite) */}
-      <div className="flex items-center justify-between gap-3 mt-0.5 flex-wrap">
-        <p className="text-xs text-slate-500">
+      {/* Type de devoir - Nom du devoir (gauche, ligne principale — c'est ce
+          que l'enfant/le parent doit effectivement faire, donc mise en avant
+          plus que la matière/chapitre au-dessus) / statut (droite) */}
+      <div className="flex items-center justify-between gap-3 mt-1 flex-wrap">
+        <p className="font-semibold text-sm text-slate-900 dark:text-white">
           {LABEL_TYPE[devoir.type] || devoir.type}
           {devoir.titre ? ` · ${devoir.titre}` : ""}
         </p>
