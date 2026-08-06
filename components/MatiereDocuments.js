@@ -543,23 +543,41 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
           {!lectureSeule && documentsSansChapitre.length > 0 && (
             <div className="rounded-lg border-2 border-dashed border-yellow-300 dark:border-yellow-700 p-3 space-y-2 bg-yellow-50/50 dark:bg-yellow-900/10">
               <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-400">
-                ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun :
+                ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun, ou supprimez-les :
               </p>
+              {chapitres.length === 0 && (
+                <p className="text-xs text-yellow-700 dark:text-yellow-500">
+                  Créez d&apos;abord un chapitre ci-dessus pour pouvoir y rattacher ces documents.
+                </p>
+              )}
               <div className="space-y-1.5">
                 {documentsSansChapitre.map((d) => (
                   <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
                     <p className="font-medium">📄 {d.nom}</p>
-                    <div className="flex items-center gap-2">
-                      <select
-                        disabled={enCoursAssignation.has(d.id) || chapitres.length === 0}
-                        onChange={(e) => assignerChapitre(d.id, e.target.value)}
-                        defaultValue=""
-                        className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs"
-                      >
-                        <option value="" disabled>Choisir un chapitre</option>
-                        {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
-                      </select>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {chapitres.length > 0 && (
+                        <select
+                          disabled={enCoursAssignation.has(d.id)}
+                          onChange={(e) => assignerChapitre(d.id, e.target.value)}
+                          defaultValue=""
+                          className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs"
+                        >
+                          <option value="" disabled>Choisir un chapitre</option>
+                          {chapitres.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                        </select>
+                      )}
                       <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
+                      {enConfirmationSuppression === d.id ? (
+                        <>
+                          <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                          <button onClick={() => supprimerDocument(d.id)} disabled={enCoursSuppression.has(d.id)} className={PILL_DANGER_SOLIDE}>
+                            {enCoursSuppression.has(d.id) ? "..." : "Oui"}
+                          </button>
+                          <button onClick={() => setEnConfirmationSuppression(null)} className={PILL_NEUTRE}>Annuler</button>
+                        </>
+                      ) : (
+                        <button onClick={() => setEnConfirmationSuppression(d.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+                      )}
                     </div>
                   </div>
                 ))}
