@@ -324,7 +324,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                 </p>
               )}
 
-              <Champ label="Titre (optionnel)">
+              <Champ label="Titre">
                 <input
                   name="titre"
                   value={titre}
@@ -390,7 +390,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
               </Champ>
 
               {matiereId && (
-                <Champ label="Chapitre (optionnel)">
+                <Champ label="Chapitre">
                   {!nouveauChapitreOuvert ? (
                     <div className="space-y-1.5">
                       <select name="chapitre_id" value={chapitreId} onChange={(e) => setChapitreId(e.target.value)} className={CLASSE_INPUT}>
@@ -470,7 +470,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
               {matiereId && (
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3.5 space-y-3 bg-slate-50 dark:bg-slate-800/40">
-                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Document à utiliser (optionnel)</p>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Document à utiliser</p>
 
                   <div className="grid grid-cols-3 gap-2">
                     {MODES_DOCUMENT.map((m) => (
