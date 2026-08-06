@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { creerDevoir } from "@/lib/devoirsSupabase";
@@ -37,9 +37,9 @@ const ROUTES_IA_PROMPT = {
 };
 
 const MODES_DOCUMENT = [
-  { value: "existant", label: "Document existant" },
-  { value: "import", label: "Importer un fichier" },
-  { value: "ia", label: "Générer par IA" },
+  { value: "existant", label: "📁 Document existant" },
+  { value: "import", label: "📤 Importer un fichier" },
+  { value: "ia", label: "✨ Générer par IA" },
 ];
 
 const SOURCES_IA = [
@@ -59,6 +59,35 @@ function Champ({ label, children }) {
 
 const CLASSE_INPUT =
   "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800/60 px-3.5 py-2.5 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#91CAFF] focus:border-transparent";
+
+// Bouton de sélection de fichier réutilisable : remplace le input[type=file]
+// natif (peu visible) par un vrai bouton, avec le nom du fichier choisi
+// affiché à côté.
+function FichierBouton({ name, nomFichier, onChange, accept }) {
+  const id = useId();
+  return (
+    <div className="flex items-center gap-2.5 flex-wrap">
+      <label
+        htmlFor={id}
+        className="shrink-0 cursor-pointer rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 shadow-sm transition hover:brightness-95 active:brightness-90"
+        style={{ background: "#91CAFF" }}
+      >
+        📎 Choisir un fichier
+      </label>
+      <input
+        id={id}
+        name={name}
+        type="file"
+        accept={accept}
+        onChange={(e) => onChange(e.target.files?.[0]?.name || "")}
+        className="hidden"
+      />
+      <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[220px]">
+        {nomFichier || "Aucun fichier sélectionné"}
+      </span>
+    </div>
+  );
+}
 
 export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree }) {
   const [ouvert, setOuvert] = useState(false);
@@ -84,6 +113,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
   const [documentId, setDocumentId] = useState("");
   const [modeDocument, setModeDocument] = useState("existant"); // "existant" | "import" | "ia"
   const [sourceIA, setSourceIA] = useState("prompt"); // "prompt" | "fichier"
+  const [nomFichierImport, setNomFichierImport] = useState("");
+  const [nomFichierSource, setNomFichierSource] = useState("");
 
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState("");
@@ -269,6 +300,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
       setType("revision");
       setTitre("");
       setDateEcheance("");
+      setNomFichierImport("");
+      setNomFichierSource("");
       fermer();
       onCree?.();
     } catch (err) {
@@ -507,16 +540,30 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                     ))}
 
                   {modeDocument === "import" && (
-                    <div className="space-y-2">
-                      <input name="nom_fichier" placeholder="Nom du document (optionnel)" className={CLASSE_INPUT} />
-                      <select name="type_fichier" className={CLASSE_INPUT}>
-                        {TYPES_DOCUMENT.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
+                    <div className="space-y-3">
+                      <Champ label="Nom du document">
+                        <input name="nom_fichier" placeholder="Ex. Chapitre 3 - Les fractions" className={CLASSE_INPUT} />
+                      </Champ>
+                      <Champ label="Type de document">
+                        <select name="type_fichier" defaultValue="" required className={CLASSE_INPUT}>
+                          <option value="" disabled>
+                            Choisir un type de document
                           </option>
-                        ))}
-                      </select>
-                      <input name="fichier" type="file" className="w-full text-xs" />
+                          {TYPES_DOCUMENT.map((t) => (
+                            <option key={t.value} value={t.value}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                      </Champ>
+                      <Champ label="Fichier à importer">
+                        <FichierBouton
+                          name="fichier"
+                          nomFichier={nomFichierImport}
+                          onChange={setNomFichierImport}
+                          accept=".pdf,.doc,.docx,image/*"
+                        />
+                      </Champ>
                     </div>
                   )}
 
@@ -558,12 +605,21 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                           />
                         </div>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <p className="text-xs text-slate-500">
                             Étape 1 : importez le fichier de cours (PDF, Word ou image) qui servira de base.
                           </p>
-                          <input name="nom_fichier" placeholder="Nom du cours source (optionnel)" className={CLASSE_INPUT} />
-                          <input name="fichier_source" type="file" className="w-full text-xs" />
+                          <Champ label="Nom du cours source">
+                            <input name="nom_fichier" placeholder="Ex. Cours sur la Révolution française" className={CLASSE_INPUT} />
+                          </Champ>
+                          <Champ label="Fichier du cours">
+                            <FichierBouton
+                              name="fichier_source"
+                              nomFichier={nomFichierSource}
+                              onChange={setNomFichierSource}
+                              accept=".pdf,.doc,.docx,image/*"
+                            />
+                          </Champ>
                           <p className="text-xs text-slate-500 pt-1">
                             Étape 2 (optionnelle) : précisez une consigne pour orienter {LABEL_IA_PAR_TYPE[type]}.
                           </p>
