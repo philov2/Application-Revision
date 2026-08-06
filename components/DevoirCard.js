@@ -47,7 +47,7 @@ function classeNote(note) {
 
 export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId }) {
   const router = useRouter();
-  const couleur = matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
+  const couleur = devoir.couleur || matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
   const fait = devoir.statut === "fait";
   const [, month, day] = devoir.echeance.split("-");
   const dateLabel = `${day}/${month}`;
