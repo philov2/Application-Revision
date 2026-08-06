@@ -14,6 +14,7 @@ import { filtrerDevoirsFaitsRecents, filtrerDevoirsEnAttenteCorrection } from "@
 import { chargerDevoirs } from "@/lib/devoirsSupabase";
 import { compterNonLus } from "@/lib/messagesSupabase";
 import { envoyerNotification } from "@/lib/notifications";
+import { choisirCouleurMatiere } from "@/lib/couleursMatieres";
 import FormulaireDevoir from "@/components/FormulaireDevoir";
 
 // En démonstration, Viviane est rattachée à Rose pour 4 matières (voir
@@ -129,7 +130,9 @@ function Contenu() {
     setMessage("");
     setEnCoursMatiere(true);
     try {
-      const { data, error } = await supabase.from("matieres").insert({ nom: nomNouvelleMatiere.trim() }).select().single();
+      const nom = nomNouvelleMatiere.trim();
+      const couleur = choisirCouleurMatiere(nom, matieres);
+      const { data, error } = await supabase.from("matieres").insert({ nom, couleur }).select().single();
       if (error) throw error;
       setNomNouvelleMatiere("");
       setNouvelleMatiereOuvert(false);
