@@ -313,3 +313,23 @@ for select using (
   exists (select 1 from liens_parent_enfant l where l.enfant_id = liens_soutien.enfant_id and l.parent_id = auth.uid())
   or exists (select 1 from liens_soutien s2 where s2.enfant_id = liens_soutien.enfant_id and s2.soutien_id = auth.uid())
 );
+
+-- Jalon "rattachement d'un document orphelin a un chapitre" (suite au
+-- signalement : dans l'onglet Chapitres et documents, choisir un chapitre
+-- pour un document importe avant que ce soit obligatoire ne faisait rien -
+-- le document restait sans chapitre meme apres rafraichissement). Cause :
+-- aucune policy RLS n'autorisait la modification (UPDATE) d'un document,
+-- donc l'appel Supabase echouait silencieusement (pas d'erreur, 0 ligne
+-- modifiee). Autorise desormais le parent ou le soutien rattache a
+-- l'enfant/la matiere concernee, ou l'administrateur.
+create policy "rattachement document a un chapitre par parent soutien ou admin" on documents
+for update using (
+  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  or exists (select 1 from liens_parent_enfant l where l.enfant_id = documents.enfant_id and l.parent_id = auth.uid())
+  or exists (select 1 from liens_soutien s where s.enfant_id = documents.enfant_id and s.matiere_id = documents.matiere_id and s.soutien_id = auth.uid())
+)
+with check (
+  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  or exists (select 1 from liens_parent_enfant l where l.enfant_id = documents.enfant_id and l.parent_id = auth.uid())
+  or exists (select 1 from liens_soutien s where s.enfant_id = documents.enfant_id and s.matiere_id = documents.matiere_id and s.soutien_id = auth.uid())
+);
