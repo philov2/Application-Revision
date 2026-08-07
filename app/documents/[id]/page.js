@@ -114,7 +114,7 @@ export default function PageDocument() {
       <main className="min-h-screen bg-slate-50 dark:bg-slate-950 py-8 px-4 print:bg-white print:py-0">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4 print:hidden">
-            <button onClick={() => router.back()} className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+            <button onClick={() => router.back()} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
               ← Retour
             </button>
             {contenuMarkdown && (
@@ -127,7 +127,7 @@ export default function PageDocument() {
             )}
           </div>
 
-          {chargement && <p className="text-sm text-slate-500 text-center py-16">Chargement du document...</p>}
+          {chargement && <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-16">Chargement du document...</p>}
 
           {!chargement && erreur && (
             <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-xl px-4 py-3">
@@ -150,7 +150,7 @@ export default function PageDocument() {
                   </span>
                 )}
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{document.nom}</h1>
-                <p className="text-sm text-slate-500 mt-1.5">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
                   {LABEL_TYPE[document.type] || document.type}
                   {document.matiere?.nom ? ` · ${document.matiere.nom}` : ""}
                   {document.chapitre?.nom ? ` · ${document.chapitre.nom}` : ""}
