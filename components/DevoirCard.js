@@ -317,7 +317,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
             </button>
             <button
               onClick={() => setEnConfirmationSuppression(false)}
-              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Annuler
             </button>
@@ -326,7 +326,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           <>
             <button
               onClick={commencerEdition}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               ✎ Modif.
             </button>
@@ -369,7 +369,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           <button onClick={enregistrer} disabled={enCours} className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
             {enCours ? "Enregistrement..." : "Enregistrer"}
           </button>
-          <button onClick={() => setEnEdition(false)} className="text-sm text-slate-500">Annuler</button>
+          <button onClick={() => setEnEdition(false)} className="text-sm text-slate-500 dark:text-slate-400">Annuler</button>
         </div>
       </div>
     );
@@ -381,7 +381,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // un devoir marqué comme fait immédiatement reconnaissable.
   function BadgeStatut({ children, tonalite = "neutre" }) {
     if (tonalite === "neutre") {
-      return <span className="text-xs font-medium text-slate-500">{children}</span>;
+      return <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{children}</span>;
     }
     const classes =
       tonalite === "vert"
@@ -425,7 +425,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           {devoir.chapitre ? ` · ${devoir.chapitre}` : ""}
         </p>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-slate-500">{devoir.origine}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">{devoir.origine}</span>
           {fait ? (
             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
               {dateRealisationLabel ? `✓ Fait le ${dateRealisationLabel}` : "✓ Fait"}
@@ -471,6 +471,14 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         {devoir.type === "exercice" && (
           <div className="space-y-1">
             {erreurFichiers && <p className="text-red-600">{erreurFichiers}</p>}
+            {devoir.document && (
+              <div>
+                {erreurDocument && <p className="text-red-600 mb-1">{erreurDocument}</p>}
+                <button onClick={voirDocument} disabled={enChargementDocument} className="underline font-medium text-blue-600 disabled:opacity-50 text-left">
+                  {enChargementDocument ? "Ouverture..." : `Voir l'exercice : ${devoir.document.nom}`}
+                </button>
+              </div>
+            )}
             {!devoir.reponseExercice ? (
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 {onToggle ? (
@@ -523,7 +531,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                   </div>
                 ) : (
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-slate-500">
+                    <p className="text-slate-500 dark:text-slate-400">
                       {devoir.reponseExercice.note == null
                         ? "Réponse envoyée, en attente de correction."
                         : devoir.reponseExercice.commentaire || ""}
@@ -561,7 +569,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               <div className="space-y-3 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-medium text-sm">{testDisponible.titre}</p>
-                  <button onClick={annulerTest} className="text-xs font-medium underline text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 shrink-0">
+                  <button onClick={annulerTest} className="text-xs font-medium underline text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 shrink-0">
                     Annuler
                   </button>
                 </div>
@@ -585,7 +593,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                   >
                     {enEnvoiTest ? "Envoi..." : "Valider le test"}
                   </button>
-                  <button onClick={annulerTest} className="text-sm text-slate-500">Annuler</button>
+                  <button onClick={annulerTest} className="text-sm text-slate-500 dark:text-slate-400">Annuler</button>
                 </div>
               </div>
             )}
@@ -631,7 +639,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                                       ? "text-green-700 dark:text-green-400 font-medium"
                                       : estChoixDonne
                                       ? "text-red-600 dark:text-red-400"
-                                      : "text-slate-500"
+                                      : "text-slate-500 dark:text-slate-400"
                                   }
                                 >
                                   {estBonneReponse ? "✓" : estChoixDonne ? "✗" : "·"} {choixTexte}
