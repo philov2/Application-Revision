@@ -47,7 +47,7 @@ export default function DemandeCompte() {
                 <input name="email" type="email" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
               </div>
               {erreur && <p className="text-sm text-red-600">{erreur}</p>}
-              <button type="submit" className="w-full rounded-lg py-2 font-medium" style={{ background: "#91CAFF" }}>
+              <button type="submit" className="w-full rounded-lg py-2 font-medium text-white" style={{ background: "#4169E1" }}>
                 Envoyer la demande
               </button>
             </form>
