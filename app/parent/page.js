@@ -219,8 +219,8 @@ function Contenu() {
             <button
               key={e.id}
               onClick={() => { setEnfantSelectionne(e.id); if (supabaseConfigured) recharger(e.id); }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent" : "border-slate-300 dark:border-slate-600"}`}
-              style={e.id === enfantSelectionne ? { background: "#91CAFF" } : {}}
+              className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent text-white" : "border-slate-300 dark:border-slate-600"}`}
+              style={e.id === enfantSelectionne ? { background: "#4169E1" } : {}}
             >
               {e.nom}{e.niveau ? ` · ${e.niveau}` : ""}
             </button>
@@ -236,7 +236,7 @@ function Contenu() {
             <input name="nom" required placeholder="Prénom" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
             <input name="email" type="email" required placeholder="Adresse email" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
             <input name="niveau_scolaire" required placeholder="Niveau scolaire (ex. 4ème)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
-            <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium" style={{ background: "#91CAFF" }}>Créer le compte</button>
+            <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#4169E1" }}>Créer le compte</button>
           </form>
         )}
 
@@ -313,7 +313,7 @@ function Contenu() {
                 {nouvelleMatiereOuvert && (
                   <form onSubmit={creerNouvelleMatiere} className="flex items-center gap-2 mb-3">
                     <input value={nomNouvelleMatiere} onChange={(e) => setNomNouvelleMatiere(e.target.value)} placeholder="Nom de la nouvelle matière" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                    <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                    <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
                       {enCoursMatiere ? "..." : "Ajouter"}
                     </button>
                   </form>
@@ -357,7 +357,7 @@ function Contenu() {
                   ))}
                 </div>
               </div>
-              <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium" style={{ background: "#91CAFF" }}>
+              <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#4169E1" }}>
                 Envoyer la demande à l&apos;administrateur
               </button>
             </form>
