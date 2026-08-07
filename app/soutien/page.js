@@ -228,7 +228,7 @@ function Contenu() {
             {nouvelleMatiereOuvert && (
               <form onSubmit={creerNouvelleMatiere} className="flex items-center gap-2 mb-3">
                 <input value={nomNouvelleMatiere} onChange={(e) => setNomNouvelleMatiere(e.target.value)} placeholder="Nom de la nouvelle matière" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
                   {enCoursMatiere ? "..." : "Ajouter"}
                 </button>
               </form>
