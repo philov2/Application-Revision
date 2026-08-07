@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { chargerMessages, envoyerMessage, marquerCommeLu, chargerMembresFamille } from "@/lib/messagesSupabase";
+import { chargerMessages, envoyerMessage, marquerCommeLu, chargerMembresFamille, supprimerMessage } from "@/lib/messagesSupabase";
 
 const LABEL_ROLE = { parent: "Parent", enfant: "Enfant", soutien: "Soutien", admin: "Administrateur" };
 
@@ -23,6 +23,8 @@ const [texte, setTexte] = useState("");
 const [envoi, setEnvoi] = useState(false);
 const [erreur, setErreur] = useState("");
 const [chargement, setChargement] = useState(true);
+const [confirmSuppressionId, setConfirmSuppressionId] = useState(null);
+const [suppressionEnCours, setSuppressionEnCours] = useState(false);
 const finRef = useRef(null);
 
 async function recharger() {
@@ -69,6 +71,20 @@ setEnvoi(false);
 }
 }
 
+async function supprimer(id) {
+setSuppressionEnCours(true);
+setErreur("");
+try {
+await supprimerMessage(id);
+setMessages((prev) => prev.filter((m) => m.id !== id));
+} catch (err) {
+setErreur(err.message);
+} finally {
+setSuppressionEnCours(false);
+setConfirmSuppressionId(null);
+}
+}
+
 function surTouche(e) {
 if (e.key === "Enter" && !e.shiftKey) {
 e.preventDefault();
@@ -110,7 +126,40 @@ style={estMoi ? { background: "#4169E1" } : undefined}
 </p>
 )}
 <p className="whitespace-pre-wrap break-words">{m.contenu}</p>
-<p className={`text-[10px] mt-1 ${estMoi ? "text-white/70" : "text-slate-400"}`}>{formatHeure(m.created_at)}</p>
+<div className="flex items-center gap-2 mt-1">
+<p className={`text-[10px] ${estMoi ? "text-white/70" : "text-slate-400"}`}>{formatHeure(m.created_at)}</p>
+{estMoi && confirmSuppressionId !== m.id && (
+<button
+type="button"
+onClick={() => setConfirmSuppressionId(m.id)}
+title="Supprimer ce message"
+className="text-[10px] text-white/70 hover:text-white underline"
+>
+🗑
+</button>
+)}
+{estMoi && confirmSuppressionId === m.id && (
+<span className="text-[10px] text-white/90 flex items-center gap-1">
+Supprimer ?
+<button
+type="button"
+onClick={() => supprimer(m.id)}
+disabled={suppressionEnCours}
+className="underline font-medium disabled:opacity-50"
+>
+{suppressionEnCours ? "..." : "Oui"}
+</button>
+<button
+type="button"
+onClick={() => setConfirmSuppressionId(null)}
+disabled={suppressionEnCours}
+className="underline disabled:opacity-50"
+>
+Non
+</button>
+</span>
+)}
+</div>
 </div>
 </div>
 );
@@ -123,7 +172,7 @@ style={estMoi ? { background: "#4169E1" } : undefined}
 <form onSubmit={envoyer} className="border-t border-slate-200 dark:border-slate-700 p-3 space-y-2">
 {membres.length > 0 && (
 <div className="flex items-center gap-2">
-<label htmlFor="destinataire-message" className="text-xs text-slate-500 shrink-0">
+<label htmlFor="destinataire-message" className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
 Pour :
 </label>
 <select
