@@ -50,7 +50,7 @@ useEffect(() => {
                 Connectez-vous, ou faites une demande de compte si vous n&apos;en avez pas encore.
               </p>
               <div className="grid grid-cols-1 gap-3">
-                <Link href="/login" className="rounded-lg py-3 font-medium" style={{ background: "#91CAFF" }}>
+                <Link href="/login" className="rounded-lg py-3 font-medium text-white" style={{ background: "#4169E1" }}>
                   Se connecter
                 </Link>
                 <Link href="/demande" className="rounded-lg py-3 font-medium border border-slate-300 dark:border-slate-600">
@@ -64,7 +64,7 @@ useEffect(() => {
                 Aperçu de l&apos;interface — MVP en construction. Choisissez un profil pour prévisualiser son tableau de bord (données d&apos;exemple).
               </p>
               <div className="grid grid-cols-1 gap-3">
-                <Link href="/parent" className="rounded-lg py-3 font-medium" style={{ background: "#91CAFF" }}>
+                <Link href="/parent" className="rounded-lg py-3 font-medium text-white" style={{ background: "#4169E1" }}>
                   Tableau de bord Parent
                 </Link>
                 <Link href="/enfant" className="rounded-lg py-3 font-medium" style={{ background: "#F7CEE6" }}>
