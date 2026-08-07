@@ -157,14 +157,14 @@ style={{ background: "#4169E1" }}
 >
 {enCours.has(c.id) ? "Enregistrement..." : "Enregistrer"}
 </button>
-<button onClick={annulerEdition} className="text-sm text-slate-500">Annuler</button>
+<button onClick={annulerEdition} className="text-sm text-slate-500 dark:text-slate-400">Annuler</button>
 </div>
 </>
 ) : (
 <>
 <div>
 <p className="font-medium">{c.nom} <span className="text-xs font-normal text-slate-400">({LABELS_ROLE[c.role] || c.role})</span></p>
-<p className="text-sm text-slate-500">{c.email}</p>
+<p className="text-sm text-slate-500 dark:text-slate-400">{c.email}</p>
 <p className="text-xs text-slate-400">
 Statut : {c.statut}
 {c.telephone ? ` · ${c.telephone}` : " · téléphone non renseigné"}
@@ -195,7 +195,7 @@ className="text-xs font-medium underline text-red-600 disabled:opacity-50"
 >
 {enCours.has(c.id) ? "Suppression..." : "Oui, supprimer"}
 </button>
-<button onClick={() => setEnConfirmation(null)} className="text-xs font-medium underline text-slate-500">Annuler</button>
+<button onClick={() => setEnConfirmation(null)} className="text-xs font-medium underline text-slate-500 dark:text-slate-400">Annuler</button>
 </>
 ) : (
 <button
@@ -210,7 +210,7 @@ Supprimer
 )}
 </div>
 ))}
-{comptes.length === 0 && <p className="text-slate-500 text-sm">Aucun compte.</p>}
+{comptes.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Aucun compte.</p>}
 </div>
 </main>
 </>
