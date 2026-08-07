@@ -159,19 +159,19 @@ function Contenu() {
         <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
           <button
             onClick={() => setOnglet("devoirs")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}
           >
             Mes devoirs
           </button>
           <button
             onClick={() => setOnglet("documents")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}
           >
             Chapitres et documents
           </button>
           <button
             onClick={() => setOnglet("messages")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}
           >
             Messages
             {nonLus > 0 && (
@@ -189,7 +189,7 @@ function Contenu() {
               <h2 className="font-semibold mb-3">À faire ({aFaire.length})</h2>
               <div className="space-y-3">
                 {aFaire.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
-                {aFaire.length === 0 && <p className="text-slate-500 text-sm">Rien à faire pour le moment, bravo !</p>}
+                {aFaire.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Rien à faire pour le moment, bravo !</p>}
               </div>
             </section>
             {enAttenteCorrection.length > 0 && (
@@ -218,7 +218,7 @@ function Contenu() {
               {matieres.map((m) => (
                 <MatiereDocuments key={m.id} matiere={m} enfantId={enfantId} compteId={compteId} lectureSeule />
               ))}
-              {matieres.length === 0 && <p className="text-slate-500 text-xs">Aucune matière pour l&apos;instant.</p>}
+              {matieres.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-xs">Aucune matière pour l&apos;instant.</p>}
             </div>
           </section>
         )}
