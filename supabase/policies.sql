@@ -333,3 +333,14 @@ with check (
   or exists (select 1 from liens_parent_enfant l where l.enfant_id = documents.enfant_id and l.parent_id = auth.uid())
   or exists (select 1 from liens_soutien s where s.enfant_id = documents.enfant_id and s.matiere_id = documents.matiere_id and s.soutien_id = auth.uid())
 );
+
+-- Jalon "notifications push" : chaque compte gere ses propres abonnements
+-- push (un par appareil/navigateur) — creation depuis /api/push/subscribe,
+-- suppression depuis /api/push/unsubscribe. L'envoi effectif des
+-- notifications (route /api/push/envoyer) passe par la cle de service
+-- Supabase et n'a donc pas besoin de policy RLS dediee.
+alter table push_subscriptions enable row level security;
+
+create policy "un compte gere ses propres abonnements push" on push_subscriptions
+for all using (compte_id = auth.uid())
+with check (compte_id = auth.uid());

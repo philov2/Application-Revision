@@ -107,7 +107,7 @@ create table resultats_tests (
 -- Demandes de création de compte (Jalon 1)
 -- - type_compte = 'parent' : demande publique, avant toute connexion (page /demande)
 -- - type_compte = 'soutien' : demande faite par un parent déjà connecté, pour lui-même
---   ou pour un tiers, en précisant les matières concernées
+-- ou pour un tiers, en précisant les matières concernées
 create table demandes_comptes (
   id uuid primary key default gen_random_uuid(),
   type_compte text not null check (type_compte in ('parent', 'soutien')),
@@ -140,4 +140,16 @@ create table messages_lectures (
   enfant_id uuid references comptes(id) not null,
   derniere_lecture timestamptz not null default now(),
   primary key (compte_id, enfant_id)
+);
+
+-- Jalon "notifications push" : un abonnement par appareil/navigateur, pour
+-- pouvoir lui pousser des notifications même quand l'app/l'onglet est
+-- fermé (voir supabase/push_notifications.sql pour les déclencheurs).
+create table push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  compte_id uuid references comptes(id) on delete cascade not null,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
 );
