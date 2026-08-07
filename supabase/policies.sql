@@ -259,6 +259,11 @@ for insert with check (
   )
 );
 
+-- Suppression d'un message : chacun ne peut effacer que ses propres messages
+-- (bouton "supprimer" dans MessagerieFamille.js).
+create policy "suppression de ses propres messages" on messages
+for delete using (auteur_id = auth.uid());
+
 -- Suivi de lecture (badge de messages non lus) : chacun ne gere que sa propre ligne.
 create policy "gestion de sa propre lecture de messages" on messages_lectures
 for all using (compte_id = auth.uid())
