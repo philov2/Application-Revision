@@ -57,7 +57,7 @@ window.location.href = (compte && CHEMIN_PAR_ROLE[compte.role]) || "/login";
 if (etat === "demo") {
 return (
 <main className="flex-1 flex items-center justify-center px-4">
-<p className="text-slate-500 text-sm text-center max-w-sm">
+<p className="text-slate-500 dark:text-slate-400 text-sm text-center max-w-sm">
 Le projet Supabase n'est pas encore connecte (voir README.md).
 </p>
 </main>
@@ -67,7 +67,7 @@ Le projet Supabase n'est pas encore connecte (voir README.md).
 if (etat === "verification") {
 return (
 <main className="flex-1 flex items-center justify-center">
-<p className="text-slate-500 text-sm">Verification du lien...</p>
+<p className="text-slate-500 dark:text-slate-400 text-sm">Verification du lien...</p>
 </main>
 );
 }
@@ -75,7 +75,7 @@ return (
 if (etat === "lien_invalide") {
 return (
 <main className="flex-1 flex items-center justify-center px-4">
-<p className="text-slate-500 text-sm text-center max-w-sm">
+<p className="text-slate-500 dark:text-slate-400 text-sm text-center max-w-sm">
 Ce lien n'est plus valide ou a deja ete utilise. Contactez l'administrateur pour recevoir une nouvelle invitation.
 </p>
 </main>
@@ -87,7 +87,7 @@ return (
 <DemoBanner />
 <main className="flex-1 flex items-center justify-center px-4">
 <form onSubmit={handleSubmit} className="max-w-sm w-full space-y-4 py-16">
-<h1 className="text-xl font-semibold" style={{ color: "#2E75B6" }}>Choisir un mot de passe</h1>
+<h1 className="text-xl font-semibold text-[#2E75B6] dark:text-[#8AB4F8]">Choisir un mot de passe</h1>
 <div>
 <label className="block text-sm mb-1">Nouveau mot de passe</label>
 <input
