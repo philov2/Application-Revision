@@ -66,8 +66,8 @@ export default function LoginPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit" disabled={loading}
-            className="w-full rounded-lg py-2 font-medium"
-            style={{ background: "#91CAFF" }}
+            className="w-full rounded-lg py-2 font-medium text-white"
+            style={{ background: "#4169E1" }}
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
