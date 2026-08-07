@@ -97,8 +97,8 @@ function Contenu() {
                 <button
                   onClick={() => valider(d.id)}
                   disabled={enCoursValidation.has(d.id) || enCoursRejet.has(d.id)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
-                  style={{ background: "#91CAFF" }}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  style={{ background: "#4169E1" }}
                 >
                   {enCoursValidation.has(d.id) ? "Validation..." : "Valider"}
                 </button>
