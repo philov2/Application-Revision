@@ -28,6 +28,7 @@ const [telephoneEdite, setTelephoneEdite] = useState("");
 const [enCours, setEnCours] = useState(new Set());
 const [enConfirmation, setEnConfirmation] = useState(null);
 const [message, setMessage] = useState("");
+const [retourReset, setRetourReset] = useState({});
 
 async function charger() {
 if (!supabaseConfigured) return;
@@ -78,18 +79,22 @@ return next;
 async function reinitialiserMotDePasse(c) {
 setErreur("");
 setMessage("");
+setRetourReset((prev) => ({ ...prev, [c.id]: null }));
 setEnCours((prev) => new Set(prev).add(c.id));
 try {
 const res = await authFetch(`/api/comptes/${c.id}/reinitialiser-mot-de-passe`, { method: "POST" });
-setMessage(`Email de réinitialisation envoyé à ${res.email}.`);
+setRetourReset((prev) => ({ ...prev, [c.id]: { type: "succes", texte: `Email envoyé à ${res.email}` } }));
 } catch (err) {
-setErreur(err.message);
+setRetourReset((prev) => ({ ...prev, [c.id]: { type: "erreur", texte: err.message } }));
 } finally {
 setEnCours((prev) => {
 const next = new Set(prev);
 next.delete(c.id);
 return next;
 });
+setTimeout(() => {
+setRetourReset((prev) => ({ ...prev, [c.id]: null }));
+}, 6000);
 }
 }
 
@@ -185,6 +190,11 @@ className="text-xs font-medium underline disabled:opacity-50"
 >
 {enCours.has(c.id) ? "Envoi..." : "Réinitialiser le mot de passe"}
 </button>
+{retourReset[c.id] && (
+<span className={`text-xs font-medium ${retourReset[c.id].type === "succes" ? "text-green-600" : "text-red-600"}`}>
+{retourReset[c.id].texte}
+</span>
+)}
 {enConfirmation === c.id ? (
 <>
 <span className="text-xs text-red-600">Confirmer ?</span>
