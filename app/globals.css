@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Mode sombre pilote par la classe .dark sur <html> (bouton dans la Navbar),
+   plutot que par la seule preference systeme (prefers-color-scheme). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
