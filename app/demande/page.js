@@ -31,9 +31,9 @@ export default function DemandeCompte() {
       <DemoBanner />
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-sm w-full py-16">
-          <h1 className="text-xl font-semibold mb-4" style={{ color: "#2E75B6" }}>Demande de création de compte</h1>
+          <h1 className="text-xl font-semibold mb-4 text-[#2E75B6] dark:text-[#8AB4F8]">Demande de création de compte</h1>
           {envoye ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Votre demande a été envoyée à l&apos;administrateur. Vous recevrez un email d&apos;invitation dès qu&apos;elle sera validée.
             </p>
           ) : (
@@ -52,7 +52,7 @@ export default function DemandeCompte() {
               </button>
             </form>
           )}
-          <p className="text-xs text-slate-500 text-center mt-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
             <Link href="/login" className="underline">Déjà un compte ? Se connecter</Link>
           </p>
         </div>
