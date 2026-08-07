@@ -48,7 +48,7 @@ export default function LoginPage() {
       <DemoBanner />
       <main className="flex-1 flex items-center justify-center px-4">
         <form onSubmit={handleSubmit} className="max-w-sm w-full space-y-4 py-16">
-          <h1 className="text-xl font-semibold" style={{ color: "#2E75B6" }}>Connexion</h1>
+          <h1 className="text-xl font-semibold text-[#2E75B6] dark:text-[#8AB4F8]">Connexion</h1>
           <div>
             <label className="block text-sm mb-1">Adresse email</label>
             <input
@@ -71,10 +71,10 @@ export default function LoginPage() {
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
-          <p className="text-xs text-slate-500 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
             Mot de passe oublié ? Contactez l&apos;administrateur.
           </p>
-          <p className="text-xs text-slate-500 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
             <Link href="/demande" className="underline">Pas encore de compte ? Faire une demande</Link>
           </p>
         </form>
