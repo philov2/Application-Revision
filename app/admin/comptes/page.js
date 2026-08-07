@@ -152,8 +152,8 @@ className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transpare
 <button
 onClick={() => enregistrer(c.id)}
 disabled={enCours.has(c.id)}
-className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-style={{ background: "#91CAFF" }}
+className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+style={{ background: "#4169E1" }}
 >
 {enCours.has(c.id) ? "Enregistrement..." : "Enregistrer"}
 </button>
