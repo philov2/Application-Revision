@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { notificationsSupportees, permissionNotifications, demanderPermissionNotifications, envoyerNotification } from "@/lib/notifications";
-import { pushSupporte, abonnerPush, testerPush } from "@/lib/pushClient";
+import { pushSupporte, abonnerPush } from "@/lib/pushClient";
 
 // Petite pastille discrète pour activer les notifications (nouveaux
 // messages, nouveaux devoirs, corrections). Deux couches, l'une par-dessus
@@ -15,8 +15,6 @@ import { pushSupporte, abonnerPush, testerPush } from "@/lib/pushClient";
 // actives quand même, donc rien ne casse pour l'utilisateur.
 export default function ActivateNotifications() {
   const [permission, setPermission] = useState("default");
-  const [enCoursTestPush, setEnCoursTestPush] = useState(false);
-  const [erreurPush, setErreurPush] = useState("");
 
   useEffect(() => {
     setPermission(permissionNotifications());
@@ -43,24 +41,10 @@ export default function ActivateNotifications() {
         "Vous recevrez une alerte pour les nouveaux messages, devoirs et corrections."
       );
       if (pushSupporte()) {
-        try {
-          await abonnerPush();
-        } catch (err) {
-          setErreurPush(err.message);
-        }
+        abonnerPush().catch(() => {
+          // Silencieux : les notifications navigateur classiques suffisent en repli.
+        });
       }
-    }
-  }
-
-  async function testerPushNotification() {
-    setErreurPush("");
-    setEnCoursTestPush(true);
-    try {
-      await testerPush();
-    } catch (err) {
-      setErreurPush(err.message);
-    } finally {
-      setEnCoursTestPush(false);
     }
   }
 
@@ -77,39 +61,11 @@ export default function ActivateNotifications() {
     );
   }
 
-  // Une fois accordée, deux petits liens "Tester" restent disponibles :
-  // l'un pour la notification navigateur classique (immédiate, utile
-  // pendant qu'on a l'onglet ouvert sous les yeux), l'autre pour la
-  // notification push (fait un aller-retour serveur, utile pour vérifier
-  // que ça arrive bien même app fermée — à tester en fermant l'app juste
-  // après avoir cliqué).
-  if (permission === "granted") {
-    return (
-      <span className="inline-flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() =>
-            envoyerNotification("Test de notification", "Si vous voyez ceci, les notifications fonctionnent.")
-          }
-          className="text-xs font-medium underline text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-          title="Envoyer une notification de test (onglet ouvert)"
-        >
-          🔔 Tester
-        </button>
-        {pushSupporte() && (
-          <button
-            onClick={testerPushNotification}
-            disabled={enCoursTestPush}
-            className="text-xs font-medium underline text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-50"
-            title="Envoyer une notification push de test (fonctionne même app fermée)"
-          >
-            {enCoursTestPush ? "..." : "📡 Tester push"}
-          </button>
-        )}
-        {erreurPush && <span className="text-xs text-red-500">{erreurPush}</span>}
-      </span>
-    );
-  }
-
+  // Une fois la permission accordée, plus rien à afficher ici : les liens
+  // "Tester" / "Tester push" n'avaient de sens que le temps de mettre en
+  // place et vérifier le circuit push (voir Jalon "notifications push") —
+  // maintenant que c'est en place, les notifications fonctionnent
+  // silencieusement en arrière-plan, sans UI dédiée dans l'en-tête.
   if (permission !== "default") return null;
 
   return (
