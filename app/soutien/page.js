@@ -16,6 +16,7 @@ import { compterNonLus } from "@/lib/messagesSupabase";
 import { envoyerNotification } from "@/lib/notifications";
 import { choisirCouleurMatiere } from "@/lib/couleursMatieres";
 import FormulaireDevoir from "@/components/FormulaireDevoir";
+import { authFetch } from "@/lib/authFetch";
 
 // En démonstration, Viviane est rattachée à Rose pour 4 matières (voir
 // supabase/seed.sql et l'Addendum au DCF). Une fois Supabase connecté, la
@@ -136,7 +137,28 @@ function Contenu() {
       if (error) throw error;
       setNomNouvelleMatiere("");
       setNouvelleMatiereOuvert(false);
-      setMessage(`Matière « ${data.nom} » créée. Demandez à un parent de vous y rattacher pour la gérer ici.`);
+      // Rattacher automatiquement le soutien à cette nouvelle matière (pour
+      // cet enfant), comme dans FormulaireDevoir.js : sans ça, la matière se
+      // crée mais reste inutilisable (impossible d'y importer un document
+      // tant qu'aucune ligne liens_soutien ne l'y relie). Non bloquant si ça
+      // échoue (ex. compte pas encore rattaché à cet enfant du tout).
+      let rattache = false;
+      try {
+        const resultat = await authFetch("/api/liens-soutien", {
+          method: "POST",
+          body: JSON.stringify({ enfantId, matiereId: data.id }),
+        });
+        rattache = !resultat.ignore;
+      } catch (err) {
+        // silencieux : voir message affiché ci-dessous dans tous les cas
+      }
+      if (rattache) {
+        setMatieres((prev) => [...prev, data].sort((a, b) => a.nom.localeCompare(b.nom)));
+        setMatieresSuivies((prev) => [...prev, data.nom]);
+        setMessage(`Matière « ${data.nom} » créée et rattachée à ${nomEnfant}.`);
+      } else {
+        setMessage(`Matière « ${data.nom} » créée. Demandez à un parent de vous y rattacher pour la gérer ici.`);
+      }
     } catch (err) {
       setMessage(err.message);
     } finally {
