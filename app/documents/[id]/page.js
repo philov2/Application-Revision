@@ -138,7 +138,7 @@ export default function PageDocument() {
           {!chargement && !erreur && contenuMarkdown && document && (
             <article
               className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 overflow-hidden print:shadow-none print:ring-0"
-              style={{ borderTop: `6px solid ${document.matiere?.couleur || "#91CAFF"}` }}
+              style={{ borderTop: `6px solid ${document.matiere?.couleur || "#4169E1"}` }}
             >
               <header className="px-6 sm:px-10 pt-8 pb-6 border-b border-slate-100 dark:border-slate-800">
                 {document.genere_par_ia && (
