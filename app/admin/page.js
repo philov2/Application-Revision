@@ -90,7 +90,7 @@ function Contenu() {
             <div key={d.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium">{d.type_compte === "soutien" ? "Nouveau compte Soutien" : d.type ? d.type : "Nouveau compte Parent"}</p>
-                <p className="text-sm text-slate-500">{d.nom} · {d.email}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{d.nom} · {d.email}</p>
                 <p className="text-xs text-slate-400">Reçue le {(d.date_demande || d.date || "").toString().slice(0, 10)}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ function Contenu() {
               </div>
             </div>
           ))}
-          {demandes.length === 0 && <p className="text-slate-500 text-sm">Aucune demande en attente.</p>}
+          {demandes.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Aucune demande en attente.</p>}
         </div>
       </main>
     </>
