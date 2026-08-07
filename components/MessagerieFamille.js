@@ -95,11 +95,11 @@ const nomDestinataire = m.destinataire?.nom || null;
 return (
 <div key={m.id} className={`flex ${estMoi ? "justify-end" : "justify-start"}`}>
 <div
-className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${estMoi ? "text-slate-900" : "bg-slate-100 dark:bg-slate-800"}`}
-style={estMoi ? { background: "#91CAFF" } : undefined}
+className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${estMoi ? "text-white" : "bg-slate-100 dark:bg-slate-800"}`}
+style={estMoi ? { background: "#4169E1" } : undefined}
 >
 {(!estMoi || nomDestinataire) && (
-<p className={`text-xs font-semibold mb-0.5 ${estMoi ? "text-slate-700/80" : "text-slate-500 dark:text-slate-400"}`}>
+<p className={`text-xs font-semibold mb-0.5 ${estMoi ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>
 {!estMoi && (
 <>
 {nomAuteur}
@@ -110,7 +110,7 @@ style={estMoi ? { background: "#91CAFF" } : undefined}
 </p>
 )}
 <p className="whitespace-pre-wrap break-words">{m.contenu}</p>
-<p className={`text-[10px] mt-1 ${estMoi ? "text-slate-700/70" : "text-slate-400"}`}>{formatHeure(m.created_at)}</p>
+<p className={`text-[10px] mt-1 ${estMoi ? "text-white/70" : "text-slate-400"}`}>{formatHeure(m.created_at)}</p>
 </div>
 </div>
 );
@@ -130,7 +130,7 @@ Pour :
 id="destinataire-message"
 value={destinataireId}
 onChange={(e) => setDestinataireId(e.target.value)}
-className="text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#91CAFF]"
+className="text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#4169E1]"
 >
 <option value="">Tout le monde</option>
 {membres.map((m) => (
@@ -148,13 +148,13 @@ onChange={(e) => setTexte(e.target.value)}
 onKeyDown={surTouche}
 rows={1}
 placeholder="Écrire un message…"
-className="flex-1 resize-none rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#91CAFF]"
+className="flex-1 resize-none rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4169E1]"
 />
 <button
 type="submit"
 disabled={envoi || !texte.trim()}
-className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 shrink-0"
-style={{ background: "#91CAFF" }}
+className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 shrink-0"
+style={{ background: "#4169E1" }}
 >
 Envoyer
 </button>

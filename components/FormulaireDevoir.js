@@ -58,7 +58,7 @@ function Champ({ label, children }) {
 }
 
 const CLASSE_INPUT =
-  "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800/60 px-3.5 py-2.5 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#91CAFF] focus:border-transparent";
+  "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800/60 px-3.5 py-2.5 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#4169E1] focus:border-transparent";
 
 // Bouton de sélection de fichier réutilisable : remplace le input[type=file]
 // natif (peu visible) par un vrai bouton, avec le nom du fichier choisi
@@ -69,8 +69,8 @@ function FichierBouton({ name, nomFichier, onChange, accept }) {
     <div className="flex items-center gap-2.5 flex-wrap">
       <label
         htmlFor={id}
-        className="shrink-0 cursor-pointer rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 shadow-sm transition hover:brightness-95 active:brightness-90"
-        style={{ background: "#91CAFF" }}
+        className="shrink-0 cursor-pointer rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:brightness-95 active:brightness-90"
+        style={{ background: "#4169E1" }}
       >
         📎 Choisir un fichier
       </label>
@@ -315,8 +315,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
     <div>
       <button
         onClick={() => setOuvert(true)}
-        className="text-sm font-medium rounded-lg px-3.5 py-1.5 text-slate-900 shadow-sm transition hover:brightness-95 active:brightness-90"
-        style={{ background: "#91CAFF" }}
+        className="text-sm font-medium rounded-lg px-3.5 py-1.5 text-white shadow-sm transition hover:brightness-95 active:brightness-90"
+        style={{ background: "#4169E1" }}
       >
         + Nouveau devoir
       </button>
@@ -333,11 +333,11 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
             {/* En-tête */}
             <div
               className="px-5 py-4 flex items-start justify-between gap-3 shrink-0"
-              style={{ background: "linear-gradient(135deg, #91CAFF, #c3e0ff)" }}
+              style={{ background: "linear-gradient(135deg, #4169E1, #7A96EA)" }}
             >
               <div>
-                <h2 className="text-base font-semibold text-slate-900">Nouveau devoir</h2>
-                <p className="text-xs text-slate-700/80 mt-0.5">Créez un devoir de révision, d&apos;exercices ou de test.</p>
+                <h2 className="text-base font-semibold text-white">Nouveau devoir</h2>
+                <p className="text-xs text-white/80 mt-0.5">Créez un devoir de révision, d&apos;exercices ou de test.</p>
               </div>
               <button
                 type="button"
@@ -403,8 +403,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                       type="button"
                       onClick={creerNouvelleMatiere}
                       disabled={enCoursMatiere || !nomNouvelleMatiere.trim()}
-                      className="rounded-xl px-3 py-2.5 text-xs font-medium disabled:opacity-50 shadow-sm"
-                      style={{ background: "#91CAFF" }}
+                      className="rounded-xl px-3 py-2.5 text-xs font-medium text-white disabled:opacity-50 shadow-sm"
+                      style={{ background: "#4169E1" }}
                     >
                       {enCoursMatiere ? "..." : "Ajouter"}
                     </button>
@@ -450,8 +450,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                         type="button"
                         onClick={creerNouveauChapitre}
                         disabled={enCoursChapitre || !nomNouveauChapitre.trim()}
-                        className="rounded-xl px-3 py-2.5 text-xs font-medium disabled:opacity-50 shadow-sm"
-                        style={{ background: "#91CAFF" }}
+                        className="rounded-xl px-3 py-2.5 text-xs font-medium text-white disabled:opacity-50 shadow-sm"
+                        style={{ background: "#4169E1" }}
                       >
                         {enCoursChapitre ? "..." : "Ajouter"}
                       </button>
@@ -479,10 +479,10 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                       onClick={() => setType(t.value)}
                       className={`rounded-xl px-2 py-2 text-xs font-medium border transition ${
                         type === t.value
-                          ? "border-transparent text-slate-900 shadow-sm"
+                          ? "border-transparent text-white shadow-sm"
                           : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400"
                       }`}
-                      style={type === t.value ? { background: "#91CAFF" } : undefined}
+                      style={type === t.value ? { background: "#4169E1" } : undefined}
                     >
                       {t.label}
                     </button>
@@ -513,10 +513,10 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                         onClick={() => setModeDocument(m.value)}
                         className={`rounded-lg px-2 py-1.5 text-xs font-medium border transition ${
                           modeDocument === m.value
-                            ? "border-transparent text-slate-900 shadow-sm"
+                            ? "border-transparent text-white shadow-sm"
                             : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400 bg-white dark:bg-slate-800"
                         }`}
-                        style={modeDocument === m.value ? { background: "#91CAFF" } : undefined}
+                        style={modeDocument === m.value ? { background: "#4169E1" } : undefined}
                       >
                         {m.label}
                       </button>
@@ -582,10 +582,10 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                             onClick={() => setSourceIA(s.value)}
                             className={`rounded-lg px-2 py-2 text-xs font-medium border transition text-left ${
                               sourceIA === s.value
-                                ? "border-transparent text-slate-900 shadow-sm"
+                                ? "border-transparent text-white shadow-sm"
                                 : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400 bg-white dark:bg-slate-800"
                             }`}
-                            style={sourceIA === s.value ? { background: "#91CAFF" } : undefined}
+                            style={sourceIA === s.value ? { background: "#4169E1" } : undefined}
                           >
                             {s.label}
                           </button>
@@ -652,8 +652,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                 type="submit"
                 form="formulaire-nouveau-devoir"
                 disabled={envoi}
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm disabled:opacity-50 transition hover:brightness-95"
-                style={{ background: "#91CAFF" }}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-50 transition hover:brightness-95"
+                style={{ background: "#4169E1" }}
               >
                 {envoi ? (modeDocument === "ia" ? "Génération en cours..." : "Création...") : "Créer le devoir"}
               </button>

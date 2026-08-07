@@ -186,7 +186,7 @@ export function MarkdownDoc({ texte }) {
         <blockquote
           key={`q-${cleBloc++}`}
           className="border-l-4 pl-3.5 py-1 mb-3.5 text-sm italic text-slate-600 dark:text-slate-400"
-          style={{ borderColor: "#91CAFF" }}
+          style={{ borderColor: "#4169E1" }}
         >
           {renduInline(citation[1], `q-${cleBloc}`)}
         </blockquote>

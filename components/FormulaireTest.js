@@ -170,7 +170,7 @@ export default function FormulaireTest({ chapitreId, onCree, className, label, o
             + Question
           </button>
           <div className="flex items-center gap-2">
-            <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+            <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
               {envoi ? "Création..." : "Créer le test"}
             </button>
             <button type="button" onClick={() => { setOuvert(false); reinitialiser(); }} className="text-sm text-slate-500">

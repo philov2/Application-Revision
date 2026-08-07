@@ -52,16 +52,16 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
                 <Link
                   key={t.role}
                   href={t.chemin}
-                  className={`px-2.5 py-1 rounded-lg ${pathname === t.chemin ? "font-medium" : "text-slate-500 dark:text-slate-400"}`}
-                  style={pathname === t.chemin ? { background: "#91CAFF" } : {}}
+                  className={`px-2.5 py-1 rounded-lg ${pathname === t.chemin ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
+                  style={pathname === t.chemin ? { background: "#4169E1" } : {}}
                 >
                   {t.label}
                 </Link>
               ))}
               <Link
                 href="/admin/comptes"
-                className={`px-2.5 py-1 rounded-lg ${pathname === "/admin/comptes" ? "font-medium" : "text-slate-500 dark:text-slate-400"}`}
-                style={pathname === "/admin/comptes" ? { background: "#91CAFF" } : {}}
+                className={`px-2.5 py-1 rounded-lg ${pathname === "/admin/comptes" ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
+                style={pathname === "/admin/comptes" ? { background: "#4169E1" } : {}}
               >
                 Comptes
               </Link>

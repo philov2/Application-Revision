@@ -47,7 +47,7 @@ function classeNote(note) {
 
 export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId }) {
   const router = useRouter();
-  const couleur = devoir.couleur || matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#91CAFF";
+  const couleur = devoir.couleur || matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#4169E1";
   const fait = devoir.statut === "fait";
   const [, month, day] = devoir.echeance.split("-");
   const dateLabel = `${day}/${month}`;
@@ -366,7 +366,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           </select>
         )}
         <div className="flex items-center gap-2">
-          <button onClick={enregistrer} disabled={enCours} className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+          <button onClick={enregistrer} disabled={enCours} className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
             {enCours ? "Enregistrement..." : "Enregistrer"}
           </button>
           <button onClick={() => setEnEdition(false)} className="text-sm text-slate-500">Annuler</button>
@@ -516,7 +516,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                     />
                     <div className="flex items-center gap-2 shrink-0">
                       <input type="number" min="0" max="20" step="0.5" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note /20" className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1" />
-                      <button onClick={enregistrerNote} disabled={enCoursNote || note === ""} className="rounded-lg px-3 py-1 font-medium disabled:opacity-50" style={{ background: "#91CAFF" }}>
+                      <button onClick={enregistrerNote} disabled={enCoursNote || note === ""} className="rounded-lg px-3 py-1 font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
                         {enCoursNote ? "..." : "Enregistrer"}
                       </button>
                     </div>
@@ -580,8 +580,8 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                   <button
                     onClick={validerTest}
                     disabled={enEnvoiTest || reponsesTest.some((r) => r === null)}
-                    className="rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-                    style={{ background: "#91CAFF" }}
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                    style={{ background: "#4169E1" }}
                   >
                     {enEnvoiTest ? "Envoi..." : "Valider le test"}
                   </button>
