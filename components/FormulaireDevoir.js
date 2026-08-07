@@ -166,6 +166,22 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
     try {
       const { data, error } = await supabase.from("matieres").insert({ nom: nomNouvelleMatiere.trim() }).select().single();
       if (error) throw error;
+      // Si c'est un soutien qui crée cette nouvelle matière, il n'y est pas
+      // encore rattaché (table liens_soutien) : sans ce rattachement
+      // automatique, créer ensuite un chapitre ou un devoir dans cette
+      // matière échouerait avec "non autorisé" (voir signalement : création
+      // d'un devoir dans la matière Technologie non autorisée). Pour un
+      // parent, cet appel ne fait rien (la route l'ignore) puisqu'il n'est
+      // pas limité par matière. Non bloquant si ça échoue : la matière reste
+      // créée dans tous les cas.
+      try {
+        await authFetch("/api/liens-soutien", {
+          method: "POST",
+          body: JSON.stringify({ enfantId, matiereId: data.id }),
+        });
+      } catch (err) {
+        // silencieux : voir commentaire ci-dessus
+      }
       setMatieresLocales((prev) => [...prev, data].sort((a, b) => a.nom.localeCompare(b.nom)));
       setMatiereId(data.id);
       setChapitreId("");
@@ -414,7 +430,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                         setNouvelleMatiereOuvert(false);
                         setNomNouvelleMatiere("");
                       }}
-                      className="text-xs text-slate-500 hover:underline"
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
                     >
                       Annuler
                     </button>
@@ -461,7 +477,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                           setNouveauChapitreOuvert(false);
                           setNomNouveauChapitre("");
                         }}
-                        className="text-xs text-slate-500 hover:underline"
+                        className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
                       >
                         Annuler
                       </button>
@@ -594,7 +610,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
                       {sourceIA === "prompt" ? (
                         <div className="space-y-1.5">
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Aucun fichier : décrivez simplement ce que vous voulez, l&apos;IA rédige {LABEL_IA_PAR_TYPE[type]} à partir de votre texte.
                           </p>
                           <textarea
@@ -606,7 +622,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Étape 1 : importez le fichier de cours (PDF, Word ou image) qui servira de base.
                           </p>
                           <Champ label="Nom du cours source">
@@ -620,7 +636,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                               accept=".pdf,.doc,.docx,image/*"
                             />
                           </Champ>
-                          <p className="text-xs text-slate-500 pt-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
                             Étape 2 (optionnelle) : précisez une consigne pour orienter {LABEL_IA_PAR_TYPE[type]}.
                           </p>
                           <textarea
@@ -645,7 +661,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
             {/* Pied — actions */}
             <div className="px-5 py-3.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2 shrink-0">
-              <button type="button" onClick={fermer} className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">
+              <button type="button" onClick={fermer} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">
                 Annuler
               </button>
               <button
