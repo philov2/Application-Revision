@@ -34,9 +34,12 @@ export async function POST(request) {
     return NextResponse.json({ error: "enfantId et matiereId requis." }, { status: 400 });
   }
 
+  // Remarque : liens_soutien n'a pas de colonne "id" (clé primaire composite
+  // soutien_id + enfant_id + matiere_id, voir schema.sql) — on sélectionne
+  // donc une colonne qui existe vraiment.
   const { data: dejaRattache } = await supabaseAdmin
     .from("liens_soutien")
-    .select("id")
+    .select("matiere_id")
     .eq("soutien_id", compte.id)
     .eq("enfant_id", enfantId)
     .limit(1);
@@ -47,7 +50,7 @@ export async function POST(request) {
 
   const { data: existant } = await supabaseAdmin
     .from("liens_soutien")
-    .select("id")
+    .select("matiere_id")
     .eq("soutien_id", compte.id)
     .eq("enfant_id", enfantId)
     .eq("matiere_id", matiereId)
