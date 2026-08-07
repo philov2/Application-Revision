@@ -92,6 +92,10 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [enEnvoiTest, setEnEnvoiTest] = useState(false);
   const [erreurTest, setErreurTest] = useState("");
   const [correctionOuverte, setCorrectionOuverte] = useState(false);
+  // Contenu du test consultable par le Parent/Soutien avant même que
+  // l'enfant ne l'ait passé (signalement : le Parent qui crée un test ne
+  // peut pas en voir les questions, seul l'enfant les voit en le passant).
+  const [contenuTestOuvert, setContenuTestOuvert] = useState(false);
 
   useEffect(() => {
     if (!matiereId) {
@@ -556,13 +560,48 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               </div>
             )}
             {testDisponible && !resultatTest && !enPassageTest && (
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                {onToggle ? (
-                  <button onClick={commencerTest} className="underline font-medium text-blue-600">Passer le test</button>
-                ) : (
-                  <p className="text-slate-400">Test pas encore passé par l&apos;enfant.</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  {onToggle ? (
+                    <button onClick={commencerTest} className="underline font-medium text-blue-600">Passer le test</button>
+                  ) : (
+                    <span className="flex items-center gap-2 flex-wrap">
+                      <p className="text-slate-400">Test pas encore passé par l&apos;enfant.</p>
+                      <button
+                        onClick={() => setContenuTestOuvert((v) => !v)}
+                        className="text-xs font-medium underline text-blue-600"
+                      >
+                        {contenuTestOuvert ? "Masquer le contenu" : "Voir le contenu du test"}
+                      </button>
+                    </span>
+                  )}
+                  <ActionsModifierSupprimer />
+                </div>
+
+                {contenuTestOuvert && !onToggle && (
+                  <div className="space-y-3 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
+                    <p className="font-medium text-sm">{testDisponible.titre}</p>
+                    {testDisponible.questions.map((q, i) => (
+                      <div key={i} className="space-y-1">
+                        <p className="text-sm font-medium">{i + 1}. {q.question}</p>
+                        <div className="space-y-0.5 pl-5">
+                          {q.choix.map((choixTexte, j) => {
+                            const estBonneReponse = j === q.bonne_reponse;
+                            return (
+                              <p
+                                key={j}
+                                className={estBonneReponse ? "text-green-700 dark:text-green-400 font-medium" : "text-slate-500 dark:text-slate-400"}
+                              >
+                                {estBonneReponse ? "✓" : "·"} {choixTexte}
+                                {estBonneReponse ? " (bonne réponse)" : ""}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <ActionsModifierSupprimer />
               </div>
             )}
             {testDisponible && !resultatTest && enPassageTest && (
