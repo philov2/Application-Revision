@@ -154,24 +154,24 @@ function Contenu() {
       <Navbar role="soutien" nom="Viviane" enfantId={enfantId} compteId={compteId} />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
         {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
-        <p className="text-sm text-slate-500">Matières suivies : {matieresSuivies.join(", ")} — {nomEnfant}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Matières suivies : {matieresSuivies.join(", ")} — {nomEnfant}</p>
 
         <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
           <button
             onClick={() => setOnglet("devoirs")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}
           >
             Devoirs de {nomEnfant}
           </button>
           <button
             onClick={() => setOnglet("documents")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}
           >
             Chapitres et documents
           </button>
           <button
             onClick={() => setOnglet("messages")}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500"}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}
           >
             Messages
             {nonLus > 0 && (
@@ -202,7 +202,7 @@ function Contenu() {
               </div>
               <div className="space-y-3">
                 {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
-                {devoirsAFaireTries.length === 0 && <p className="text-slate-500 text-sm">Aucun devoir pour ces matières.</p>}
+                {devoirsAFaireTries.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Aucun devoir pour ces matières.</p>}
               </div>
             </section>
 
@@ -240,7 +240,7 @@ function Contenu() {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-xs">Aucune matière ne vous est encore confiée.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">Aucune matière ne vous est encore confiée.</p>
             )}
           </section>
         )}
