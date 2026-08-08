@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+import { consigneLangue } from "@/lib/langueMatiere";
 
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -77,9 +78,12 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Format de fichier non pris en charge pour la synthese IA : ${mime || "inconnu"}` }, { status: 400 });
   }
 
+  const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", document.matiere_id).single();
+  const consigneLangueMatiere = consigneLangue(matiere?.nom);
+
   const consigneSysteme = consigne
-    ? `Tu es un assistant pedagogique qui aide des eleves de college et lycee a reviser. Redige une synthese claire, structuree (titres, listes a puces) et fidele au contenu du cours fourni, en francais. Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}`
-    : "Tu es un assistant pedagogique qui aide des eleves de college et lycee a reviser. Redige une synthese claire, structuree (titres, listes a puces) et fidele au contenu du cours fourni, en francais.";
+    ? `Tu es un assistant pedagogique qui aide des eleves de college et lycee a reviser. Redige une synthese claire, structuree (titres, listes a puces) et fidele au contenu du cours fourni. ${consigneLangueMatiere} Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}`
+    : `Tu es un assistant pedagogique qui aide des eleves de college et lycee a reviser. Redige une synthese claire, structuree (titres, listes a puces) et fidele au contenu du cours fourni. ${consigneLangueMatiere}`;
 
   let reponseClaude;
   try {
