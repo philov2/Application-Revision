@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
 import { genererEtEnregistrerCorrige } from "@/lib/corrigeIA";
+import { consigneLangue } from "@/lib/langueMatiere";
 
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -78,9 +79,12 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Format de fichier non pris en charge pour la generation d'exercices : ${mime || "inconnu"}` }, { status: 400 });
   }
 
+  const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", document.matiere_id).single();
+  const consigneLangueMatiere = consigneLangue(matiere?.nom);
+
   const consigneSysteme = consigne
-    ? `Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes, en francais. Adapte la difficulte au contenu du cours. Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}`
-    : "Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes, en francais. Adapte la difficulte au contenu du cours.";
+    ? `Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes. Adapte la difficulte au contenu du cours. ${consigneLangueMatiere} Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}`
+    : `Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir du cours fourni, redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes. Adapte la difficulte au contenu du cours. ${consigneLangueMatiere}`;
 
   let reponseClaude;
   try {
@@ -163,6 +167,7 @@ export async function POST(request, { params }) {
     chapitreId: document.chapitre_id,
     enfantId: document.enfant_id,
     creePar: compte.id,
+    nomMatiere: matiere?.nom,
   });
 
   return NextResponse.json({ success: true, document: nouveauDocument, corrige });
