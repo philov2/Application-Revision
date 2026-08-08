@@ -18,10 +18,10 @@ self.addEventListener("push", (event) => {
   try {
     donnees = event.data ? event.data.json() : {};
   } catch {
-    donnees = { titre: "Application de révision", corps: event.data ? event.data.text() : "" };
+    donnees = { titre: "Révision", corps: event.data ? event.data.text() : "" };
   }
 
-  const titre = donnees.titre || "Application de révision";
+  const titre = donnees.titre || "Révision";
   const options = {
     body: donnees.corps || "",
     icon: "/favicon.ico",
