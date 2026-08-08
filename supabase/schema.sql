@@ -56,6 +56,7 @@ create table documents (
   taille_octets bigint,
   format text,
   genere_par_ia boolean not null default false,
+  corrige_de_id uuid references documents(id) on delete cascade, -- voir Jalon "corrigé auto des exercices IA" : renseigné uniquement sur le document "corrigé" généré en même temps qu'un exercice IA, pointe vers ce document exercice ; supprimer l'exercice supprime son corrigé
   created_at timestamptz not null default now()
 );
 
