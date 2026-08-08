@@ -521,19 +521,27 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         )}
 
         {devoir.type === "exercice" && (
-          <div className="space-y-1">
+          <div className="space-y-2">
             {erreurFichiers && <p className="text-red-600">{erreurFichiers}</p>}
             {devoir.document && (
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 {erreurDocument && <p className="text-red-600 w-full">{erreurDocument}</p>}
-                <button onClick={voirDocument} disabled={enChargementDocument} className="underline font-medium text-blue-600 disabled:opacity-50 text-left">
-                  {enChargementDocument ? "Ouverture..." : `Voir l'exercice : ${devoir.document.nom}`}
+                <button
+                  onClick={voirDocument}
+                  disabled={enChargementDocument}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 disabled:opacity-50"
+                >
+                  📄 {enChargementDocument ? "Ouverture..." : `Voir l'exercice : ${devoir.document.nom}`}
                 </button>
                 {/* Corrigé : toujours visible pour Parent/Soutien (matieres),
                     seulement une fois la réponse envoyée côté Enfant. */}
                 {corrigeDisponible && (matieres || devoir.reponseExercice) && (
-                  <button onClick={voirCorrige} disabled={enChargementDocument} className="underline font-medium text-green-700 dark:text-green-400 disabled:opacity-50 text-left">
-                    {enChargementDocument ? "Ouverture..." : `Voir le corrigé : ${corrigeDisponible.nom}`}
+                  <button
+                    onClick={voirCorrige}
+                    disabled={enChargementDocument}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30 disabled:opacity-50"
+                  >
+                    ✅ {enChargementDocument ? "Ouverture..." : `Voir le corrigé : ${corrigeDisponible.nom}`}
                   </button>
                 )}
               </div>
@@ -541,7 +549,13 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
             {!devoir.reponseExercice ? (
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 {onToggle ? (
-                  <>
+                  <div className="space-y-2">
+                    {/* Instructions explicites pour l'enfant : la case ne
+                        se limitait qu'à un lien "Envoyer l'exercice" peu
+                        clair sur la marche à suivre (signalement de Phil). */}
+                    <p className="text-slate-500 dark:text-slate-400">
+                      Comment faire : faites l&apos;exercice, prenez une photo de vos réponses (plusieurs photos, un PDF ou un fichier Word sont aussi acceptés), puis appuyez sur le bouton ci-dessous pour l&apos;envoyer.
+                    </p>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -552,10 +566,14 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                       className="hidden"
                       id={`fichiers-${devoir.id}`}
                     />
-                    <label htmlFor={`fichiers-${devoir.id}`} className="cursor-pointer underline font-medium text-blue-600">
-                      {enEnvoiFichiers ? "Envoi en cours..." : "Envoyer l'exercice (photo, PDF ou Word — plusieurs fichiers possibles)"}
+                    <label
+                      htmlFor={`fichiers-${devoir.id}`}
+                      className="inline-flex items-center gap-1.5 cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                      style={{ background: "#4169E1" }}
+                    >
+                      📷 {enEnvoiFichiers ? "Envoi en cours..." : "Importer la réponse"}
                     </label>
-                  </>
+                  </div>
                 ) : (
                   <p className="text-slate-400">En attente d&apos;envoi par l&apos;enfant.</p>
                 )}
@@ -563,14 +581,19 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               </div>
             ) : (
               <>
-                {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
-                  <div key={chemin} className="flex items-center justify-between gap-3">
-                    <button onClick={() => voirFichier(chemin)} disabled={enChargementFichier} className="underline font-medium text-blue-600 disabled:opacity-50 text-left">
-                      Voir fichier {i + 1}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {devoir.reponseExercice.fichiersUrls.map((chemin, i) => (
+                    <button
+                      key={chemin}
+                      onClick={() => voirFichier(chemin)}
+                      disabled={enChargementFichier}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 disabled:opacity-50"
+                    >
+                      📎 Voir fichier {i + 1}
                     </button>
-                    {i === 0 && <ActionsModifierSupprimer />}
-                  </div>
-                ))}
+                  ))}
+                  <ActionsModifierSupprimer />
+                </div>
                 {erreurNote && <p className="text-red-600">{erreurNote}</p>}
                 {matieres && devoir.reponseExercice.note == null ? (
                   <div className="flex items-center justify-between gap-3 flex-wrap">
