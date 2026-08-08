@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+import { consigneLangue } from "@/lib/langueMatiere";
 
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -79,11 +80,14 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Format de fichier non pris en charge pour la generation de test : ${mime || "inconnu"}` }, { status: 400 });
   }
 
+  const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", document.matiere_id).single();
+  const consigneLangueMatiere = consigneLangue(matiere?.nom);
+
   const consigneFormat =
     'Reponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni apres, sans balises markdown, exactement sous cette forme : ' +
     '{"titre": "...", "questions": [{"question": "...", "choix": ["...", "...", "...", "..."], "bonne_reponse": 0}]}. ' +
     "Le champ bonne_reponse est l'indice (0, 1, 2 ou 3) de la bonne reponse dans le tableau choix. " +
-    "Genere entre 5 et 8 questions, fideles au contenu du cours, en francais, avec 4 choix par question.";
+    `Genere entre 5 et 8 questions, fideles au contenu du cours, avec 4 choix par question. ${consigneLangueMatiere}`;
 
   const consigneUtilisateur = consigne ? ` Consigne particuliere donnee par l'utilisateur, a respecter en priorite : ${consigne}` : "";
 
