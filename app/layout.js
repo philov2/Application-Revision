@@ -2,7 +2,7 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata = {
-  title: "Application de révision",
+  title: "Révision",
   description: "Application familiale de révision pour enfants, parents et soutiens",
   manifest: "/manifest.json",
 };

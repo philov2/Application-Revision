@@ -41,8 +41,8 @@ useEffect(() => {
       <DemoBanner />
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center space-y-6 py-16">
-          <h1 className="text-2xl font-semibold" style={{ color: "#2E75B6" }}>
-            Application de révision
+          <h1 className="text-2xl font-semibold" style={{ color: "#FFC0CB" }}>
+            Révision
           </h1>
           {supabaseConfigured ? (
             <>
