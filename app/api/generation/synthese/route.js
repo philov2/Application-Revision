@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+import { consigneLangue } from "@/lib/langueMatiere";
 
 // Genere une synthese de cours par IA a partir d'un simple prompt tape par
 // l'utilisateur (parent ou soutien), sans document source a importer au
@@ -29,6 +30,9 @@ export async function POST(request) {
     return NextResponse.json({ error: "Matiere et enfant requis pour generer une synthese." }, { status: 400 });
   }
 
+  const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", matiereId).single();
+  const consigneLangueMatiere = consigneLangue(matiere?.nom);
+
   let reponseClaude;
   try {
     reponseClaude = await fetch("https://api.anthropic.com/v1/messages", {
@@ -41,7 +45,7 @@ export async function POST(request) {
       body: JSON.stringify({
         model: "claude-sonnet-5",
         max_tokens: 4096,
-        system: "Tu es un assistant pedagogique qui redige des syntheses de cours claires et structurees pour des eleves de college et lycee, en francais, a partir de la demande de l'utilisateur (qui peut preciser le sujet, le niveau scolaire, les points a couvrir, etc.). Structure ta reponse avec des titres et sous-titres.",
+        system: `Tu es un assistant pedagogique qui redige des syntheses de cours claires et structurees pour des eleves de college et lycee, a partir de la demande de l'utilisateur (qui peut preciser le sujet, le niveau scolaire, les points a couvrir, etc.). Structure ta reponse avec des titres et sous-titres. ${consigneLangueMatiere}`,
         messages: [
           {
             role: "user",
