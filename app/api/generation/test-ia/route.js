@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+import { consigneLangue } from "@/lib/langueMatiere";
 
 // Genere un test a choix multiples (QCM) par IA a partir d'un simple prompt
 // tape par l'utilisateur, sans document source a importer au prealable.
@@ -30,11 +31,17 @@ export async function POST(request) {
     return NextResponse.json({ error: "Un chapitre est requis pour generer un test (le test est retrouve par l'enfant via le chapitre)." }, { status: 400 });
   }
 
+  const { data: chapitre } = await supabaseAdmin.from("chapitres").select("matiere_id").eq("id", chapitreId).single();
+  const { data: matiere } = chapitre?.matiere_id
+    ? await supabaseAdmin.from("matieres").select("nom").eq("id", chapitre.matiere_id).single()
+    : { data: null };
+  const consigneLangueMatiere = consigneLangue(matiere?.nom);
+
   const consigneFormat =
     'Reponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni apres, sans balises markdown, exactement sous cette forme : ' +
     '{"titre": "...", "questions": [{"question": "...", "choix": ["...", "...", "...", "..."], "bonne_reponse": 0}]}. ' +
     "Le champ bonne_reponse est l'indice (0, 1, 2 ou 3) de la bonne reponse dans le tableau choix. " +
-    "Genere entre 5 et 8 questions, en francais, avec 4 choix par question.";
+    `Genere entre 5 et 8 questions, avec 4 choix par question. ${consigneLangueMatiere}`;
 
   let reponseClaude;
   try {
