@@ -40,6 +40,11 @@ function Contenu() {
   const [enfantId, setEnfantId] = useState(null);
   const [nomEnfant, setNomEnfant] = useState("Rose");
   const [compteId, setCompteId] = useState(null);
+  // "Viviane" restait affiche en dur meme apres suppression du compte
+  // correspondant (signalement de Phil : "j'ai supprimé le compte soutien
+  // Viviane, mais il reste apparent") : on va desormais chercher le vrai nom
+  // du compte reellement connecte (soutien reel, ou admin en previsualisation).
+  const [nomCompte, setNomCompte] = useState("Soutien");
   const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
   const [nouvelleMatiereOuvert, setNouvelleMatiereOuvert] = useState(false);
   const [nomNouvelleMatiere, setNomNouvelleMatiere] = useState("");
@@ -56,7 +61,8 @@ function Contenu() {
       if (!session) return;
       setCompteId(session.user.id);
 
-      const { data: compte } = await supabase.from("comptes").select("role").eq("id", session.user.id).single();
+      const { data: compte } = await supabase.from("comptes").select("role, nom").eq("id", session.user.id).single();
+      if (compte?.nom) setNomCompte(compte.nom);
 
       if (compte?.role === "admin") {
         const { data: toutesMatieres } = await supabase.from("matieres").select("id, nom, couleur").order("nom");
@@ -173,7 +179,7 @@ function Contenu() {
   return (
     <>
       <DemoBanner />
-      <Navbar role="soutien" nom="Viviane" enfantId={enfantId} compteId={compteId} />
+      <Navbar role="soutien" nom={nomCompte} enfantId={enfantId} compteId={compteId} />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
         {message && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2">{message}</p>}
         <p className="text-sm text-slate-500 dark:text-slate-400">Matières suivies : {matieresSuivies.join(", ")} — {nomEnfant}</p>
