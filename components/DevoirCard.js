@@ -96,6 +96,11 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // l'enfant ne l'ait passé (signalement : le Parent qui crée un test ne
   // peut pas en voir les questions, seul l'enfant les voit en le passant).
   const [contenuTestOuvert, setContenuTestOuvert] = useState(false);
+  // Corrigé généré par IA à côté d'un exercice (signalement : il faut un
+  // fichier de réponses une fois l'exercice fait — visible pour l'Enfant
+  // seulement après envoi de sa réponse, et tout de suite pour le
+  // Parent/Soutien, juste à côté du fichier de l'exercice).
+  const [corrigeDisponible, setCorrigeDisponible] = useState(null);
 
   useEffect(() => {
     if (!matiereId) {
@@ -137,6 +142,25 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       }
     })();
   }, [devoir.type, devoir.chapitreId, devoir.enfantId]);
+
+  useEffect(() => {
+    if (devoir.type !== "exercice" || !devoir.document?.id) {
+      setCorrigeDisponible(null);
+      return;
+    }
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("documents")
+          .select("id, nom, fichier_url, genere_par_ia, format")
+          .eq("corrige_de_id", devoir.document.id)
+          .maybeSingle();
+        setCorrigeDisponible(data || null);
+      } catch {
+        // silencieux : ne bloque pas l'affichage du devoir
+      }
+    })();
+  }, [devoir.type, devoir.document?.id]);
 
   function commencerEdition() {
     setTitre(devoir.titre || "");
@@ -228,6 +252,30 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     setEnChargementDocument(true);
     try {
       const { data, error } = await supabase.storage.from("documents").createSignedUrl(devoir.document.fichierUrl, 60);
+      if (error) throw error;
+      window.open(data.signedUrl, "_blank");
+    } catch (err) {
+      setErreurDocument(err.message);
+    } finally {
+      setEnChargementDocument(false);
+    }
+  }
+
+  async function voirCorrige() {
+    if (!corrigeDisponible) return;
+
+    // Même logique que voirDocument ci-dessus : un corrigé généré par IA
+    // (toujours le cas ici) s'ouvre dans la page de lecture stylisée.
+    const estMarkdownIA = corrigeDisponible.genere_par_ia && (corrigeDisponible.format || "").includes("markdown");
+    if (estMarkdownIA) {
+      router.push(`/documents/${corrigeDisponible.id}`);
+      return;
+    }
+
+    setErreurDocument("");
+    setEnChargementDocument(true);
+    try {
+      const { data, error } = await supabase.storage.from("documents").createSignedUrl(corrigeDisponible.fichier_url, 60);
       if (error) throw error;
       window.open(data.signedUrl, "_blank");
     } catch (err) {
@@ -476,11 +524,18 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           <div className="space-y-1">
             {erreurFichiers && <p className="text-red-600">{erreurFichiers}</p>}
             {devoir.document && (
-              <div>
-                {erreurDocument && <p className="text-red-600 mb-1">{erreurDocument}</p>}
+              <div className="flex items-center gap-3 flex-wrap">
+                {erreurDocument && <p className="text-red-600 w-full">{erreurDocument}</p>}
                 <button onClick={voirDocument} disabled={enChargementDocument} className="underline font-medium text-blue-600 disabled:opacity-50 text-left">
                   {enChargementDocument ? "Ouverture..." : `Voir l'exercice : ${devoir.document.nom}`}
                 </button>
+                {/* Corrigé : toujours visible pour Parent/Soutien (matieres),
+                    seulement une fois la réponse envoyée côté Enfant. */}
+                {corrigeDisponible && (matieres || devoir.reponseExercice) && (
+                  <button onClick={voirCorrige} disabled={enChargementDocument} className="underline font-medium text-green-700 dark:text-green-400 disabled:opacity-50 text-left">
+                    {enChargementDocument ? "Ouverture..." : `Voir le corrigé : ${corrigeDisponible.nom}`}
+                  </button>
+                )}
               </div>
             )}
             {!devoir.reponseExercice ? (
