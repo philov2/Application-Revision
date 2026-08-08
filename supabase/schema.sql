@@ -50,8 +50,8 @@ create table documents (
   type type_document not null,
   matiere_id uuid references matieres(id),
   chapitre_id uuid references chapitres(id) on delete set null, -- voir Jalon "suppression de chapitres obsolètes" : un document ne doit pas empêcher la suppression de son chapitre
-  enfant_id uuid references comptes(id), -- null tant que non attribué
-  cree_par uuid references comptes(id) not null,
+  enfant_id uuid references comptes(id) on delete cascade, -- null tant que non attribué ; supprimer l'enfant supprime ses documents
+  cree_par uuid references comptes(id) on delete set null, -- suppression du compte createur (parent/soutien/admin) : le document est conserve, la reference au createur est simplement effacee
   fichier_url text not null,
   taille_octets bigint,
   format text,
@@ -62,14 +62,14 @@ create table documents (
 
 create table devoirs (
   id uuid primary key default gen_random_uuid(),
-  enfant_id uuid references comptes(id) not null,
+  enfant_id uuid references comptes(id) on delete cascade not null, -- supprimer l'enfant supprime ses devoirs
   matiere_id uuid references matieres(id),
   chapitre_id uuid references chapitres(id) on delete set null, -- voir Jalon "suppression de chapitres obsolètes"
   document_id uuid references documents(id) on delete set null, -- voir Jalon "suppression d'un document référencé par un devoir" : la suppression du document ne doit pas être bloquée, le devoir perd simplement son document associé
   titre text, -- nom donné au devoir (optionnel) ; voir Jalon "titre + creation matiere/chapitre + IA"
   type type_devoir not null,
   date_echeance date,
-  cree_par uuid references comptes(id) not null,
+  cree_par uuid references comptes(id) on delete set null, -- suppression du compte createur : le devoir est conserve, la reference au createur est effacee
   statut statut_devoir not null default 'a_faire',
   date_realisation timestamptz,
   created_at timestamptz not null default now()
@@ -82,7 +82,7 @@ create table reponses_exercices (
   fichiers_urls text[] not null default '{}', -- liste des fichiers envoyés (photo, PDF, Word...) ; voir Jalon "fichiers multiples + statut en attente de correction"
   date_soumission timestamptz not null default now(),
   note numeric(4,2),
-  note_par uuid references comptes(id),
+  note_par uuid references comptes(id) on delete set null, -- suppression du compte correcteur : la reponse est conservee, la reference au correcteur est effacee
   commentaire text
 );
 
@@ -96,7 +96,7 @@ create table tests (
 create table resultats_tests (
   id uuid primary key default gen_random_uuid(),
   test_id uuid references tests(id),
-  enfant_id uuid references comptes(id) not null,
+  enfant_id uuid references comptes(id) on delete cascade not null, -- supprimer l'enfant supprime ses resultats de tests
   reponses jsonb not null,
   note numeric(4,2),
   date_realisation timestamptz not null default now(),
@@ -115,7 +115,7 @@ create table demandes_comptes (
   nom text not null,
   email text not null,
   matieres uuid[] not null default '{}', -- utilisé uniquement pour type_compte = 'soutien'
-  demandeur_id uuid references comptes(id), -- le parent à l'origine de la demande (soutien uniquement)
+  demandeur_id uuid references comptes(id) on delete set null, -- le parent à l'origine de la demande (soutien uniquement) ; suppression du compte : la demande est conservee, la reference au demandeur est effacee
   statut text not null default 'en_attente', -- en_attente | traitee
   date_demande timestamptz not null default now()
 );
@@ -127,18 +127,18 @@ create table demandes_comptes (
 -- tout tourne autour de enfant_id.
 create table messages (
   id uuid primary key default gen_random_uuid(),
-  enfant_id uuid references comptes(id) not null, -- fil de discussion = la famille de cet enfant
-  auteur_id uuid references comptes(id) not null,
+  enfant_id uuid references comptes(id) on delete cascade not null, -- fil de discussion = la famille de cet enfant ; supprimer l'enfant supprime le fil
+  auteur_id uuid references comptes(id) on delete set null, -- suppression du compte auteur : le message est conserve, la reference a l'auteur est effacee
   contenu text not null,
-  destinataire_id uuid references comptes(id), -- a qui le message est adresse ; null = tout le monde (voir ajustement "destinataire du message")
+  destinataire_id uuid references comptes(id) on delete set null, -- a qui le message est adresse ; null = tout le monde (voir ajustement "destinataire du message")
   created_at timestamptz not null default now()
 );
 
 -- Derniere lecture du fil, par compte et par enfant : sert uniquement a
 -- calculer le nombre de messages non lus (badge dans l'onglet Messages).
 create table messages_lectures (
-  compte_id uuid references comptes(id) not null,
-  enfant_id uuid references comptes(id) not null,
+  compte_id uuid references comptes(id) on delete cascade not null,
+  enfant_id uuid references comptes(id) on delete cascade not null,
   derniere_lecture timestamptz not null default now(),
   primary key (compte_id, enfant_id)
 );
