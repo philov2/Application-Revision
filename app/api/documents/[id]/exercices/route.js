@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+import { genererEtEnregistrerCorrige } from "@/lib/corrigeIA";
 
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -130,10 +131,11 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Echec de l'enregistrement des exercices : ${uploadError.message}` }, { status: 500 });
   }
 
+  const nomDocument = `Exercices - ${document.nom}`;
   const { data: nouveauDocument, error: insertError } = await supabaseAdmin
     .from("documents")
     .insert({
-      nom: `Exercices - ${document.nom}`,
+      nom: nomDocument,
       type: "exercice",
       matiere_id: document.matiere_id,
       chapitre_id: document.chapitre_id,
@@ -151,5 +153,17 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Echec de l'enregistrement des exercices : ${insertError.message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, document: nouveauDocument });
+  // Corrigé généré automatiquement à côté de l'exercice (voir lib/corrigeIA.js) —
+  // non bloquant : l'exercice reste utilisable même si cette étape échoue.
+  const corrige = await genererEtEnregistrerCorrige({
+    texteExercices,
+    nomDocumentExercice: nomDocument,
+    documentExerciceId: nouveauDocument.id,
+    matiereId: document.matiere_id,
+    chapitreId: document.chapitre_id,
+    enfantId: document.enfant_id,
+    creePar: compte.id,
+  });
+
+  return NextResponse.json({ success: true, document: nouveauDocument, corrige });
 }
