@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
 import { genererEtEnregistrerCorrige } from "@/lib/corrigeIA";
+import { consigneLangue } from "@/lib/langueMatiere";
 
 // Genere des exercices d'entrainement par IA a partir d'un simple prompt
 // tape par l'utilisateur, sans document source a importer au prealable.
@@ -29,6 +30,9 @@ export async function POST(request) {
     return NextResponse.json({ error: "Matiere et enfant requis pour generer des exercices." }, { status: 400 });
   }
 
+  const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", matiereId).single();
+  const consigneLangueMatiere = consigneLangue(matiere?.nom);
+
   let reponseClaude;
   try {
     reponseClaude = await fetch("https://api.anthropic.com/v1/messages", {
@@ -41,7 +45,7 @@ export async function POST(request) {
       body: JSON.stringify({
         model: "claude-sonnet-5",
         max_tokens: 4096,
-        system: "Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir de la demande de l'utilisateur (sujet, niveau, nombre d'exercices souhaite, etc.), redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes, en francais.",
+        system: `Tu es un assistant pedagogique qui aide des eleves de college et lycee a s'entrainer. A partir de la demande de l'utilisateur (sujet, niveau, nombre d'exercices souhaite, etc.), redige une serie d'exercices d'entrainement varies et progressifs (sans corrige), clairement numerotes. ${consigneLangueMatiere}`,
         messages: [
           {
             role: "user",
@@ -111,6 +115,7 @@ export async function POST(request) {
     chapitreId,
     enfantId,
     creePar: compte.id,
+    nomMatiere: matiere?.nom,
   });
 
   return NextResponse.json({ success: true, document: nouveauDocument, corrige });
