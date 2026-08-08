@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+import { genererEtEnregistrerCorrige } from "@/lib/corrigeIA";
 
 // Genere des exercices d'entrainement par IA a partir d'un simple prompt
 // tape par l'utilisateur, sans document source a importer au prealable.
@@ -100,5 +101,17 @@ export async function POST(request) {
     return NextResponse.json({ error: `Echec de l'enregistrement des exercices : ${insertError.message}` }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, document: nouveauDocument });
+  // Corrigé généré automatiquement à côté de l'exercice (voir lib/corrigeIA.js) —
+  // non bloquant : l'exercice reste utilisable même si cette étape échoue.
+  const corrige = await genererEtEnregistrerCorrige({
+    texteExercices,
+    nomDocumentExercice: nomDocument,
+    documentExerciceId: nouveauDocument.id,
+    matiereId,
+    chapitreId,
+    enfantId,
+    creePar: compte.id,
+  });
+
+  return NextResponse.json({ success: true, document: nouveauDocument, corrige });
 }
