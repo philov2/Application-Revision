@@ -29,6 +29,10 @@ const [enCours, setEnCours] = useState(new Set());
 const [enConfirmation, setEnConfirmation] = useState(null);
 const [message, setMessage] = useState("");
 const [retourReset, setRetourReset] = useState({});
+// "Philippe" restait affiche en dur meme apres suppression du compte
+// correspondant (meme confusion que celle signalee par Phil cote Soutien) :
+// on va desormais chercher le vrai nom du compte admin connecte.
+const [nomAdmin, setNomAdmin] = useState("Administrateur");
 
 async function charger() {
 if (!supabaseConfigured) return;
@@ -41,6 +45,13 @@ setComptes(data || []);
 
 useEffect(() => {
 charger();
+if (!supabaseConfigured) return;
+(async () => {
+const { data: { session } } = await supabase.auth.getSession();
+if (!session) return;
+const { data: compte } = await supabase.from("comptes").select("nom").eq("id", session.user.id).single();
+if (compte?.nom) setNomAdmin(compte.nom);
+})();
 }, []);
 
 function commencerEdition(c) {
@@ -119,7 +130,7 @@ return next;
 return (
 <>
 <DemoBanner />
-<Navbar role="admin" nom="Philippe" />
+<Navbar role="admin" nom={nomAdmin} />
 <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-6">
 <h2 className="font-semibold">Comptes ({comptes.length})</h2>
 {erreur && <p className="text-sm text-red-600">{erreur}</p>}
