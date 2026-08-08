@@ -13,15 +13,45 @@ alter table tests enable row level security;
 alter table resultats_tests enable row level security;
 alter table demandes_comptes enable row level security;
 
+-- Fonctions "security definer" pour verifier le role d'un utilisateur sans
+-- jamais redeclencher l'evaluation des policies de "comptes" (contournent
+-- RLS pour ce lookup precis, car elles s'executent avec les droits de leur
+-- proprietaire, qui n'est pas soumis a RLS). Indispensable des qu'une policy
+-- (sur comptes ou sur une autre table) a besoin de connaitre le role de
+-- l'utilisateur connecte : une sous-requete directe sur comptes provoquerait
+-- "infinite recursion detected in policy for relation comptes" (42P17) des
+-- qu'un cycle se forme entre plusieurs tables (voir plus bas, incident du
+-- 08/08/2026 : RLS activee sur comptes -> boucle comptes <-> liens_parent_enfant
+-- <-> liens_soutien, qui bloquait toute connexion).
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from comptes where id = auth.uid() and role = 'admin'
+  );
+$$;
+
+create or replace function public.mon_role()
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select role from comptes where id = auth.uid();
+$$;
+
 -- Un utilisateur voit toujours sa propre fiche compte
 create policy "voir son propre compte" on comptes
 for select using (id = auth.uid());
 
 -- L'administrateur voit et gère tous les comptes
 create policy "admin gere tous les comptes" on comptes
-for all using (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
-);
+for all using ( public.is_admin() );
 
 -- Un parent voit les comptes de ses enfants
 create policy "parent voit ses enfants" on comptes
@@ -40,7 +70,7 @@ create policy "parent et enfant voient leurs liens" on liens_parent_enfant
 for select using (
   parent_id = auth.uid()
   or enfant_id = auth.uid()
-  or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  or public.is_admin()
 );
 
 -- Meme chose pour les rattachements soutien <-> enfant.
@@ -49,7 +79,7 @@ for select using (
   soutien_id = auth.uid()
   or enfant_id = auth.uid()
   or exists (select 1 from liens_parent_enfant l where l.enfant_id = liens_soutien.enfant_id and l.parent_id = auth.uid())
-  or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  or public.is_admin()
 );
 
 -- Documents et devoirs : visibles par l'enfant concerné, son ou ses parents,
@@ -64,9 +94,7 @@ for select using (
 
 -- L'administrateur voit tous les documents (pas seulement les siens)
 create policy "admin voit tous les documents" on documents
-for select using (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
-);
+for select using ( public.is_admin() );
 
 create policy "acces devoirs enfant" on devoirs
 for select using (
@@ -89,7 +117,7 @@ create policy "lecture chapitres" on chapitres for select using (auth.uid() is n
 -- Jalon 2 : un soutien assigné à une matière (ou l'admin) peut créer des chapitres
 create policy "creation chapitres par soutien ou admin" on chapitres
 for insert with check (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  public.is_admin()
   or exists (select 1 from liens_soutien s where s.matiere_id = chapitres.matiere_id and s.soutien_id = auth.uid())
 );
 
@@ -98,7 +126,7 @@ create policy "creation documents par soutien ou admin" on documents
 for insert with check (
   cree_par = auth.uid()
   and (
-    exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+    public.is_admin()
     or (enfant_id is not null and exists (select 1 from liens_soutien s where s.matiere_id = documents.matiere_id and s.enfant_id = documents.enfant_id and s.soutien_id = auth.uid()))
   )
 );
@@ -124,20 +152,16 @@ create policy "demande soutien par parent" on demandes_comptes
 for insert with check (
   type_compte = 'soutien'
   and demandeur_id = auth.uid()
-  and exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'parent')
+  and public.mon_role() = 'parent'
 );
 
 -- Seul l'administrateur peut consulter/traiter les demandes
 -- (la création du compte lui-même se fait via une route API dédiée, avec la
 -- clé secrète Supabase, qui n'est jamais exposée au navigateur).
 create policy "admin gere les demandes" on demandes_comptes
-for select using (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
-);
+for select using ( public.is_admin() );
 create policy "admin met a jour les demandes" on demandes_comptes
-for update using (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
-);
+for update using ( public.is_admin() );
 
 -- NOTE: ce fichier pose les fondations. Chaque nouvelle fonctionnalité (V2) devra
 -- ajouter ses propres policies avant mise en production.
@@ -149,9 +173,7 @@ with check (enfant_id = auth.uid());
 
 -- Jalon 3 : l'administrateur peut aussi creer des devoirs
 create policy "admin cree des devoirs" on devoirs
-for insert with check (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
-);
+for insert with check ( public.is_admin() );
 
 -- NOTE DE SYNCHRONISATION (voir cahier des charges, section 8.1 et 11.2) :
 -- plusieurs autres règles sont actives en production mais n'ont pas encore
@@ -183,12 +205,12 @@ for insert with check (
 -- lecture reste ouverte à tout compte actif comme avant).
 create policy "creation matieres par parent soutien ou admin" on matieres
 for insert with check (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role in ('parent', 'soutien', 'admin'))
+  public.mon_role() in ('parent', 'soutien', 'admin')
 );
 
 create policy "creation chapitres par parent ou admin" on chapitres
 for insert with check (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role in ('parent', 'soutien', 'admin'))
+  public.mon_role() in ('parent', 'soutien', 'admin')
 );
 
 -- Jalon "fichiers multiples + statut en attente de correction" : la reponse
@@ -204,7 +226,7 @@ for insert with check (
     where d.id = reponses_exercices.devoir_id
     and (
       d.enfant_id = auth.uid()
-      or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+      or public.is_admin()
     )
   )
 );
@@ -219,7 +241,7 @@ for insert with check (
 create policy "admin televerse dans le bucket documents" on storage.objects
 for insert with check (
   bucket_id = 'documents'
-  and exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  and public.is_admin()
 );
 
 -- Jalon "suppression de chapitres obsolètes" : la suppression d'un chapitre
@@ -245,7 +267,7 @@ for select using (
   enfant_id = auth.uid()
   or exists (select 1 from liens_parent_enfant l where l.enfant_id = messages.enfant_id and l.parent_id = auth.uid())
   or exists (select 1 from liens_soutien s where s.enfant_id = messages.enfant_id and s.soutien_id = auth.uid())
-  or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  or public.is_admin()
 );
 
 create policy "envoi messages famille" on messages
@@ -255,7 +277,7 @@ for insert with check (
     enfant_id = auth.uid()
     or exists (select 1 from liens_parent_enfant l where l.enfant_id = messages.enfant_id and l.parent_id = auth.uid())
     or exists (select 1 from liens_soutien s where s.enfant_id = messages.enfant_id and s.soutien_id = auth.uid())
-    or exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+    or public.is_admin()
   )
 );
 
@@ -329,12 +351,12 @@ for select using (
 -- l'enfant/la matiere concernee, ou l'administrateur.
 create policy "rattachement document a un chapitre par parent soutien ou admin" on documents
 for update using (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  public.is_admin()
   or exists (select 1 from liens_parent_enfant l where l.enfant_id = documents.enfant_id and l.parent_id = auth.uid())
   or exists (select 1 from liens_soutien s where s.enfant_id = documents.enfant_id and s.matiere_id = documents.matiere_id and s.soutien_id = auth.uid())
 )
 with check (
-  exists (select 1 from comptes c where c.id = auth.uid() and c.role = 'admin')
+  public.is_admin()
   or exists (select 1 from liens_parent_enfant l where l.enfant_id = documents.enfant_id and l.parent_id = auth.uid())
   or exists (select 1 from liens_soutien s where s.enfant_id = documents.enfant_id and s.matiere_id = documents.matiere_id and s.soutien_id = auth.uid())
 );
