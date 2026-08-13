@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
-import { creerDevoir } from "@/lib/devoirsSupabase";
+import { creerDevoir } from "@/lib/devoirsSupabase";import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
 const TYPES_DEVOIR = [
   { value: "revision", label: "📖 Réviser le cours" },
@@ -251,7 +251,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
   }
 
   async function importerDocument(fichier, nom, typeDocument) {
-        const chemin = `${compteId}/${Date.now()}-${fichier.name}`;
+        const chemin = `${compteId}/${Date.now()}-${sanitizeNomFichier(fichier.name)}`;
         const { error: uploadError } = await supabase.storage.from("documents").upload(chemin, fichier);
         if (uploadError) throw uploadError;
 
