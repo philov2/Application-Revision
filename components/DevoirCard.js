@@ -6,7 +6,7 @@ import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
 import { modifierDevoir, supprimerDevoir, basculerStatutDevoir } from "@/lib/devoirsSupabase";
 import { soumettreReponseExercice, noterExercice, urlSigneeFichierExercice } from "@/lib/reponsesExercicesSupabase";
-import { chargerTestsChapitre, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
+import { chargerTestsChapitre, chargerTest, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
 
 const LABEL_TYPE = { revision: "Réviser le cours", exercice: "Exercices", test: "Test" };
 const TYPES_DEVOIR = [
@@ -127,11 +127,11 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   }, [enEdition, matiereId, chapitreId, enfantId]);
 
   useEffect(() => {
-    if (devoir.type !== "test" || !devoir.chapitreId || !devoir.enfantId) return;
+    if (devoir.type !== "test" || !devoir.enfantId) return;
     (async () => {
       try {
-        const tests = await chargerTestsChapitre(devoir.chapitreId);
-        const t = tests[0] || null;
+        let t = null; if (devoir.testId) { t = await chargerTest(devoir.testId); } else if (devoir.chapitreId) { const tests = await chargerTestsChapitre(devoir.chapitreId); t = tests[0] || null; }
+
         setTestDisponible(t);
         if (t) {
           const r = await chargerResultatTest(t.id, devoir.enfantId);
@@ -141,7 +141,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         // silencieux : ne bloque pas l'affichage du devoir
       }
     })();
-  }, [devoir.type, devoir.chapitreId, devoir.enfantId]);
+  }, [devoir.type, devoir.testId, devoir.chapitreId, devoir.enfantId]);
 
   useEffect(() => {
     if (devoir.type !== "exercice" || !devoir.document?.id) {
