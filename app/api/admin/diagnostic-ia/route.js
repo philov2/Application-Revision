@@ -18,7 +18,7 @@ export async function GET(request) {
         const texte = await appellerClaude({
                 systemPrompt: "Reponds uniquement par le mot OK, sans rien ajouter.",
                 promptTexte: "Dis OK.",
-                maxTokens: 20,
+                maxTokens: 300,
         });
         resultats.claude = { ok: true, reponse: texte };
   } catch (err) {
@@ -29,7 +29,7 @@ export async function GET(request) {
         const texte = await appellerGemini({
                 systemPrompt: "Reponds uniquement par le mot OK, sans rien ajouter.",
                 promptTexte: "Dis OK.",
-                maxTokens: 20,
+                maxTokens: 300,
         });
         resultats.gemini = { ok: true, reponse: texte };
   } catch (err) {
