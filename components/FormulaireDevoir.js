@@ -466,7 +466,53 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                 )}
 </Champ>
 
-              <Champ label="Type de devoir">
+{matiereId && (
+                    <Champ label="Chapitre">
+                      <div className="flex flex-wrap gap-2">
+{chapitres.map((c) => (
+                          <Puce key={c.id} actif={chapitreId === c.id} onClick={() => setChapitreId(chapitreId === c.id ? "" : c.id)}>
+{c.nom}
+</Puce>
+                      ))}
+{!nouveauChapitreOuvert && (
+                          <Puce pointille onClick={() => setNouveauChapitreOuvert(true)}>
+                            + Nouveau
+  </Puce>
+                       )}
+</div>
+{nouveauChapitreOuvert && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <input
+                           value={nomNouveauChapitre}
+                                                      onChange={(e) => setNomNouveauChapitre(e.target.value)}
+                                                                                 placeholder="Nom du nouveau chapitre"
+                                                                                                            className={`flex-1 ${CLASSE_INPUT}`}
+                      />
+                                              <button
+                                                type="button"
+                                                                          onClick={creerNouveauChapitre}
+                                                                                                    disabled={enCoursChapitre || !nomNouveauChapitre.trim()}
+                        className="rounded-xl px-3 py-2.5 text-xs font-medium text-white disabled:opacity-50 shadow-sm"
+                                                  style={{ background: "#4169E1" }}
+                      >
+{enCoursChapitre ? "..." : "Ajouter"}
+</button>
+                        <button
+                          type="button"
+                                                    onClick={() => {
+                                                                                                          setNouveauChapitreOuvert(false);
+                                                                                                          setNomNouveauChapitre("");
+                                                    }}
+                                                                              className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
+                                                                                                      >
+                                                                                                                                  Annuler
+                                                                                </button>
+                                                                                </div>
+                                                                                                  )}
+                                                                                                    </Champ>
+                                                                                                                  )}
+                                                                                                                    
+                                                                                                                    <Champ label="Type de devoir">
                                   <div className="grid grid-cols-3 gap-2">
                 {TYPES_DEVOIR.map((t) => (
                                       <button
@@ -508,51 +554,6 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                       </Champ>
                       </div>
 
-{matiereId && (
-                  <Champ label="Chapitre">
-                    <div className="flex flex-wrap gap-2">
-{chapitres.map((c) => (
-                        <Puce key={c.id} actif={chapitreId === c.id} onClick={() => setChapitreId(chapitreId === c.id ? "" : c.id)}>
-{c.nom}
-</Puce>
-                    ))}
-{!nouveauChapitreOuvert && (
-                        <Puce pointille onClick={() => setNouveauChapitreOuvert(true)}>
-                          + Nouveau
-  </Puce>
-                     )}
-</div>
-{nouveauChapitreOuvert && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                         value={nomNouveauChapitre}
-                         onChange={(e) => setNomNouveauChapitre(e.target.value)}
-                         placeholder="Nom du nouveau chapitre"
-                         className={`flex-1 ${CLASSE_INPUT}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={creerNouveauChapitre}
-                        disabled={enCoursChapitre || !nomNouveauChapitre.trim()}
-                        className="rounded-xl px-3 py-2.5 text-xs font-medium text-white disabled:opacity-50 shadow-sm"
-                        style={{ background: "#4169E1" }}
-                      >
-{enCoursChapitre ? "..." : "Ajouter"}
-</button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                                                    setNouveauChapitreOuvert(false);
-                                                    setNomNouveauChapitre("");
-                        }}
-                        className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
-                      >
-                                                  Annuler
-                          </button>
-                          </div>
-                  )}
-</Champ>
-              )}
 {matiereId && (
                   <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3.5 space-y-3 bg-slate-50 dark:bg-slate-800/40">
                     <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Document à utiliser</p>
