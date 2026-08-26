@@ -1,1 +1,104 @@
-import { NextResponse } from "next/server"; import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";  /* Valide une demande de compte (Parent, Soutien ou Co-parent) : réservé à l'administrateur. */ /* - Crée le compte Supabase Auth (envoi d'un email d'invitation par Supabase) */ /* - Crée la ligne correspondante dans "comptes" */ /* - Pour un Soutien : rattache les matières demandées à tous les enfants du parent demandeur */ /* - Pour un Co-parent : rattache le nouveau compte (role "parent") à tous les enfants du parent demandeur */ /* - Marque la demande comme traitée */ export async function POST(request, { params }) {   if (!supabaseAdminConfigured) {     return NextResponse.json({ error: "Supabase n'est pas encore configuré côté serveur (SUPABASE_SERVICE_ROLE_KEY manquante)." }, { status: 500 });   }    const compte = await getCompteFromToken(request);   if (!compte || compte.role !== "admin") {     return NextResponse.json({ error: "Réservé à l'administrateur." }, { status: 403 });   }      const { id } = await params;    const { data: demande, error: demandeError } = await supabaseAdmin     .from("demandes_comptes")     .select("*")     .eq("id", id)     .single();    if (demandeError || !demande) {     return NextResponse.json({ error: "Demande introuvable." }, { status: 404 });   }   if (demande.statut === "traitee") {     return NextResponse.json({ error: "Cette demande a déjà été traitée." }, { status: 409 });   }    /* 1) Créer le compte Supabase Auth et envoyer l'email d'invitation */   const { data: invite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(demande.email, { redirectTo: new URL("/definir-mot-de-passe", request.url).toString() });   if (inviteError) {     return NextResponse.json({ error: `Échec de l'invitation : ${inviteError.message}` }, { status: 500 });   }   const nouveauCompteId = invite.user.id;    /* 2) Créer la ligne "comptes". La colonne "role" de la table comptes n'accepte */   /* que 'admin' | 'parent' | 'enfant' | 'soutien' : un compte "coparent" est un */   /* parent comme un autre, seul le type de la demande (type_compte) distingue */   /* son mode de rattachement (voir étape 3 ci-dessous). */   const roleCompte = demande.type_compte === "coparent" ? "parent" : demande.type_compte;   const { error: compteError } = await supabaseAdmin.from("comptes").insert({     id: nouveauCompteId,     email: demande.email,     nom: demande.nom,     role: roleCompte,     statut: "actif",   });   if (compteError) {     return NextResponse.json({ error: `Échec de la création du compte : ${compteError.message}` }, { status: 500 });   }    /* 3) Pour un Soutien : le rattacher, pour les matières demandées, à tous les */   /* enfants du parent qui a fait la demande (voir DCF : un soutien a accès à */   /* tous les enfants du parent pour la/les matière(s) qui lui ont été confiées). */   if (demande.type_compte === "soutien" && demande.demandeur_id) {     const { data: enfants } = await supabaseAdmin       .from("liens_parent_enfant")       .select("enfant_id")       .eq("parent_id", demande.demandeur_id);      const lignes = [];     for (const { enfant_id } of enfants || []) {       for (const matiere_id of demande.matieres || []) {         lignes.push({ soutien_id: nouveauCompteId, enfant_id, matiere_id });       }     }     if (lignes.length > 0) {       await supabaseAdmin.from("liens_soutien").insert(lignes);     }   }  /* 3bis) Pour un Co-parent : le rattacher comme second parent à tous les */   /* enfants du parent qui a fait la demande (même niveau scolaire que déjà */   /* enregistré pour ne rien perdre côté affichage). */   if (demande.type_compte === "coparent" && demande.demandeur_id) {     const { data: enfants } = await supabaseAdmin       .from("liens_parent_enfant")       .select("enfant_id, niveau_scolaire")       .eq("parent_id", demande.demandeur_id);      const lignes = (enfants || []).map(({ enfant_id, niveau_scolaire }) => ({       parent_id: nouveauCompteId,       enfant_id,       niveau_scolaire,     }));     if (lignes.length > 0) {       await supabaseAdmin.from("liens_parent_enfant").insert(lignes);     }   }    /* 4) Marquer la demande comme traitée */   await supabaseAdmin.from("demandes_comptes").update({ statut: "traitee" }).eq("id", id);    return NextResponse.json({ success: true, compteId: nouveauCompteId }); } 
+import { NextResponse } from "next/server";
+import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
+
+/* Valide une demande de compte (Parent, Soutien ou Co-parent) : réservé à l'administrateur. */
+/* - Crée le compte Supabase Auth (envoi d'un email d'invitation par Supabase) */
+/* - Crée la ligne correspondante dans "comptes" (avec le téléphone renseigné à la demande) */
+/* - Pour un Soutien : rattache les matières demandées à tous les enfants du parent demandeur */
+/* - Pour un Co-parent : rattache le nouveau compte (role "parent") à tous les enfants du parent demandeur */
+/* - Marque la demande comme traitée */
+export async function POST(request, { params }) {
+  if (!supabaseAdminConfigured) {
+    return NextResponse.json({ error: "Supabase n'est pas encore configuré côté serveur (SUPABASE_SERVICE_ROLE_KEY manquante)." }, { status: 500 });
+  }
+
+  const compte = await getCompteFromToken(request);
+  if (!compte || compte.role !== "admin") {
+    return NextResponse.json({ error: "Réservé à l'administrateur." }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const { data: demande, error: demandeError } = await supabaseAdmin
+    .from("demandes_comptes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (demandeError || !demande) {
+    return NextResponse.json({ error: "Demande introuvable." }, { status: 404 });
+  }
+  if (demande.statut === "traitee") {
+    return NextResponse.json({ error: "Cette demande a déjà été traitée." }, { status: 409 });
+  }
+
+  /* 1) Créer le compte Supabase Auth et envoyer l'email d'invitation */
+  const { data: invite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(demande.email, { redirectTo: new URL("/definir-mot-de-passe", request.url).toString() });
+  if (inviteError) {
+    return NextResponse.json({ error: `Échec de l'invitation : ${inviteError.message}` }, { status: 500 });
+  }
+  const nouveauCompteId = invite.user.id;
+
+  /* 2) Créer la ligne "comptes". La colonne "role" de la table comptes n'accepte */
+  /* que 'admin' | 'parent' | 'enfant' | 'soutien' : un compte "coparent" est un */
+  /* parent comme un autre, seul le type de la demande (type_compte) distingue */
+  /* son mode de rattachement (voir étape 3 ci-dessous). Le téléphone renseigné */
+  /* lors de la demande (voir app/demande/page.js, app/parent/page.js) est repris */
+  /* tel quel sur le nouveau compte, sans que l'admin ait à le ressaisir. */
+  const roleCompte = demande.type_compte === "coparent" ? "parent" : demande.type_compte;
+  const { error: compteError } = await supabaseAdmin.from("comptes").insert({
+    id: nouveauCompteId,
+    email: demande.email,
+    nom: demande.nom,
+    role: roleCompte,
+    statut: "actif",
+    telephone: demande.telephone || null,
+  });
+  if (compteError) {
+    return NextResponse.json({ error: `Échec de la création du compte : ${compteError.message}` }, { status: 500 });
+  }
+
+  /* 3) Pour un Soutien : le rattacher, pour les matières demandées, à tous les */
+  /* enfants du parent qui a fait la demande (voir DCF : un soutien a accès à */
+  /* tous les enfants du parent pour la/les matière(s) qui lui ont été confiées). */
+  if (demande.type_compte === "soutien" && demande.demandeur_id) {
+    const { data: enfants } = await supabaseAdmin
+      .from("liens_parent_enfant")
+      .select("enfant_id")
+      .eq("parent_id", demande.demandeur_id);
+
+    const lignes = [];
+    for (const { enfant_id } of enfants || []) {
+      for (const matiere_id of demande.matieres || []) {
+        lignes.push({ soutien_id: nouveauCompteId, enfant_id, matiere_id });
+      }
+    }
+    if (lignes.length > 0) {
+      await supabaseAdmin.from("liens_soutien").insert(lignes);
+    }
+  }
+
+  /* 3bis) Pour un Co-parent : le rattacher comme second parent à tous les */
+  /* enfants du parent qui a fait la demande (même niveau scolaire que déjà */
+  /* enregistré pour ne rien perdre côté affichage). */
+  if (demande.type_compte === "coparent" && demande.demandeur_id) {
+    const { data: enfants } = await supabaseAdmin
+      .from("liens_parent_enfant")
+      .select("enfant_id, niveau_scolaire")
+      .eq("parent_id", demande.demandeur_id);
+
+    const lignes = (enfants || []).map(({ enfant_id, niveau_scolaire }) => ({
+      parent_id: nouveauCompteId,
+      enfant_id,
+      niveau_scolaire,
+    }));
+    if (lignes.length > 0) {
+      await supabaseAdmin.from("liens_parent_enfant").insert(lignes);
+    }
+  }
+
+  /* 4) Marquer la demande comme traitée */
+  await supabaseAdmin.from("demandes_comptes").update({ statut: "traitee" }).eq("id", id);
+
+  return NextResponse.json({ success: true, compteId: nouveauCompteId });
+}
