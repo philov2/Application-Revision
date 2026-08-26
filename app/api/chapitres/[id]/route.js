@@ -83,3 +83,63 @@ export async function DELETE(request, { params }) {
 
   return NextResponse.json(avertissement ? { success: true, avertissement } : { success: true });
 }
+
+/* Renomme un chapitre existant : corrige une erreur de frappe sans avoir a
+   le supprimer puis le recreer (ce qui supprimerait aussi tous ses
+   documents, voir DELETE ci-dessus). Ouvert aux memes roles que la
+   creation/suppression d'un chapitre (parent, soutien, admin). L'unicite du
+   nom n'est verifiee que parmi les chapitres de la MEME matiere (comme pour
+   la creation), pas globalement. */
+export async function PATCH(request, { params }) {
+  if (!supabaseAdminConfigured) {
+    return NextResponse.json({ error: "Supabase n'est pas encore configuré côté serveur (SUPABASE_SERVICE_ROLE_KEY manquante)." }, { status: 500 });
+  }
+
+  const compte = await getCompteFromToken(request);
+  if (!compte || compte.statut !== "actif") {
+    return NextResponse.json({ error: "Non autorisé." }, { status: 403 });
+  }
+
+  if (!["parent", "soutien", "admin"].includes(compte.role)) {
+    return NextResponse.json({ error: "Réservé aux parents, soutiens et à l'administrateur." }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const body = await request.json();
+  const nom = (body?.nom || "").trim();
+
+  if (!nom) {
+    return NextResponse.json({ error: "Le nom ne peut pas être vide." }, { status: 400 });
+  }
+
+  const { data: chapitre, error: chapitreError } = await supabaseAdmin
+    .from("chapitres")
+    .select("id, matiere_id")
+    .eq("id", id)
+    .single();
+
+  if (chapitreError || !chapitre) {
+    return NextResponse.json({ error: "Chapitre introuvable." }, { status: 404 });
+  }
+
+  const { data: chapitresMemeMatiere, error: chapitresError } = await supabaseAdmin
+    .from("chapitres")
+    .select("id, nom")
+    .eq("matiere_id", chapitre.matiere_id);
+
+  if (chapitresError) {
+    return NextResponse.json({ error: `Échec de la vérification des doublons : ${chapitresError.message}` }, { status: 500 });
+  }
+
+  const doublon = (chapitresMemeMatiere || []).some((c) => c.id !== id && c.nom.trim().toLowerCase() === nom.toLowerCase());
+  if (doublon) {
+    return NextResponse.json({ error: `Un chapitre « ${nom} » existe déjà dans cette matière.` }, { status: 400 });
+  }
+
+  const { error: updateError } = await supabaseAdmin.from("chapitres").update({ nom }).eq("id", id);
+  if (updateError) {
+    return NextResponse.json({ error: `Échec du renommage du chapitre : ${updateError.message}` }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
