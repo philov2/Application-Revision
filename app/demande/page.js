@@ -62,7 +62,7 @@ export default function DemandeCompte() {
               </div>
               <div>
                 <label className="block text-sm mb-1">Numéro de téléphone</label>
-                <input name="telephone" type="tel" required placeholder="ex. 0612345678" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
+                <input name="telephone" type="tel" required placeholder="ex. 621 234 567" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
               </div>
               {erreur && <p className="text-sm text-red-600">{erreur}</p>}
               <button type="submit" className="w-full rounded-lg py-2 font-medium text-white" style={{ background: "#4169E1" }}>
