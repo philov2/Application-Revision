@@ -14,7 +14,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Réservé aux comptes Parent." }, { status: 403 });
   }
 
-  const { nom, email, niveau_scolaire } = await request.json();
+  const { nom, email, niveau_scolaire, telephone } = await request.json();
   if (!nom || !email) {
     return NextResponse.json({ error: "Nom et email requis." }, { status: 400 });
   }
@@ -31,6 +31,7 @@ export async function POST(request) {
     nom,
     role: "enfant",
     statut: "actif",
+    telephone: telephone || null,
   });
   if (compteError) {
     return NextResponse.json({ error: `Échec de la création du compte : ${compteError.message}` }, { status: 500 });
