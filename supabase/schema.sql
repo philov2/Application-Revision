@@ -192,3 +192,23 @@ alter table comptes add column if not exists telephone text;
 -- RLS ici (voir supabase/policies.sql, qui n'a pas de policy UPDATE sur
 -- comptes en dehors de l'administrateur).
 alter table comptes add column if not exists couleur_accent text;
+
+-- Jalon "flashcards" (signalement de Phil : rendre l'application plus
+-- attractive pour une adolescente, dans la meme veine que le streak, le
+-- minuteur focus et la progression par matiere) : mode de revision
+-- interactif carte a carte (question au recto, reponse au verso), genere
+-- par IA a partir d'un document de cours deja importe (voir
+-- app/api/documents/[id]/flashcards-ia/route.js). Les cartes sont stockees
+-- en jsonb plutot que comme un document texte, pour piloter directement
+-- l'UI carte a carte (voir components/RevisionFlashcards.js) sans avoir a
+-- reparser un fichier. Pas de creation manuelle (contrairement aux tests) :
+-- uniquement genere par l'IA.
+create table flashcards (
+  id uuid primary key default gen_random_uuid(),
+  chapitre_id uuid references chapitres(id) on delete set null, -- voir Jalon "suppression de chapitres obsolètes"
+  titre text not null,
+  cartes jsonb not null, -- [{ question, reponse }]
+  created_at timestamptz not null default now()
+);
+
+alter table devoirs add column if not exists flashcards_id uuid references flashcards(id) on delete set null;
