@@ -5,8 +5,13 @@ import { formaterTemps, stadePlante } from "@/lib/useMinuteurFocus";
 /* Jalon "minuteur focus" (voir lib/useMinuteurFocus.js pour l'état) : ce
    composant est purement présentationnel — l'état (phase, temps restant,
    actif, sessions terminées) vient du hook useMinuteurFocus, instancié au
-   niveau du dashboard Enfant, pour qu'il survive aux changements d'onglet. */
-export default function MinuteurFocus({ minuteur }) {
+   niveau du dashboard Enfant, pour qu'il survive aux changements d'onglet.
+
+   couleurAccent (Jalon "personnalisation de l'espace Enfant", signalement
+   de Phil) : couleur choisie par l'enfant (voir PersonnalisationEspace.js),
+   utilisée pour le bouton Démarrer/Reprendre à la place du bleu par défaut
+   de l'application. Optionnelle : #4169E1 si l'enfant n'a rien choisi. */
+export default function MinuteurFocus({ minuteur, couleurAccent }) {
   const {
     phase,
     secondesRestantes,
@@ -33,7 +38,7 @@ export default function MinuteurFocus({ minuteur }) {
           <button
             onClick={demarrer}
             className="rounded-lg px-4 py-2 text-sm font-medium text-white"
-            style={{ background: "#4169E1" }}
+            style={{ background: couleurAccent || "#4169E1" }}
           >
             {secondesRestantes === dureeTotale ? "Démarrer" : "Reprendre"}
           </button>
