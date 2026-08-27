@@ -478,7 +478,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                        onChange={(e) => setNomNouvelleMatiere(e.target.value)}
                        placeholder="Nom de la nouvelle matière"
                        className={`flex-1 ${CLASSE_INPUT}`}
-                    ?>
+                    />
                     <button
                       type="button"
                       onClick={creerNouvelleMatiere}
