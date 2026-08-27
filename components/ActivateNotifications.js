@@ -14,10 +14,20 @@ import { pushSupporte, abonnerPush } from "@/lib/pushClient";
 // ne le supporte pas...), les notifications navigateur classiques restent
 // actives quand même, donc rien ne casse pour l'utilisateur.
 export default function ActivateNotifications() {
+  /* Bug d'hydratation découvert (page /documents/[id], qui affiche la
+     Navbar sans passer par AuthGuard) : notificationsSupportees() dépend de
+     `typeof window !== "undefined"`, donc son résultat diffère forcément
+     entre le rendu serveur (toujours false) et le tout premier rendu client
+     — exactement le cas que React signale par l'erreur d'hydratation #418.
+     Comme pour ThemeToggle, on ne consulte ce genre d'info navigateur
+     qu'après le montage, dans un useEffect, pour que le tout premier rendu
+     client soit identique à celui du serveur (rien). */
+  const [pret, setPret] = useState(false);
   const [permission, setPermission] = useState("default");
 
   useEffect(() => {
     setPermission(permissionNotifications());
+    setPret(true);
   }, []);
 
   // Réabonnement silencieux : si la permission a déjà été accordée lors
@@ -48,7 +58,7 @@ export default function ActivateNotifications() {
     }
   }
 
-  if (!notificationsSupportees()) return null;
+  if (!pret || !notificationsSupportees()) return null;
 
   if (permission === "denied") {
     return (
