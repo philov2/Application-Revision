@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { MarkdownDoc } from "@/components/markdownDoc";
 import Navbar from "@/components/Navbar";
+import MinuteurFocusMini from "@/components/MinuteurFocusMini";
+import { useMinuteurFocus } from "@/lib/useMinuteurFocus";
 
 const LABEL_TYPE = {
   cours: "Cours",
@@ -34,6 +36,12 @@ export default function PageDocument() {
   const [compteId, setCompteId] = useState(null);
   const [role, setRole] = useState(null);
   const [nom, setNom] = useState(null);
+  /* Jalon "minuteur focus" (signalement de Phil : ouvrir un document depuis */
+  /* l'application faisait perdre la progression du minuteur, la page */
+  /* /enfant étant entièrement démontée par cette navigation). Le hook se */
+  /* resynchronise via sessionStorage, donc le badge continue d'afficher la */
+  /* bonne plante et le bon temps restant ici aussi. */
+  const minuteur = useMinuteurFocus();
 
   useEffect(() => {
     if (!supabaseConfigured || !id) return;
@@ -164,6 +172,9 @@ export default function PageDocument() {
           )}
         </div>
       </main>
+      {role === "enfant" && (
+        <MinuteurFocusMini minuteur={minuteur} onOuvrir={() => router.push("/enfant")} />
+      )}
     </>
   );
 }
