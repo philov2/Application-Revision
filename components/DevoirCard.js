@@ -364,8 +364,16 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       });
       const noteCalculee = Math.round((correct / total) * 20 * 100) / 100;
       await soumettreResultatTest({ testId: testDisponible.id, enfantId: devoir.enfantId, reponses: reponsesTest, note: noteCalculee });
+      // Le test valide marque aussi le devoir comme "fait" (statut et
+      // date_realisation), comme l'envoi d'une reponse d'exercice plus haut —
+      // sinon le devoir reste indefiniment "a faire" et le streak de jours
+      // d'affilee ne compte jamais les tests passes (signalement de Phil).
+      if (devoir.statut !== "fait") {
+        await basculerStatutDevoir(devoir.id, "fait");
+      }
       setResultatTest({ note: noteCalculee, reponses: reponsesTest });
       setEnPassageTest(false);
+      onChange?.();
     } catch (err) {
       setErreurTest(err.message);
     } finally {
