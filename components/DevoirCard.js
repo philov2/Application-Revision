@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { modifierDevoir, supprimerDevoir, basculerStatutDevoir } from "@/lib/devoirsSupabase";
 import { soumettreReponseExercice, noterExercice, urlSigneeFichierExercice } from "@/lib/reponsesExercicesSupabase";
 import { chargerTestsChapitre, chargerTest, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
+import { chargerFlashcards } from "@/lib/flashcardsSupabase";
+import RevisionFlashcards from "@/components/RevisionFlashcards";
 
 const LABEL_TYPE = { revision: "Réviser le cours", exercice: "Exercices", test: "Test" };
 const TYPES_DEVOIR = [
@@ -102,6 +104,17 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // Parent/Soutien, juste à côté du fichier de l'exercice).
   const [corrigeDisponible, setCorrigeDisponible] = useState(null);
 
+  // Jalon "flashcards" (signalement de Phil : rendre l'application plus
+  // attractive pour une adolescente, dans la même veine que le streak, le
+  // minuteur focus et la progression par matière) : un devoir de révision
+  // peut référencer soit un document (comportement existant, voir plus bas),
+  // soit un deck de flashcards (voir components/RevisionFlashcards.js pour
+  // le mode carte à carte). Chargé une seule fois, à l'ouverture de la
+  // carte, comme le contenu du test ci-dessus.
+  const [flashcardsDeck, setFlashcardsDeck] = useState(null);
+  const [revisionFlashcardsOuverte, setRevisionFlashcardsOuverte] = useState(false);
+  const [erreurFlashcards, setErreurFlashcards] = useState("");
+
   useEffect(() => {
     if (!matiereId) {
       setChapitres([]);
@@ -161,6 +174,21 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       }
     })();
   }, [devoir.type, devoir.document?.id]);
+
+  useEffect(() => {
+    if (devoir.type !== "revision" || !devoir.flashcardsId) {
+      setFlashcardsDeck(null);
+      return;
+    }
+    (async () => {
+      try {
+        const deck = await chargerFlashcards(devoir.flashcardsId);
+        setFlashcardsDeck(deck);
+      } catch (err) {
+        setErreurFlashcards(err.message);
+      }
+    })();
+  }, [devoir.type, devoir.flashcardsId]);
 
   function commencerEdition() {
     setTitre(devoir.titre || "");
@@ -504,7 +532,33 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       {erreur && <p className="text-xs text-red-600 mt-1">{erreur}</p>}
 
       <div className="mt-2 text-xs space-y-1">
-        {devoir.type === "revision" && (
+        {devoir.type === "revision" && devoir.flashcardsId && (
+          <div className="space-y-2">
+            {erreurFlashcards && <p className="text-red-600">{erreurFlashcards}</p>}
+            {!revisionFlashcardsOuverte ? (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <button
+                  onClick={() => setRevisionFlashcardsOuverte(true)}
+                  disabled={!flashcardsDeck}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                  style={{ background: "#4169E1" }}
+                >
+                  🗂 {flashcardsDeck ? "Réviser avec les flashcards" : "Chargement..."}
+                </button>
+                <ActionsModifierSupprimer />
+              </div>
+            ) : (
+              <>
+                <RevisionFlashcards flashcards={flashcardsDeck} onFermer={() => setRevisionFlashcardsOuverte(false)} />
+                <div className="flex justify-end">
+                  <ActionsModifierSupprimer />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {devoir.type === "revision" && !devoir.flashcardsId && (
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="min-w-0">
               {erreurDocument && <p className="text-red-600 mb-1">{erreurDocument}</p>}
