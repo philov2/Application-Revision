@@ -3,7 +3,8 @@
 import { useEffect, useId, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
-import { creerDevoir } from "@/lib/devoirsSupabase";import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
+import { creerDevoir } from "@/lib/devoirsSupabase";
+import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
 const TYPES_DEVOIR = [
   { value: "revision", label: "📖 Réviser le cours" },
@@ -23,6 +24,21 @@ const LABEL_IA_PAR_TYPE = {
     exercice: "des exercices",
     test: "un test (QCM)",
 };
+
+// Jalon "flashcards depuis l'assistant Nouveau devoir" (signalement de Phil :
+// en tapant "flashcards" dans la description du devoir de type Révision,
+// l'IA générait un document texte imitant la mise en page recto/verso au
+// lieu de vraies flashcards interactives -- cette option n'existait tout
+// simplement pas ici, seul le bouton dédié de l'onglet "Chapitres et
+// documents" créait de vraies flashcards). Un devoir de révision généré par
+// IA peut désormais produire soit une synthèse (comportement existant), soit
+// un jeu de flashcards, au choix.
+function libelleIA(type, formatRevision) {
+  if (type === "revision" && formatRevision === "flashcards") {
+    return "des flashcards de révision (cartes question/réponse)";
+  }
+  return LABEL_IA_PAR_TYPE[type];
+}
 
 const ROUTES_IA_AVEC_DOCUMENT = {
     revision: "synthese",
@@ -132,6 +148,12 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
   const [type, setType] = useState("revision");
     const [titre, setTitre] = useState("");
     const [dateEcheance, setDateEcheance] = useState("");
+
+  // "synthese" (comportement existant, produit un document à lire) ou
+  // "flashcards" (produit un jeu de cartes interactif) -- uniquement
+  // pertinent quand type === "revision" et modeDocument === "ia".
+  const [formatRevision, setFormatRevision] = useState("synthese");
+  const estFlashcardsFormat = type === "revision" && formatRevision === "flashcards";
 
   const [documents, setDocuments] = useState([]);
     const [documentId, setDocumentId] = useState("");
@@ -285,6 +307,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
         setEnvoi(true);
         try {
                 let documentIdAEnvoyer = documentId || null;
+                let flashcardsIdAEnvoyer = null;
 
           if (modeDocument === "import") {
                     const fichier = form.get("fichier");
@@ -293,8 +316,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                 documentIdAEnvoyer = nouveauDocument.id;
                     }
           } else if (modeDocument === "ia") {
-                    if (type === "test" && !chapitreId) {
-                                throw new Error("Choisissez ou créez d'abord un chapitre : un test généré par IA doit être rattaché à un chapitre.");
+                    if ((type === "test" || estFlashcardsFormat) && !chapitreId) {
+                                throw new Error("Choisissez ou créez d'abord un chapitre : un contenu généré par IA (test ou flashcards) doit être rattaché à un chapitre.");
                     }
 
                   if (sourceIA === "fichier") {
@@ -304,26 +327,37 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                               }
                               const consigne = (form.get("consigne_ia") || "").trim();
                               const coursSource = await importerDocument(fichierSource, form.get("nom_fichier") || fichierSource.name, "cours");
-                              const route = ROUTES_IA_AVEC_DOCUMENT[type];
-                              if (type === "test") {
-                                            await authFetch(`/api/documents/${coursSource.id}/${route}`, {
-                                                            method: "POST",
-                                                            body: JSON.stringify({ consigne }),
-                                            });
-                                            documentIdAEnvoyer = coursSource.id;
+                              if (estFlashcardsFormat) {
+                                            const resultat = await authFetch(`/api/documents/${coursSource.id}/flashcards-ia`, { method: "POST" });
+                                            flashcardsIdAEnvoyer = resultat.flashcards.id;
                               } else {
-                                            const resultat = await authFetch(`/api/documents/${coursSource.id}/${route}`, {
-                                                            method: "POST",
-                                                            body: JSON.stringify({ consigne }),
-                                            });
-                                            documentIdAEnvoyer = resultat.document.id;
+                                            const route = ROUTES_IA_AVEC_DOCUMENT[type];
+                                            if (type === "test") {
+                                                            await authFetch(`/api/documents/${coursSource.id}/${route}`, {
+                                                                            method: "POST",
+                                                                            body: JSON.stringify({ consigne }),
+                                                            });
+                                                            documentIdAEnvoyer = coursSource.id;
+                                            } else {
+                                                            const resultat = await authFetch(`/api/documents/${coursSource.id}/${route}`, {
+                                                                            method: "POST",
+                                                                            body: JSON.stringify({ consigne }),
+                                                            });
+                                                            documentIdAEnvoyer = resultat.document.id;
+                                            }
                               }
                   } else {
                               const promptIA = (form.get("prompt_ia") || "").trim();
                               if (!promptIA) {
                                             throw new Error("Décrivez ce que l'IA doit générer.");
                               }
-                              if (type === "test") {
+                              if (estFlashcardsFormat) {
+                                            const resultat = await authFetch("/api/generation/flashcards-ia", {
+                                                            method: "POST",
+                                                            body: JSON.stringify({ prompt: promptIA, chapitreId }),
+                                            });
+                                            flashcardsIdAEnvoyer = resultat.flashcards.id;
+                              } else if (type === "test") {
                                             await authFetch(ROUTES_IA_PROMPT.test, {
                                                             method: "POST",
                                                             body: JSON.stringify({ prompt: promptIA, chapitreId }),
@@ -344,6 +378,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                     matiereId,
                     chapitreId: chapitreId || null,
                     documentId: documentIdAEnvoyer,
+                    flashcardsId: flashcardsIdAEnvoyer,
                     titre: form.get("titre") || null,
                     type,
                     dateEcheance: form.get("date_echeance"),
@@ -356,6 +391,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                 setModeDocument("existant");
                 setSourceIA("prompt");
                 setType("revision");
+                setFormatRevision("synthese");
                 setTitre("");
                 setDateEcheance("");
                 setNomFichierImport("");
@@ -442,7 +478,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                        onChange={(e) => setNomNouvelleMatiere(e.target.value)}
                        placeholder="Nom de la nouvelle matière"
                        className={`flex-1 ${CLASSE_INPUT}`}
-                    />
+                    ?>
                     <button
                       type="button"
                       onClick={creerNouvelleMatiere}
@@ -493,7 +529,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                                                           onClick={creerNouveauChapitre}
                                                                                                     disabled={enCoursChapitre || !nomNouveauChapitre.trim()}
                         className="rounded-xl px-3 py-2.5 text-xs font-medium text-white disabled:opacity-50 shadow-sm"
-                                                  style={{ background: "#4169E1" }}
+                                      style={{ background: "#4169E1" }}
                       >
 {enCoursChapitre ? "..." : "Ajouter"}
 </button>
@@ -503,15 +539,14 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                                                                                           setNouveauChapitreOuvert(false);
                                                                                                           setNomNouveauChapitre("");
                                                     }}
-                                                                              className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
                                                                                                       >
-                                                                                                                                  Annuler
+                                                                                                                                   Annuler
                                                                                 </button>
                                                                                 </div>
                                                                                                   )}
                                                                                                     </Champ>
                                                                                                                   )}
-                                                                                                                    
+
                                                                                                                     <Champ label="Type de devoir">
                                   <div className="grid grid-cols-3 gap-2">
                 {TYPES_DEVOIR.map((t) => (
@@ -623,9 +658,20 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 {modeDocument === "ia" && (
                       <div className="space-y-3">
                         <p className="text-xs text-slate-600 dark:text-slate-300">
-                          L&apos;IA va générer <strong>{LABEL_IA_PAR_TYPE[type]}</strong> (d&apos;après le type de devoir choisi ci-dessus).
+                          L&apos;IA va générer <strong>{libelleIA(type, formatRevision)}</strong> (d&apos;après le type de devoir choisi ci-dessus).
                         Choisissez comment lui fournir la matière première :
                         </p>
+
+                      {type === "revision" && (
+                        <div className="flex flex-wrap gap-2">
+                          <Puce actif={formatRevision === "synthese"} onClick={() => setFormatRevision("synthese")}>
+                            📄 Synthèse à lire
+                          </Puce>
+                          <Puce actif={formatRevision === "flashcards"} onClick={() => setFormatRevision("flashcards")}>
+                            🗂 Flashcards (cartes)
+                          </Puce>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 gap-2">
                         {SOURCES_IA.map((s) => (
@@ -644,11 +690,10 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 </button>
                         ))}
                           </div>
-
 {sourceIA === "prompt" ? (
                           <div className="space-y-1.5">
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Aucun fichier : décrivez simplement ce que vous voulez, l&apos;IA rédige {LABEL_IA_PAR_TYPE[type]} à partir de votre texte.
+                              Aucun fichier : décrivez simplement ce que vous voulez, l&apos;IA rédige {libelleIA(type, formatRevision)} à partir de votre texte.
   </p>
                            <textarea
                              name="prompt_ia"
@@ -673,8 +718,10 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                accept=".pdf,.doc,.docx,image/*"
                              />
                                  </Champ>
+                         {!estFlashcardsFormat && (
+                           <>
                            <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
-                                                             Étape 2 (optionnelle) : précisez une consigne pour orienter {LABEL_IA_PAR_TYPE[type]}.
+                                                             Étape 2 (optionnelle) : précisez une consigne pour orienter {libelleIA(type, formatRevision)}.
  </p>
                            <textarea
                              name="consigne_ia"
@@ -682,38 +729,16 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                              placeholder="Ex. « insiste sur les dates clés » ou « questions faciles uniquement » — laissez vide pour une génération standard"
                              className={CLASSE_INPUT}
                            />
+                           </>
+                         )}
                                </div>
-                       )}
+                      )}
 
-{type === "test" && !chapitreId && (
+{(type === "test" || estFlashcardsFormat) && !chapitreId && (
                           <p className="text-xs text-red-600">
-                            Choisissez ou créez d&apos;abord un chapitre ci-dessus : un test généré par IA doit être rattaché à un chapitre.
+                            Choisissez ou créez d&apos;abord un chapitre ci-dessus : un contenu généré par IA (test ou flashcards) doit être rattaché à un chapitre.
   </p>
                        )}
 </div>
-                  )}
-</div>
-              )}
-</form>
-
-{/* Pied — actions */}
-            <div className="px-5 py-3.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2 shrink-0">
-                            <button type="button" onClick={fermer} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">
-                              Annuler
-              </button>
-              <button
-                type="submit"
-                form="formulaire-nouveau-devoir"
-                disabled={envoi}
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-50 transition hover:brightness-95"
-                style={{ background: "#4169E1" }}
-              >
-{envoi ? (modeDocument === "ia" ? "Génération en cours..." : "Création...") : "Créer le devoir"}
-</button>
-  </div>
-  </div>
-  </div>
-      )}
-</div>
-  );
-}
+                  }
+</s?�F�c��У��f�&�ࠧ���VB(	B7F���2��Т�F�b6�74��S�'��R��2�R&�&FW"�B&�&FW"�6�FR�#F&��&�&FW"�6�FR�sf�W��FV�2�6V�FW"�W7F�g��V�Bv�"6�&���#��'WGF��G�S�&'WGF��"��6Ɩ6�׶fW&�W'�6�74��S�'FW�B�6�f��B��VF�V�FW�B�6�FR�SF&��FW�B�6�FR�C��fW#�FW�B�6�FR�sF&����fW#�FW�B�6�FR�3��2��"#���V�W ���'WGF����'WGF��G�S�'7V&֗B �f�&��&f�&�V��&R���WfVR�FWf��" �F�6&�VC׶V�f��Т6�74��S�'&�V�FVB׆���B��"FW�B�6�f��B�6V֖&��BFW�B�v��FR6�F�r�6�F�6&�VC��6�G��SG&�6�F�����fW#�'&�v�F�W72ӓR �7G��S׷�&6�w&�V�C�"3Cc�S"�Т৶V�f������FTF�7V�V�B���&�"�$|:��:�&F���V�6�W'2���"�$7,:�F������"��$7,:�W"�RFWf��"'У��'WGF�����F�c���F�c���F�c��У��F�c�����
