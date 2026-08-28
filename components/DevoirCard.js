@@ -929,7 +929,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       {vueCompacte ? (
         <>
           <div
-            className={`aspect-square rounded-xl border p-2 flex flex-col cursor-pointer transition-shadow hover:shadow-md ${
+            className={`aspect-square rounded-xl border p-1.5 flex flex-col cursor-pointer transition-shadow hover:shadow-md ${
               fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
             }`}
             style={{ borderLeft: `6px solid ${couleur}` }}
