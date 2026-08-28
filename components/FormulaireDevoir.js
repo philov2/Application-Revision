@@ -308,6 +308,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
         try {
                 let documentIdAEnvoyer = documentId || null;
                 let flashcardsIdAEnvoyer = null;
+                let testIdAEnvoyer = null;
 
           if (modeDocument === "import") {
                     const fichier = form.get("fichier");
@@ -333,11 +334,12 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                               } else {
                                             const route = ROUTES_IA_AVEC_DOCUMENT[type];
                                             if (type === "test") {
-                                                            await authFetch(`/api/documents/${coursSource.id}/${route}`, {
+                                                            const resultatTest = await authFetch(`/api/documents/${coursSource.id}/${route}`, {
                                                                             method: "POST",
                                                                             body: JSON.stringify({ consigne }),
                                                             });
                                                             documentIdAEnvoyer = coursSource.id;
+                                                            testIdAEnvoyer = resultatTest.test.id;
                                             } else {
                                                             const resultat = await authFetch(`/api/documents/${coursSource.id}/${route}`, {
                                                                             method: "POST",
@@ -358,11 +360,12 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                             });
                                             flashcardsIdAEnvoyer = resultat.flashcards.id;
                               } else if (type === "test") {
-                                            await authFetch(ROUTES_IA_PROMPT.test, {
+                                            const resultatTest = await authFetch(ROUTES_IA_PROMPT.test, {
                                                             method: "POST",
                                                             body: JSON.stringify({ prompt: promptIA, chapitreId }),
                                             });
                                             documentIdAEnvoyer = null;
+                                            testIdAEnvoyer = resultatTest.test.id;
                               } else {
                                             const resultat = await authFetch(ROUTES_IA_PROMPT[type], {
                                                             method: "POST",
@@ -378,6 +381,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                     matiereId,
                     chapitreId: chapitreId || null,
                     documentId: documentIdAEnvoyer,
+                    testId: testIdAEnvoyer,
                     flashcardsId: flashcardsIdAEnvoyer,
                     titre: form.get("titre") || null,
                     type,
