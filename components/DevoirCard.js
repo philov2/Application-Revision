@@ -388,7 +388,6 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setResultatTest({ note: noteCalculee, reponses: reponsesTest });
       setAfficherAnimationScore(true);
       setEnPassageTest(false);
-      onChange?.();
     } catch (err) {
       setErreurTest(err.message);
     } finally {
@@ -904,7 +903,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               return (
                 <div
                   className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
-                  onClick={() => setAfficherAnimationScore(false)}
+                  onClick={() => { setAfficherAnimationScore(false); onChange?.(); }}
                 >
                   <div
                     onClick={(e) => e.stopPropagation()}
@@ -919,7 +918,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                     </p>
                     <div>
                       <button
-                        onClick={() => setAfficherAnimationScore(false)}
+                        onClick={() => { setAfficherAnimationScore(false); onChange?.(); }}
                         className="rounded-lg px-4 py-2 text-sm font-medium text-white"
                         style={{ background: "#4169E1" }}
                       >
