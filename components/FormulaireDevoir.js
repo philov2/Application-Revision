@@ -740,6 +740,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
   </p>
                        )}
 </div>
+                )}
 </div>
                 )}
 </form>
