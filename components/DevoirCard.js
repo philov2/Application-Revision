@@ -543,26 +543,31 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         {devoir.type === "revision" && devoir.flashcardsId && (
           <div className="space-y-2">
             {erreurFlashcards && <p className="text-red-600">{erreurFlashcards}</p>}
-            {!revisionFlashcardsOuverte ? (
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <button
-                  onClick={() => setRevisionFlashcardsOuverte(true)}
-                  disabled={!flashcardsDeck}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                  style={{ background: "#4169E1" }}
-                >
-                  🗂 {flashcardsDeck ? "Réviser avec les flashcards" : "Chargement..."}
-                </button>
-                <ActionsModifierSupprimer />
-              </div>
-            ) : (
-              <>
-                <RevisionFlashcards flashcards={flashcardsDeck} onFermer={() => setRevisionFlashcardsOuverte(false)} />
-                <div className="flex justify-end">
-                  <ActionsModifierSupprimer />
-                </div>
-              </>
-            )}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <button
+                onClick={() => setRevisionFlashcardsOuverte(true)}
+                disabled={!flashcardsDeck}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                style={{ background: "#4169E1" }}
+              >
+                🗂 {flashcardsDeck ? "Réviser avec les flashcards" : "Chargement..."}
+              </button>
+              <ActionsModifierSupprimer />
+            </div>
+          </div>
+        )}
+
+        {revisionFlashcardsOuverte && flashcardsDeck && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
+            onClick={() => setRevisionFlashcardsOuverte(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+            >
+              <RevisionFlashcards flashcards={flashcardsDeck} onFermer={() => setRevisionFlashcardsOuverte(false)} />
+            </div>
           </div>
         )}
 
