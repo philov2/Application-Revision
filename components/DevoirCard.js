@@ -898,6 +898,10 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                   >
                     {enEnvoiTest ? "Envoi..." : "Valider le test"}
                   </button>
+                  <button onClick={annulerTest} className="text-sm text-slate-500 dark:text-slate-400">Annuler</button>
+                </div>
+              </div>
+            )}
             {afficherAnimationScore && resultatTest && (() => {
               const palier = paliersNote(resultatTest.note);
               return (
@@ -929,10 +933,6 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                 </div>
               );
             })()}
-                  <button onClick={annulerTest} className="text-sm text-slate-500 dark:text-slate-400">Annuler</button>
-                </div>
-              </div>
-            )}
             {resultatTest && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
