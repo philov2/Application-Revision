@@ -121,6 +121,14 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // detail complet, comme pour les flashcards).
   const [detailOuvert, setDetailOuvert] = useState(false);
 
+  // Jalon "animation de score" (signalement de Phil : une petite animation
+  // motivante selon la note obtenue a un test, avec des cotillons pour un
+  // 20/20). Distinct de resultatTest (qui reste affiche en permanence une
+  // fois le test passe) : ce drapeau ne s'active qu'au moment ou l'enfant
+  // vient de valider le test, pas quand un resultat deja ancien est charge
+  // au chargement de la carte.
+  const [afficherAnimationScore, setAfficherAnimationScore] = useState(false);
+
   useEffect(() => {
     if (!matiereId) {
       setChapitres([]);
@@ -378,6 +386,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         await basculerStatutDevoir(devoir.id, "fait");
       }
       setResultatTest({ note: noteCalculee, reponses: reponsesTest });
+      setAfficherAnimationScore(true);
       setEnPassageTest(false);
       onChange?.();
     } catch (err) {
@@ -473,6 +482,47 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // dans la liste "à faire" et dans la liste "Devoirs faits" — c'est ce badge
   // vert bien visible, combiné à la teinte de la carte ci-dessous, qui rend
   // un devoir marqué comme fait immédiatement reconnaissable.
+  // Jalon "animation de score" (suite) : palier de message/emoji selon la
+  // note /20 obtenue a un test, exactement les seuils demandes par Phil.
+  function paliersNote(note) {
+    if (note >= 20) return { emoji: "🎉", titre: "Bravo !", message: "Note parfaite, felicitations !", confetti: true };
+    if (note >= 18) return { emoji: "👏", titre: "Felicitations !", message: "Excellent travail !", confetti: false };
+    if (note >= 16) return { emoji: "😊", titre: "Tres bien !", message: "Bon travail, continue comme ca.", confetti: false };
+    if (note >= 14) return { emoji: "🙂", titre: "Bien", message: "Mais tu peux sans doute faire un peu mieux.", confetti: false };
+    if (note >= 10) return { emoji: "📘", titre: "A revoir", message: "Prends le temps de revoir le cours.", confetti: false };
+    return { emoji: "📚", titre: "Courage", message: "Il vaut mieux apprendre le cours avant de faire les exercices.", confetti: false };
+  }
+
+  // Petite pluie de cotillons (CSS pur, sans dependance) affichee uniquement
+  // pour un 20/20 (signalement de Phil : "Bravo avec cotillons").
+  function Cotillons() {
+    const pieces = ["🎉", "🎊", "✨", "🎈", "⭐"];
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute text-xl"
+            style={{
+              left: `${(i * 37) % 100}%`,
+              top: 0,
+              animation: `devoircard-cotillons ${1.6 + (i % 5) * 0.2}s ease-in ${(i % 6) * 0.15}s 1`,
+            }}
+          >
+            {pieces[i % pieces.length]}
+          </span>
+        ))}
+        <style>{`
+          @keyframes devoircard-cotillons {
+            0% { transform: translateY(-40px) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(260px) rotate(360deg); opacity: 0; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   function BadgeStatut({ children, tonalite = "neutre" }) {
     if (tonalite === "neutre") {
       return <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{children}</span>;
@@ -849,6 +899,37 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                   >
                     {enEnvoiTest ? "Envoi..." : "Valider le test"}
                   </button>
+            {afficherAnimationScore && resultatTest && (() => {
+              const palier = paliersNote(resultatTest.note);
+              return (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
+                  onClick={() => setAfficherAnimationScore(false)}
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl p-6 text-center"
+                  >
+                    {palier.confetti && <Cotillons />}
+                    <p className="text-5xl mb-3">{palier.emoji}</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-white mb-1">{palier.titre}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{palier.message}</p>
+                    <p className={`inline-flex items-center px-3 py-1 rounded-md text-xl font-bold mb-4 ${classeNote(resultatTest.note)}`}>
+                      {resultatTest.note}/20
+                    </p>
+                    <div>
+                      <button
+                        onClick={() => setAfficherAnimationScore(false)}
+                        className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+                        style={{ background: "#4169E1" }}
+                      >
+                        Continuer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
                   <button onClick={annulerTest} className="text-sm text-slate-500 dark:text-slate-400">Annuler</button>
                 </div>
               </div>
