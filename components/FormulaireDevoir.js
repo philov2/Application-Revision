@@ -741,4 +741,28 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                        )}
 </div>
                   }
-</s?�F�c��У��f�&�ࠧ���VB(	B7F���2��Т�F�b6�74��S�'��R��2�R&�&FW"�B&�&FW"�6�FR�#F&��&�&FW"�6�FR�sf�W��FV�2�6V�FW"�W7F�g��V�Bv�"6�&���#��'WGF��G�S�&'WGF��"��6Ɩ6�׶fW&�W'�6�74��S�'FW�B�6�f��B��VF�V�FW�B�6�FR�SF&��FW�B�6�FR�C��fW#�FW�B�6�FR�sF&����fW#�FW�B�6�FR�3��2��"#���V�W ���'WGF����'WGF��G�S�'7V&֗B �f�&��&f�&�V��&R���WfVR�FWf��" �F�6&�VC׶V�f��Т6�74��S�'&�V�FVB׆���B��"FW�B�6�f��B�6V֖&��BFW�B�v��FR6�F�r�6�F�6&�VC��6�G��SG&�6�F�����fW#�'&�v�F�W72ӓR �7G��S׷�&6�w&�V�C�"3Cc�S"�Т৶V�f������FTF�7V�V�B���&�"�$|:��:�&F���V�6�W'2���"�$7,:�F������"��$7,:�W"�RFWf��"'У��'WGF�����F�c���F�c���F�c��У��F�c�����
+</div>
+                )}
+</form>
+
+{/* Pied — actions */}
+            <div className="px-5 py-3.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2 shrink-0">
+                          <button type="button" onClick={fermer} className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-2">
+                              Annuler
+              </button>
+              <button
+                type="submit"
+                form="formulaire-nouveau-devoir"
+                disabled={envoi}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-50 transition hover:brightness-95"
+                style={{ background: "#4169E1" }}
+              >
+{envoi ? (modeDocument === "ia" ? "Génération en cours..." : "Création...") : "Créer le devoir"}
+</button>
+  </div>
+  </div>
+  </div>
+      )}
+</div>
+  );
+}
