@@ -612,7 +612,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl bg-white dark:bg-slate-900 p-4"
           >
             <button
               type="button"
