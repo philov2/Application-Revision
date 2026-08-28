@@ -223,16 +223,16 @@ function Contenu() {
             <ProgressionMatieres devoirs={devoirs} />
             <section>
               <h2 className="font-semibold mb-3">À faire ({aFaire.length})</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {aFaire.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {aFaire.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} vueCompacte />)}
                 {aFaire.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Rien à faire pour le moment, bravo !</p>}
               </div>
             </section>
             {enAttenteCorrection.length > 0 && (
               <section>
                 <h2 className="font-semibold mb-3">Fait - en attente de correction ({enAttenteCorrection.length})</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {enAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {enAttenteCorrection.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} vueCompacte />)}
                 </div>
               </section>
             )}
@@ -240,8 +240,8 @@ function Contenu() {
               <h2 className="font-semibold mb-3 flex items-center gap-1.5 text-green-700 dark:text-green-400">
                 <span aria-hidden="true">✓</span> Déjà fait ({faits.length})
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {faits.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} />)}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {faits.map((d) => <DevoirCard key={d.id} devoir={d} onToggle={toggle} enfantId={enfantId} onChange={() => recharger(enfantId)} vueCompacte />)}
               </div>
             </section>
           </>
@@ -269,8 +269,8 @@ function Contenu() {
           <>
             <section>
               <h2 className="font-semibold mb-3">🗄 Devoirs archivés ({archives.length})</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {archives.map((d) => <DevoirCard key={d.id} devoir={d} enfantId={enfantId} />)}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {archives.map((d) => <DevoirCard key={d.id} devoir={d} enfantId={enfantId} vueCompacte />)}
                 {archives.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Aucun devoir archivé pour l&apos;instant.</p>}
               </div>
             </section>
