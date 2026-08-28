@@ -1,35 +1,45 @@
 "use client";
 
-import { progressionParMatiere } from "@/lib/devoirsStats";
+import { progressionGlobale } from "@/lib/devoirsStats";
 
-// Jalon "progression visible" (signalement de Phil : rendre l'application
-// plus attractive pour une adolescente, comme le streak et le minuteur
-// focus) : une barre de progression par matière, à la couleur de la
-// matière (même palette que partout ailleurs — cartes de devoirs, Chapitres
-// et documents), pour voir en un coup d'œil où on en est. N'affiche rien si
-// aucun devoir n'a encore de matière (liste vide au tout premier chargement).
+// Jalon "progression cumulee et ludique" (signalement de Phil : la barre de
+// progression par matiere n'etait pas assez fun ni attractive ; il prefere
+// une seule barre cumulee sur tous les devoirs, avec un message et un emoji
+// qui evoluent selon l'avancement, dans la meme veine que le streak et le
+// minuteur focus).
+function messageProgression(pourcentage, total) {
+  if (total === 0) return { emoji: "✨", texte: "Prêt·e à commencer ?" };
+  if (pourcentage >= 100) return { emoji: "🎉", texte: "Tout est fait, bravo !" };
+  if (pourcentage >= 75) return { emoji: "🔥", texte: "Presque au bout, continue !" };
+  if (pourcentage >= 50) return { emoji: "💪", texte: "Tu es à mi-chemin !" };
+  if (pourcentage >= 25) return { emoji: "🚀", texte: "Bon départ, continue comme ça !" };
+  return { emoji: "🌱", texte: "C'est parti !" };
+}
+
 export default function ProgressionMatieres({ devoirs }) {
-  const progression = progressionParMatiere(devoirs || []);
-  if (progression.length === 0) return null;
+  const { total, faits, pourcentage } = progressionGlobale(devoirs || []);
+  if (total === 0) return null;
+
+  const { emoji, texte } = messageProgression(pourcentage, total);
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2.5">
-      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Progression par matière</p>
-      <div className="space-y-2">
-        {progression.map((m) => (
-          <div key={m.matiereId} className="flex items-center gap-2.5">
-            <span className="text-xs w-20 sm:w-28 shrink-0 truncate" title={m.nom}>
-              {m.nom}
-            </span>
-            <div className="flex-1 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${m.pourcentage}%`, background: m.couleur }}
-              />
-            </div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 w-9 text-right shrink-0">{m.pourcentage}%</span>
-          </div>
-        ))}
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2.5 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800/60">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {emoji} {texte}
+        </p>
+        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+          {faits}/{total} devoirs · {pourcentage}%
+        </p>
+      </div>
+      <div className="relative h-4 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${pourcentage}%`,
+            background: "linear-gradient(90deg, #FFC0CB, #4169E1)",
+          }}
+        />
       </div>
     </div>
   );
