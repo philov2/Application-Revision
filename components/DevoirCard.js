@@ -970,9 +970,6 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               >
                 {devoir.matiere} · {LABEL_TYPE[devoir.type] || devoir.type}
               </span>
-              <p className="font-medium text-xs text-slate-900 dark:text-white line-clamp-2">
-                {devoir.titre || devoir.chapitre || devoir.matiere}
-              </p>
             </div>
           </div>
 
