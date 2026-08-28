@@ -905,30 +905,22 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
             {afficherAnimationScore && resultatTest && (() => {
               const palier = paliersNote(resultatTest.note);
               return (
-                <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
-                  onClick={() => { setAfficherAnimationScore(false); onChange?.(); }}
-                >
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl p-6 text-center"
-                  >
-                    {palier.confetti && <Cotillons />}
-                    <p className="text-5xl mb-3">{palier.emoji}</p>
-                    <p className="text-lg font-bold text-slate-900 dark:text-white mb-1">{palier.titre}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{palier.message}</p>
-                    <p className={`inline-flex items-center px-3 py-1 rounded-md text-xl font-bold mb-4 ${classeNote(resultatTest.note)}`}>
-                      {resultatTest.note}/20
-                    </p>
-                    <div>
-                      <button
-                        onClick={() => { setAfficherAnimationScore(false); onChange?.(); }}
-                        className="rounded-lg px-4 py-2 text-sm font-medium text-white"
-                        style={{ background: "#4169E1" }}
-                      >
-                        Continuer
-                      </button>
-                    </div>
+                <div className="relative overflow-hidden rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-6 text-center">
+                  {palier.confetti && <Cotillons />}
+                  <p className="text-5xl mb-3">{palier.emoji}</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white mb-1">{palier.titre}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{palier.message}</p>
+                  <p className={`inline-flex items-center px-3 py-1 rounded-md text-xl font-bold mb-4 ${classeNote(resultatTest.note)}`}>
+                    {resultatTest.note}/20
+                  </p>
+                  <div>
+                    <button
+                      onClick={() => { setAfficherAnimationScore(false); onChange?.(); }}
+                      className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+                      style={{ background: "#4169E1" }}
+                    >
+                      Continuer
+                    </button>
                   </div>
                 </div>
               );
