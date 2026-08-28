@@ -47,7 +47,7 @@ function classeNote(note) {
   return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
 }
 
-export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId }) {
+export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfantId, compteId, vueCompacte = false }) {
   const router = useRouter();
   const couleur = devoir.couleur || matieresSample.find((m) => m.nom === devoir.matiere)?.couleur || "#4169E1";
   const fait = devoir.statut === "fait";
@@ -554,73 +554,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       </label>
     ) : null;
 
-  return (
-    <>
-      <div
-        className={`rounded-xl border p-3 flex items-center gap-3 cursor-pointer transition-shadow hover:shadow-md ${
-          fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
-        }`}
-        style={{ borderLeft: `6px solid ${couleur}` }}
-        onClick={() => setDetailOuvert(true)}
-      >
-        {onToggle && devoir.type !== "exercice" ? (
-          <input
-            type="checkbox"
-            checked={fait}
-            onChange={() => onToggle?.(devoir.id)}
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 shrink-0 rounded"
-          />
-        ) : devoir.type === "exercice" ? (
-          <span
-            className={`h-3 w-3 rounded-full shrink-0 ${
-              !devoir.reponseExercice ? "bg-slate-300" : devoir.reponseExercice.note == null ? "bg-yellow-400" : "bg-green-500"
-            }`}
-          />
-        ) : (
-          <span className={`h-3 w-3 rounded-full shrink-0 ${fait ? "bg-green-500" : "bg-slate-300"}`} />
-        )}
-        <div className="min-w-0 flex-1">
-          <span
-            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold text-white"
-            style={{ background: couleur }}
-          >
-            {devoir.matiere} · {LABEL_TYPE[devoir.type] || devoir.type}
-          </span>
-          <p className="font-medium text-sm text-slate-900 dark:text-white truncate mt-0.5">
-            {devoir.titre || devoir.chapitre || devoir.matiere}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          {fait ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-              {dateRealisationLabel ? `✓ ${dateRealisationLabel}` : "✓ Fait"}
-            </span>
-          ) : (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${COULEUR_DATE[statut]}`}>
-              {dateLabel}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {detailOuvert && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
-          onClick={() => setDetailOuvert(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl bg-white dark:bg-slate-900 p-4"
-          >
-            <button
-              type="button"
-              onClick={() => setDetailOuvert(false)}
-              className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-            >
-              ← Retour
-            </button>
-
+  const carteDetail = (
     <div
       className={`rounded-xl border p-4 transition-colors ${
         fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
@@ -988,8 +922,85 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       </div>
     </div>
 
+  );
+
+  return (
+    <>
+      {vueCompacte ? (
+        <>
+          <div
+            className={`aspect-square rounded-xl border p-2 flex flex-col cursor-pointer transition-shadow hover:shadow-md ${
+              fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
+            }`}
+            style={{ borderLeft: `6px solid ${couleur}` }}
+            onClick={() => setDetailOuvert(true)}
+          >
+            <div className="flex items-center justify-between gap-1">
+              {onToggle && devoir.type !== "exercice" ? (
+                <input
+                  type="checkbox"
+                  checked={fait}
+                  onChange={() => onToggle?.(devoir.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-4 w-4 shrink-0 rounded"
+                />
+              ) : devoir.type === "exercice" ? (
+                <span
+                  className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                    !devoir.reponseExercice ? "bg-slate-300" : devoir.reponseExercice.note == null ? "bg-yellow-400" : "bg-green-500"
+                  }`}
+                />
+              ) : (
+                <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${fait ? "bg-green-500" : "bg-slate-300"}`} />
+              )}
+              {fait ? (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 truncate">
+                  {dateRealisationLabel ? `✓ ${dateRealisationLabel}` : "✓ Fait"}
+                </span>
+              ) : (
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold truncate ${COULEUR_DATE[statut]}`}>
+                  {dateLabel}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-center gap-1">
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-white"
+                style={{ background: couleur }}
+              >
+                {devoir.matiere} · {LABEL_TYPE[devoir.type] || devoir.type}
+              </span>
+              <p className="font-medium text-xs text-slate-900 dark:text-white line-clamp-2">
+                {devoir.titre || devoir.chapitre || devoir.matiere}
+              </p>
+            </div>
           </div>
-        </div>
+
+          {detailOuvert && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
+              onClick={() => setDetailOuvert(false)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl bg-white dark:bg-slate-900 p-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => setDetailOuvert(false)}
+                  className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  ← Retour
+                </button>
+
+                {carteDetail}
+
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        carteDetail
       )}
     </>
   );
