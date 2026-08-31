@@ -556,7 +556,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
 
   const carteDetail = (
     <div
-      className={`rounded-xl border p-4 transition-colors ${
+      className={`rounded-2xl border p-4 carte-recap transition-colors ${
         fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
       }`}
       style={{ borderLeft: `6px solid ${couleur}` }}
@@ -929,7 +929,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       {vueCompacte ? (
         <>
           <div
-            className={`aspect-square rounded-xl border p-1.5 flex flex-col cursor-pointer transition-shadow hover:shadow-md ${
+            className={`aspect-square rounded-2xl border p-1.5 flex flex-col cursor-pointer carte-recap ${
               fait ? "border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-950/10" : "border-slate-200 dark:border-slate-700"
             }`}
             style={{ borderLeft: `6px solid ${couleur}` }}
