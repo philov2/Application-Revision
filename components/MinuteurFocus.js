@@ -10,7 +10,7 @@ import { formaterTemps, stadePlante } from "@/lib/useMinuteurFocus";
    couleurAccent (Jalon "personnalisation de l'espace Enfant", signalement
    de Phil) : couleur choisie par l'enfant (voir PersonnalisationEspace.js),
    utilisée pour le bouton Démarrer/Reprendre à la place du bleu par défaut
-   de l'application. Optionnelle : #4169E1 si l'enfant n'a rien choisi. */
+   de l'application. Optionnelle : var(--azur) si l'enfant n'a rien choisi. */
 export default function MinuteurFocus({ minuteur, couleurAccent }) {
   const {
     phase,
@@ -32,13 +32,13 @@ export default function MinuteurFocus({ minuteur, couleurAccent }) {
       <div aria-hidden="true" style={{ fontSize: `${56 + fraction * 40}px`, transition: "font-size 1s ease" }}>
         {phase === "focus" ? stadePlante(fraction) : "☕"}
       </div>
-      <p className="text-4xl font-semibold tabular-nums">{formaterTemps(secondesRestantes)}</p>
+      <p className="text-4xl font-display font-semibold tabular-nums">{formaterTemps(secondesRestantes)}</p>
       <div className="flex items-center gap-2">
         {!actif ? (
           <button
             onClick={demarrer}
             className="rounded-lg px-4 py-2 text-sm font-medium text-white"
-            style={{ background: couleurAccent || "#4169E1" }}
+            style={{ background: couleurAccent || "var(--azur)" }}
           >
             {secondesRestantes === dureeTotale ? "Démarrer" : "Reprendre"}
           </button>
