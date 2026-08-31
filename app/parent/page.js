@@ -323,8 +323,8 @@ function Contenu() {
             {devoirsACorriger.length > 0 && (
               <section>
                 <h2 className="font-display font-semibold mb-3">À corriger</h2>
-                <div className="space-y-3">
-                  {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                  {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} vueCompacte />)}
                 </div>
               </section>
             )}
@@ -333,16 +333,16 @@ function Contenu() {
                 <h2 className="font-display font-semibold">Devoirs de {enfant.nom}</h2>
                 <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
               </div>
-              <div className="space-y-3">
-                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {devoirsAFaireTries.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} vueCompacte />)}
               </div>
             </section>
             <section>
               <h2 className="font-display font-semibold mb-3 flex items-center gap-1.5 text-green-700 dark:text-green-400">
                 <span aria-hidden="true">✓</span> Devoirs faits
               </h2>
-              <div className="space-y-3">
-                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {devoirsFaits.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} vueCompacte />)}
               </div>
             </section>
           </>
@@ -461,8 +461,8 @@ function Contenu() {
           <>
             <section>
               <h2 className="font-display font-semibold mb-3">🗄 Devoirs archivés</h2>
-              <div className="space-y-3">
-                {devoirsArchivesListe.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {devoirsArchivesListe.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} vueCompacte />)}
                 {devoirsArchivesListe.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Aucun devoir archivé pour l&apos;instant.</p>}
               </div>
             </section>
