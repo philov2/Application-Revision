@@ -41,10 +41,24 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+    <header
+      className="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-b"
+      style={{ borderColor: "var(--bordure-recap)" }}
+    >
       <div className="max-w-4xl mx-auto flex items-center justify-between px-4 py-3 gap-4 flex-wrap">
-        <Link href="/" className="font-semibold text-lg text-[#FFC0CB]">
-          Révision
+        <Link href="/" className="flex items-center gap-2.5">
+          <span
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "var(--azur)" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 5.5c2.5-1 5.5-1 8 0v13c-2.5-1-5.5-1-8 0z"/>
+              <path d="M20 5.5c-2.5-1-5.5-1-8 0v13c2.5-1 5.5-1 8 0z"/>
+            </svg>
+          </span>
+          <span className="font-display font-semibold text-lg tracking-tight text-[#FFC0CB]">
+            Révision
+          </span>
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
           {estAdmin && (
@@ -53,16 +67,16 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
                 <Link
                   key={t.role}
                   href={t.chemin}
-                  className={`px-2.5 py-1 rounded-lg ${pathname === t.chemin ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
-                  style={pathname === t.chemin ? { background: "#4169E1" } : {}}
+                  className={`px-3 py-1 rounded-full ${pathname === t.chemin ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
+                  style={pathname === t.chemin ? { background: "var(--azur)" } : {}}
                 >
                   {t.label}
                 </Link>
               ))}
               <Link
                 href="/admin/comptes"
-                className={`px-2.5 py-1 rounded-lg ${pathname === "/admin/comptes" ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
-                style={pathname === "/admin/comptes" ? { background: "#4169E1" } : {}}
+                className={`px-3 py-1 rounded-full ${pathname === "/admin/comptes" ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
+                style={pathname === "/admin/comptes" ? { background: "var(--azur)" } : {}}
               >
                 Comptes
               </Link>
@@ -76,7 +90,7 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
           {supabaseConfigured && (
             <button
               onClick={deconnexion}
-              className="text-sm font-medium rounded-lg px-3 py-1.5 border border-slate-300 dark:border-slate-600"
+              className="text-sm font-medium rounded-full px-3 py-1.5 border border-slate-300 dark:border-slate-600"
             >
               Déconnexion
             </button>
