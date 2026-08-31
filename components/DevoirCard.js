@@ -6,7 +6,7 @@ import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
 import { modifierDevoir, supprimerDevoir, basculerStatutDevoir } from "@/lib/devoirsSupabase";
 import { soumettreReponseExercice, noterExercice, urlSigneeFichierExercice } from "@/lib/reponsesExercicesSupabase";
-import { chargerTestsChapitre, chargerTest, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
+import { chargerTest, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
 import { chargerFlashcards } from "@/lib/flashcardsSupabase";
 import RevisionFlashcards from "@/components/RevisionFlashcards";
 
@@ -157,7 +157,13 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     if (devoir.type !== "test" || !devoir.enfantId) return;
     (async () => {
       try {
-        let t = null; if (devoir.testId) { t = await chargerTest(devoir.testId); } else if (devoir.chapitreId) { const tests = await chargerTestsChapitre(devoir.chapitreId); t = tests[0] || null; }
+        // Resoudre STRICTEMENT par devoir.testId (jamais par le chapitre) : un
+        // fallback sur "le premier test du chapitre" a deja cause un bug ou
+        // l'enfant voyait directement la note/correction d'un ANCIEN test du
+        // meme chapitre au lieu de devoir passer le nouveau (signalement de
+        // Phil, deja corrige une fois via la colonne test_id - voir plus haut).
+        let t = null;
+        if (devoir.testId) { t = await chargerTest(devoir.testId); }
 
         setTestDisponible(t);
         if (t) {
