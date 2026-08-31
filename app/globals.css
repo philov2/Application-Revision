@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
 
 /* Mode sombre pilote par la classe .dark sur <html> (bouton dans la Navbar),
    plutot que par la seule preference systeme (prefers-color-scheme). */
@@ -7,11 +8,42 @@
 :root {
   --bleu-matiere: #4169e1;
   --rose-matiere: #f7cee6;
+
+  /* Palette d'accent "Recap" (proposee par Phil), utilisee pour l'entete,
+     les boutons et les anneaux de progression - independante des couleurs
+     par matiere qui restent gerees par lib/matiereCouleurs. */
+  --azur: #185FA5;
+  --teal: #0F6E56;
+  --ambre: #C4832A;
+  --corail: #B85F78;
+  --sauge: #4F7F4B;
+  --ardoise: #55606F;
+  --bg-carte: #FFFFFF;
+  --bg-carte-2: #F6F6FB;
+  --bordure-recap: rgba(20,23,31,0.09);
+}
+
+.dark {
+  --azur: #5AA8E8;
+  --teal: #45C4A0;
+  --ambre: #E8A94C;
+  --corail: #E29AB0;
+  --sauge: #8FBF89;
+  --ardoise: #8B95A8;
+  --bg-carte: #1C2029;
+  --bg-carte-2: #20242F;
+  --bordure-recap: rgba(255,255,255,0.08);
 }
 
 @theme inline {
   --color-bleu-matiere: var(--bleu-matiere);
   --color-rose-matiere: var(--rose-matiere);
+  --color-azur: var(--azur);
+  --color-teal-accent: var(--teal);
+  --color-ambre-accent: var(--ambre);
+  --color-corail: var(--corail);
+  --color-sauge: var(--sauge);
+  --color-ardoise: var(--ardoise);
 }
 
 /* Le fond et la couleur de texte du body sont geres par les classes
@@ -22,5 +54,36 @@
    etait force manuellement (bouton) sans correspondre a la preference
    systeme. On ne garde donc que la police ici. */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Manrope', Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: 'Sora', sans-serif;
+}
+
+/* Carte de style "Recap" : coin arrondi genereux, legere elevation au survol.
+   A poser en plus des classes Tailwind existantes (bg/border) sur les cartes. */
+.carte-recap {
+  transition: transform .18s ease, border-color .18s ease;
+}
+.carte-recap:hover {
+  transform: translateY(-3px);
+}
+
+/* Anneau de progression circulaire (conic-gradient), style "Recap".
+   Usage : <div class="anneau" style="--pct:72; --accent: var(--azur); --trou: var(--bg-carte)"><span>72%</span></div> */
+.anneau {
+  --pct: 50;
+  --accent: var(--azur);
+  --trou: #ffffff;
+  width: 44px; height: 44px; border-radius: 9999px; flex-shrink: 0;
+  background: conic-gradient(var(--accent) calc(var(--pct) * 3.6deg), rgba(128,134,150,0.18) 0deg);
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.anneau.lg { width: 56px; height: 56px; }
+.anneau::before {
+  content: ""; position: absolute; inset: 4px; border-radius: 9999px; background: var(--trou);
+}
+.anneau span {
+  position: relative; font-size: 11px; font-weight: 700; font-family: 'Sora', sans-serif;
 }
