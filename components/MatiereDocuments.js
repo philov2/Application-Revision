@@ -25,8 +25,8 @@ const TYPES_DOCUMENT = [
    les actions se distinguent clairement de la donnée elle-même. */
 const PILL_NEUTRE = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800";
 const PILL_DANGER = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50";
-const PILL_DANGER_SOLIDE = "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50";
-const PILL_AVERTISSEMENT = "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+const PILL_DANGER_SOLIDE = "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-display font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50";
+const PILL_AVERTISSEMENT = "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-display font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
 const PILL_IA = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 disabled:opacity-50";
 
 /* lectureSeule masque toutes les actions qui modifient les données (créer,
@@ -628,14 +628,14 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
       <div className="w-full flex items-center justify-between gap-2">
         {renommageMatiereOuvert ? (
           <form onSubmit={renommerMatiere} className="flex-1 flex items-center gap-1.5 min-w-0">
-            <input value={nomMatiereEdite} onChange={(e) => setNomMatiereEdite(e.target.value)} autoFocus className="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-sm font-semibold" />
+            <input value={nomMatiereEdite} onChange={(e) => setNomMatiereEdite(e.target.value)} autoFocus className="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-sm font-display font-semibold" />
             <button type="submit" disabled={enCoursRenommageMatiere || !nomMatiereEdite.trim()} className={PILL_NEUTRE}>{enCoursRenommageMatiere ? "..." : "✓ Ok"}</button>
             <button type="button" onClick={() => setRenommageMatiereOuvert(false)} className={PILL_NEUTRE}>Annuler</button>
           </form>
         ) : (
           <button type="button" onClick={() => setMatiereReduite((v) => !v)} className="flex-1 flex items-center gap-2 min-w-0 text-left">
             <span className="text-xs text-slate-400 shrink-0">{matiereReduite ? "▶" : "▼"}</span>
-            <h3 className="font-semibold text-base truncate">{nomMatiereAffiche}</h3>
+            <h3 className="font-display font-semibold text-base truncate">{nomMatiereAffiche}</h3>
           </button>
         )}
         <span className="text-xs text-slate-400 shrink-0">
@@ -696,7 +696,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
                       <button type="button" onClick={() => toggleChapitre(c.id)} className="flex items-center gap-1.5 text-left min-w-0">
                         <span className="text-xs text-slate-400 shrink-0">{estReduit ? "▶" : "▼"}</span>
                         <span className="text-sm shrink-0">📂</span>
-                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{c.nom}</span>
+                        <span className="text-sm font-display font-semibold text-slate-700 dark:text-slate-200 truncate">{c.nom}</span>
                         <span className="text-xs text-slate-400 shrink-0">
                           ({docsChapitre.length} doc{docsChapitre.length !== 1 ? "s" : ""}
                           {testsChapitre.length > 0 ? `, ${testsChapitre.length} test${testsChapitre.length !== 1 ? "s" : ""}` : ""}
@@ -734,7 +734,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
                           </select>
                           <input name="fichier" type="file" required className="w-full text-sm" />
                           <div className="flex items-center gap-2">
-                            <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
+                            <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50" style={{ background: "var(--azur)" }}>
                               {envoi ? "Envoi..." : `Importer dans « ${c.nom} »`}
                             </button>
                             <button type="button" onClick={() => setFormOuvertPourChapitre(null)} className="text-sm text-slate-500">Annuler</button>
@@ -803,7 +803,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
 
           {!lectureSeule && !modeArchive && documentsSansChapitre.length > 0 && (
             <div className="rounded-lg border-2 border-dashed border-yellow-300 dark:border-yellow-700 p-3 space-y-2 bg-yellow-50/50 dark:bg-yellow-900/10">
-              <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-400">
+              <p className="text-xs font-display font-semibold text-yellow-800 dark:text-yellow-400">
                 ⚠️ Documents sans chapitre (importés avant que ce soit obligatoire) — choisissez un chapitre pour chacun, ou supprimez-les :
               </p>
               {chapitres.length === 0 && (
