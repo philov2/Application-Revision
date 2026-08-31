@@ -23,23 +23,23 @@ export default function ProgressionMatieres({ devoirs }) {
   const { emoji, texte } = messageProgression(pourcentage, total);
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2.5 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800/60">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+    <div
+      className="carte-recap rounded-2xl p-4 flex items-center gap-4 flex-wrap"
+      style={{ background: "var(--bg-carte)", border: "1px solid var(--bordure-recap)" }}
+    >
+      <div
+        className="anneau lg"
+        style={{ "--pct": pourcentage, "--accent": "var(--teal)", "--trou": "var(--bg-carte)" }}
+      >
+        <span>{pourcentage}%</span>
+      </div>
+      <div className="flex-1 min-w-[180px]">
+        <p className="font-display text-[15px] font-semibold">
           {emoji} {texte}
         </p>
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-          {faits}/{total} devoirs · {pourcentage}%
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {faits}/{total} devoirs faits
         </p>
-      </div>
-      <div className="relative h-4 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${pourcentage}%`,
-            background: "linear-gradient(90deg, #FFC0CB, #4169E1)",
-          }}
-        />
       </div>
     </div>
   );
