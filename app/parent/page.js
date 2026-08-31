@@ -284,7 +284,7 @@ function Contenu() {
                   if (supabaseConfigured) recharger(e.id);
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium border ${e.id === enfantSelectionne ? "border-transparent text-white" : "border-slate-300 dark:border-slate-600"}`}
-                style={e.id === enfantSelectionne ? { background: "#4169E1" } : {}}
+                style={e.id === enfantSelectionne ? { background: "var(--azur)" } : {}}
               >
                 {e.nom}{e.niveau ? ` · ${e.niveau}` : ""}
               </button>
@@ -293,13 +293,13 @@ function Contenu() {
         )}
 
         <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700 flex-wrap">
-          <button onClick={() => setOnglet("devoirs")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
+          <button onClick={() => setOnglet("devoirs")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "devoirs" ? "border-[var(--azur)] text-[var(--azur)]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
             Devoirs{enfant ? ` de ${enfant.nom}` : ""}
           </button>
-          <button onClick={() => setOnglet("documents")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
+          <button onClick={() => setOnglet("documents")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "documents" ? "border-[var(--azur)] text-[var(--azur)]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
             Chapitres et documents
           </button>
-          <button onClick={() => setOnglet("messages")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
+          <button onClick={() => setOnglet("messages")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center gap-1.5 ${onglet === "messages" ? "border-[var(--azur)] text-[var(--azur)]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
             Messages
             {nonLus > 0 && (
               <span className="inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold h-4 min-w-4 px-1">
@@ -307,10 +307,10 @@ function Contenu() {
               </span>
             )}
           </button>
-          <button onClick={() => setOnglet("compte")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "compte" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
+          <button onClick={() => setOnglet("compte")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "compte" ? "border-[var(--azur)] text-[var(--azur)]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
             Gestion du compte
           </button>
-          <button onClick={() => setOnglet("archives")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "archives" ? "border-slate-900 dark:border-white" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
+          <button onClick={() => setOnglet("archives")} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${onglet === "archives" ? "border-[var(--azur)] text-[var(--azur)]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
             🗄 Archives
           </button>
         </div>
@@ -322,7 +322,7 @@ function Contenu() {
             <ProgressionMatieres devoirs={devoirs} />
             {devoirsACorriger.length > 0 && (
               <section>
-                <h2 className="font-semibold mb-3">À corriger</h2>
+                <h2 className="font-display font-semibold mb-3">À corriger</h2>
                 <div className="space-y-3">
                   {devoirsACorriger.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
                 </div>
@@ -330,7 +330,7 @@ function Contenu() {
             )}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Devoirs de {enfant.nom}</h2>
+                <h2 className="font-display font-semibold">Devoirs de {enfant.nom}</h2>
                 <FormulaireDevoir enfantId={enfant.id} compteId={compteId} matieres={matieres} onCree={() => recharger(enfant.id)} />
               </div>
               <div className="space-y-3">
@@ -338,7 +338,7 @@ function Contenu() {
               </div>
             </section>
             <section>
-              <h2 className="font-semibold mb-3 flex items-center gap-1.5 text-green-700 dark:text-green-400">
+              <h2 className="font-display font-semibold mb-3 flex items-center gap-1.5 text-green-700 dark:text-green-400">
                 <span aria-hidden="true">✓</span> Devoirs faits
               </h2>
               <div className="space-y-3">
@@ -351,7 +351,7 @@ function Contenu() {
         {onglet === "documents" && enfant && compteId && (
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Chapitres et documents</h2>
+              <h2 className="font-display font-semibold">Chapitres et documents</h2>
               <button onClick={() => setNouvelleMatiereOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
                 + Nouvelle matière
               </button>
@@ -359,7 +359,7 @@ function Contenu() {
             {nouvelleMatiereOuvert && (
               <form onSubmit={creerNouvelleMatiere} className="flex items-center gap-2 mb-3">
                 <input value={nomNouvelleMatiere} onChange={(e) => setNomNouvelleMatiere(e.target.value)} placeholder="Nom de la nouvelle matière" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
-                <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50" style={{ background: "#4169E1" }}>
+                <button type="submit" disabled={enCoursMatiere || !nomNouvelleMatiere.trim()} className="rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50" style={{ background: "var(--azur)" }}>
                   {enCoursMatiere ? "..." : "Ajouter"}
                 </button>
               </form>
@@ -383,19 +383,19 @@ function Contenu() {
           <>
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Enfants</h2>
+                <h2 className="font-display font-semibold">Enfants</h2>
                 <button onClick={() => setFormEnfantOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
                   + Ajouter un enfant
                 </button>
               </div>
               {formEnfantOuvert && (
-                <form onSubmit={ajouterEnfant} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+                <form onSubmit={ajouterEnfant} className="rounded-2xl carte-recap p-4 space-y-3">
                   <p className="font-medium text-sm">Nouveau compte enfant</p>
                   <input name="nom" required placeholder="Prénom" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="email" type="email" required placeholder="Adresse email" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="telephone" type="tel" placeholder="Numéro de téléphone (optionnel, ex. 621 234 567)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="niveau_scolaire" required placeholder="Niveau scolaire (ex. 4ème)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
-                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#4169E1" }}>Créer le compte</button>
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "var(--azur)" }}>Créer le compte</button>
                 </form>
               )}
               {enfants.length === 0 && !formEnfantOuvert && (
@@ -405,13 +405,13 @@ function Contenu() {
 
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Soutiens</h2>
+                <h2 className="font-display font-semibold">Soutiens</h2>
                 <button onClick={() => setFormSoutienOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
                   + Demander un compte soutien
                 </button>
               </div>
               {formSoutienOuvert && (
-                <form onSubmit={demanderSoutien} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+                <form onSubmit={demanderSoutien} className="rounded-2xl carte-recap p-4 space-y-3">
                   <input name="nom" required placeholder="Nom du soutien" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="email" type="email" required placeholder="Adresse email" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="telephone" type="tel" required placeholder="Numéro de téléphone (ex. 621 234 567)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
@@ -426,7 +426,7 @@ function Contenu() {
                       ))}
                     </div>
                   </div>
-                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#4169E1" }}>
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "var(--azur)" }}>
                     Envoyer la demande à l&apos;administrateur
                   </button>
                 </form>
@@ -435,7 +435,7 @@ function Contenu() {
 
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Autre parent</h2>
+                <h2 className="font-display font-semibold">Autre parent</h2>
                 <button onClick={() => setFormCoparentOuvert((v) => !v)} className="text-sm font-medium rounded-lg px-3 py-1.5 border border-dashed border-slate-400">
                   + Inviter un co-parent
                 </button>
@@ -444,11 +444,11 @@ function Contenu() {
                 Le compte invité sera rattaché, une fois validé par l&apos;administrateur, à tous les enfants déjà liés à votre compte.
               </p>
               {formCoparentOuvert && (
-                <form onSubmit={demanderCoparent} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+                <form onSubmit={demanderCoparent} className="rounded-2xl carte-recap p-4 space-y-3">
                   <input name="nom" required placeholder="Nom de l'autre parent" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="email" type="email" required placeholder="Adresse email" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
                   <input name="telephone" type="tel" required placeholder="Numéro de téléphone (ex. 621 234 567)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2" />
-                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "#4169E1" }}>
+                  <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-white" style={{ background: "var(--azur)" }}>
                     Envoyer la demande à l&apos;administrateur
                   </button>
                 </form>
@@ -460,14 +460,14 @@ function Contenu() {
         {onglet === "archives" && enfant && compteId && (
           <>
             <section>
-              <h2 className="font-semibold mb-3">🗄 Devoirs archivés</h2>
+              <h2 className="font-display font-semibold mb-3">🗄 Devoirs archivés</h2>
               <div className="space-y-3">
                 {devoirsArchivesListe.map((d) => <DevoirCard key={d.id} devoir={d} matieres={matieres} compteId={compteId} enfantId={enfant.id} onChange={() => recharger(enfant.id)} />)}
                 {devoirsArchivesListe.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Aucun devoir archivé pour l&apos;instant.</p>}
               </div>
             </section>
             <section>
-              <h2 className="font-semibold mb-3">🗄 Documents archivés</h2>
+              <h2 className="font-display font-semibold mb-3">🗄 Documents archivés</h2>
               <div className="space-y-4">
                 {matieres.map((m) => (
                   <MatiereDocuments key={m.id} matiere={m} enfantId={enfant.id} compteId={compteId} modeArchive />
