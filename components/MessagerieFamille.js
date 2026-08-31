@@ -95,7 +95,7 @@ envoyer(e);
 return (
 <div className="rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col h-[28rem]">
 <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-<h2 className="font-semibold text-sm">{titre || "Messages de la famille"}</h2>
+<h2 className="font-display font-semibold text-sm">{titre || "Messages de la famille"}</h2>
 </div>
 
 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -112,10 +112,10 @@ return (
 <div key={m.id} className={`flex ${estMoi ? "justify-end" : "justify-start"}`}>
 <div
 className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${estMoi ? "text-white" : "bg-slate-100 dark:bg-slate-800"}`}
-style={estMoi ? { background: "#4169E1" } : undefined}
+style={estMoi ? { background: "var(--azur)" } : undefined}
 >
 {(!estMoi || nomDestinataire) && (
-<p className={`text-xs font-semibold mb-0.5 ${estMoi ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>
+<p className={`text-xs font-display font-semibold mb-0.5 ${estMoi ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>
 {!estMoi && (
 <>
 {nomAuteur}
@@ -185,7 +185,7 @@ Pour :
 id="destinataire-message"
 value={destinataireId}
 onChange={(e) => setDestinataireId(e.target.value)}
-className="text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#4169E1]"
+className="text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[var(--azur)]"
 >
 <option value="">Tout le monde</option>
 {membres.map((m) => (
@@ -203,13 +203,13 @@ onChange={(e) => setTexte(e.target.value)}
 onKeyDown={surTouche}
 rows={1}
 placeholder="Écrire un message…"
-className="flex-1 resize-none rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4169E1]"
+className="flex-1 resize-none rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--azur)]"
 />
 <button
 type="submit"
 disabled={envoi || !texte.trim()}
 className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 shrink-0"
-style={{ background: "#4169E1" }}
+style={{ background: "var(--azur)" }}
 >
 Envoyer
 </button>
