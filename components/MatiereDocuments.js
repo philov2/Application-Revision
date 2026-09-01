@@ -25,6 +25,7 @@ const TYPES_DOCUMENT = [
    les actions se distinguent clairement de la donnée elle-même. */
 const PILL_NEUTRE = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800";
 const PILL_DANGER = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50";
+const PILL_DANGER_CHAPITRE = "inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-display font-semibold border-2 border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 bg-white dark:bg-transparent hover:bg-red-50 dark:hover:bg-red-950/30";
 const PILL_DANGER_SOLIDE = "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-display font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50";
 const PILL_AVERTISSEMENT = "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-display font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
 const PILL_IA = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 disabled:opacity-50";
@@ -684,7 +685,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
               const flashcardsChapitre = flashcardsParChapitre[c.id] || [];
               const estReduit = chapitresReduits.has(c.id);
               return (
-                <div key={c.id} className="rounded-lg border-2 border-slate-200 dark:border-slate-600 p-3 space-y-2.5 bg-slate-50/60 dark:bg-slate-800/20">
+                <div key={c.id} className="rounded-lg border-2 border-slate-300 dark:border-slate-600 p-3 space-y-2.5 bg-slate-100/80 dark:bg-slate-800/40 shadow-sm">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     {chapitreEnRenommage === c.id ? (
                       <form onSubmit={(e) => renommerChapitre(e, c.id)} className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -711,21 +712,21 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
                         <FormulaireTest chapitreId={c.id} onCree={charger} className={PILL_NEUTRE} label="📝+ Test" onOuvrir={() => deplierChapitre(c.id)} />
                         {enConfirmationSuppressionChapitre === c.id ? (
                           <span className="flex items-center gap-1.5">
-                            <span className={PILL_AVERTISSEMENT}>Sûr ?</span>
+                            <span className={PILL_AVERTISSEMENT}>Suppr. chapitre + contenu ?</span>
                             <button onClick={() => supprimerChapitre(c.id)} disabled={enCoursSuppressionChapitre.has(c.id)} className={PILL_DANGER_SOLIDE}>
                               {enCoursSuppressionChapitre.has(c.id) ? "..." : "Oui"}
                             </button>
                             <button onClick={() => setEnConfirmationSuppressionChapitre(null)} className={PILL_NEUTRE}>Annuler</button>
                           </span>
                         ) : (
-                          <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className={PILL_DANGER}>🗑 Suppr.</button>
+                          <button onClick={() => setEnConfirmationSuppressionChapitre(c.id)} className={PILL_DANGER_CHAPITRE} title="Supprime le chapitre ET tout son contenu (documents, tests, flashcards)">🗑 Suppr. le chapitre</button>
                         )}
                       </div>
                     )}
                   </div>
 
                   {!estReduit && (
-                    <>
+                    <div className="mt-1 pl-3 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
                       {!lectureSeule && !modeArchive && formOuvertPourChapitre === c.id && (
                         <form onSubmit={(e) => importerDocument(e, c.id)} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 bg-white dark:bg-slate-900">
                           <input name="nom" placeholder="Nom du document (optionnel)" className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm" />
@@ -794,7 +795,7 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
                           <p className="text-slate-400 text-xs">Aucun document, test ni flashcards dans ce chapitre pour l&apos;instant.</p>
                         )}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               );
