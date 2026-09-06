@@ -57,7 +57,7 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
             </svg>
           </span>
           <span className="font-display font-semibold text-lg tracking-tight text-[#FFC0CB]">
-            Révision
+            Study Buddy
           </span>
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
