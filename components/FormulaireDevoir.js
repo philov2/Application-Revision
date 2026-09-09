@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
 import { creerDevoir } from "@/lib/devoirsSupabase";
 import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
+import CaptureAppareilPhoto from "@/components/CaptureAppareilPhoto";
 
 const TYPES_DEVOIR = [
   { value: "revision", label: "📖 Réviser le cours" },
@@ -105,6 +106,7 @@ function Puce({ actif, onClick, children, pointille }) {
 /* affiché à côté. */
 function FichierBouton({ name, nomFichier, onChange, accept }) {
     const id = useId();
+    const inputRef = useRef(null);
     return (
           <div className="flex items-center gap-2.5 flex-wrap">
             <label
@@ -119,8 +121,21 @@ function FichierBouton({ name, nomFichier, onChange, accept }) {
         name={name}
         type="file"
         accept={accept}
+        ref={inputRef}
         onChange={(e) => onChange(e.target.files?.[0]?.name || "")}
         className="hidden"
+      />
+      <CaptureAppareilPhoto
+        className="shrink-0 inline-flex items-center gap-1 rounded-xl px-3.5 py-2.5 text-xs font-display font-semibold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-700"
+        label="📷 Utiliser l'appareil photo"
+        onTerminer={(fichier) => {
+          if (inputRef.current) {
+            const dt = new DataTransfer();
+            dt.items.add(fichier);
+            inputRef.current.files = dt.files;
+            onChange(fichier.name);
+          }
+        }}
       />
                 <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[220px]">
         {nomFichier || "Aucun fichier sélectionné"}
