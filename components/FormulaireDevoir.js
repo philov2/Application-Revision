@@ -11,13 +11,7 @@ const TYPES_DEVOIR = [
   { value: "revision", label: "📖 Réviser le cours" },
   { value: "exercice", label: "✏️ Exercices" },
   { value: "test", label: "📝 Test" },
-  ];
-
-const TYPES_DOCUMENT = [
-  { value: "cours", label: "Cours" },
-  { value: "exercice", label: "Exercice" },
-  { value: "flashcard", label: "Flashcard" },
-  { value: "corrige", label: "Corrigé" },
+  { value: "flashcards", label: "🗂 Flashcards" },
   ];
 
 const LABEL_IA_PAR_TYPE = {
@@ -328,7 +322,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
           if (modeDocument === "import") {
                     const fichier = form.get("fichier");
                     if (fichier && fichier.size > 0) {
-                                const nouveauDocument = await importerDocument(fichier, form.get("nom_fichier"), form.get("type_fichier") || "cours");
+                                const typeDocumentParDefaut = type === "exercice" || type === "test" ? "exercice" : "cours";
+                                const nouveauDocument = await importerDocument(fichier, form.get("nom_fichier") || titre, form.get("type_fichier") || typeDocumentParDefaut);
                                 documentIdAEnvoyer = nouveauDocument.id;
                     }
           } else if (modeDocument === "ia") {
@@ -470,6 +465,35 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
               </p>
               )}
 
+              <Champ label="Type de devoir">
+                                  <div className="grid grid-cols-2 gap-2">
+                {TYPES_DEVOIR.map((t) => (
+                                      <button
+                                                        key={t.value}
+                      type="button"
+                      onClick={() => {
+                        if (t.value === "flashcards") {
+                          setType("revision");
+                          setFormatRevision("flashcards");
+                          setModeDocument("ia");
+                        } else {
+                          setType(t.value);
+                          if (t.value === "revision") setFormatRevision("synthese");
+                        }
+                      }}
+                      className={`rounded-xl px-2 py-2 text-xs font-medium border transition ${
+                                                (t.value === "flashcards" ? estFlashcardsFormat : type === t.value && !estFlashcardsFormat)
+                                                  ? "border-transparent text-white shadow-sm"
+                                                  : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400"
+                      }`}
+                      style={(t.value === "flashcards" ? estFlashcardsFormat : type === t.value && !estFlashcardsFormat) ? { background: "var(--azur)" } : undefined}
+                                            >
+                      {t.label}
+</button>
+                  ))}
+                    </div>
+                    </Champ>
+
               <Champ label="Matière">
                                 <div className="flex flex-wrap gap-2">
               {matieresLocales.map((m) => (
@@ -566,25 +590,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                                                                                     </Champ>
                                                                                                                   )}
 
-                                                                                                                    <Champ label="Type de devoir">
-                                  <div className="grid grid-cols-3 gap-2">
-                {TYPES_DEVOIR.map((t) => (
-                                      <button
-                                                        key={t.value}
-                      type="button"
-                      onClick={() => setType(t.value)}
-                      className={`rounded-xl px-2 py-2 text-xs font-medium border transition ${
-                                                type === t.value
-                                                  ? "border-transparent text-white shadow-sm"
-                                                  : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-slate-400"
-                      }`}
-                      style={type === t.value ? { background: "var(--azur)" } : undefined}
-                                            >
-                      {t.label}
-</button>
-                  ))}
-                    </div>
-                    </Champ>
+                                                                                                                    
 
               <div className="grid grid-cols-2 gap-3">
                                     <Champ label="Date limite">
@@ -597,7 +603,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                     className={CLASSE_INPUT}
                   />
                       </Champ>
-                <Champ label="Titre">
+                <Champ label="Nom du devoir">
                                         <input
                     name="titre"
                     value={titre}
@@ -612,7 +618,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                   <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3.5 space-y-3 bg-slate-50 dark:bg-slate-800/40">
                     <p className="text-xs font-display font-semibold text-slate-600 dark:text-slate-300">Document à utiliser</p>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  {!estFlashcardsFormat && (
+<div className="grid grid-cols-3 gap-2">
 {MODES_DOCUMENT.map((m) => (
                         <button
                                             key={m.value}
@@ -629,6 +636,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 </button>
                     ))}
                       </div>
+)}
 
 {modeDocument === "existant" &&
                       (documents.length > 0 ? (
@@ -648,22 +656,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
 {modeDocument === "import" && (
                       <div className="space-y-3">
-                        <Champ label="Nom du document">
-                          <input name="nom_fichier" placeholder="Ex. Chapitre 3 - Les fractions" className={CLASSE_INPUT} />
-  </Champ>
-                       <Champ label="Type de document">
-                          <select name="type_fichier" defaultValue="" required className={CLASSE_INPUT}>
-                            <option value="" disabled>
-                              Choisir un type de document
-  </option>
- {TYPES_DOCUMENT.map((t) => (
-                               <option key={t.value} value={t.value}>
- {t.label}
-   </option>
-                           ))}
-</select>
-  </Champ>
-                      <Champ label="Fichier à importer">
+                        <Champ label="Fichier à importer">
                           <FichierBouton
                           name="fichier"
                           nomFichier={nomFichierImport}
@@ -674,23 +667,12 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                             </div>
                   )}
 
-{modeDocument === "ia" && (
+{(estFlashcardsFormat || modeDocument === "ia") && (
                       <div className="space-y-3">
                         <p className="text-xs text-slate-600 dark:text-slate-300">
                           L&apos;IA va générer <strong>{libelleIA(type, formatRevision)}</strong> (d&apos;après le type de devoir choisi ci-dessus).
                         Choisissez comment lui fournir la matière première :
                         </p>
-
-                      {type === "revision" && (
-                        <div className="flex flex-wrap gap-2">
-                          <Puce actif={formatRevision === "synthese"} onClick={() => setFormatRevision("synthese")}>
-                            📄 Synthèse à lire
-                          </Puce>
-                          <Puce actif={formatRevision === "flashcards"} onClick={() => setFormatRevision("flashcards")}>
-                            🗂 Flashcards (cartes)
-                          </Puce>
-                        </div>
-                      )}
 
                       <div className="grid grid-cols-2 gap-2">
                         {SOURCES_IA.map((s) => (
