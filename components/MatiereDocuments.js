@@ -84,7 +84,7 @@ const fileInputRefs = useRef({});
   /* Replier/déplier la matière entière et, indépendamment, chaque chapitre —
      pour qu'une fois beaucoup de documents chargés, la liste reste courte et
      navigable au lieu de dérouler tout le contenu d'un coup. */
-  const [matiereReduite, setMatiereReduite] = useState(false);
+  const [matiereReduite, setMatiereReduite] = useState(true);
   const [chapitresReduits, setChapitresReduits] = useState(new Set());
 
   /* Renommage (corrige une erreur de frappe sans supprimer/recreer) —
