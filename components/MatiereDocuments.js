@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/authFetch";
@@ -9,6 +9,7 @@ import { supprimerTest } from "@/lib/testsSupabase";
 import { supprimerFlashcards } from "@/lib/flashcardsSupabase";
 import { creerDevoir } from "@/lib/devoirsSupabase";
 import FormulaireTest from "@/components/FormulaireTest";
+import CaptureAppareilPhoto from "@/components/CaptureAppareilPhoto";
 
 const TYPES_DOCUMENT = [
   { value: "cours", label: "Cours" },
@@ -48,6 +49,10 @@ const PILL_IA = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs f
 export default function MatiereDocuments({ matiere, enfantId, compteId, lectureSeule = false, modeArchive = false, peutSupprimerMatiere = false, onMatiereSupprimee, onMatiereRenommee }) {
   const router = useRouter();
   const [chapitres, setChapitres] = useState([]);
+/* Permet a CaptureAppareilPhoto d'injecter la photo ou le PDF directement
+dans l'input file existant de chaque chapitre (voir onTerminer plus bas),
+sans dupliquer la logique d'import. */
+const fileInputRefs = useRef({});
   const [documents, setDocuments] = useState([]);
   const [testsParChapitre, setTestsParChapitre] = useState({});
   // Jalon "flashcards" (signalement de Phil) : même principe que
@@ -733,7 +738,19 @@ export default function MatiereDocuments({ matiere, enfantId, compteId, lectureS
                           <select name="type" required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-2 text-sm">
                             {TYPES_DOCUMENT.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                           </select>
-                          <input name="fichier" type="file" required className="w-full text-sm" />
+                          <input name="fichier" type="file" required ref={(el) => { fileInputRefs.current[c.id] = el; }} className="w-full text-sm" />
+<CaptureAppareilPhoto
+className={PILL_NEUTRE}
+label="📷 Utiliser l'appareil photo"
+onTerminer={(fichier) => {
+const input = fileInputRefs.current[c.id];
+if (input) {
+const dt = new DataTransfer();
+dt.items.add(fichier);
+input.files = dt.files;
+}
+}}
+/>
                           <div className="flex items-center gap-2">
                             <button type="submit" disabled={envoi} className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50" style={{ background: "var(--azur)" }}>
                               {envoi ? "Envoi..." : `Importer dans « ${c.nom} »`}
