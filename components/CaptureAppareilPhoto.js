@@ -120,23 +120,37 @@ export default function CaptureAppareilPhoto({ onTerminer, label = "📷 Prendre
             </div>
           ) : (
             <>
-              <p className="text-white text-sm mb-2 text-center">
-                Prenez une photo de chaque page, puis appuyez sur Terminer.
+              <p className="text-white text-base font-semibold text-center">
+                {pages.length === 0
+                  ? "Photographiez la 1re page"
+                  : `${pages.length} page${pages.length > 1 ? "s" : ""} photographiée${pages.length > 1 ? "s" : ""}`}
               </p>
-              <video ref={videoRef} playsInline muted className="max-w-full max-h-[60vh] rounded-lg bg-black" />
-              {pages.length > 0 && (
-                <div className="flex gap-2 flex-wrap justify-center mt-3 max-w-full overflow-x-auto">
-                  {pages.map((p, i) => (
-                    <div key={i} className="relative">
-                      <img src={p} alt={`Page ${i + 1}`} className="w-14 h-14 object-cover rounded border-2 border-white" />
-                      <button type="button" onClick={() => supprimerPage(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-3 mt-4">
+              <p className="text-white/80 text-xs mb-2 text-center max-w-xs">
+                Encore une page à ajouter ? Appuyez à nouveau sur le bouton rond ⚪ ci-dessous.
+                Quand toutes les pages sont prises, appuyez sur « Terminer ».
+              </p>
+              <video ref={videoRef} playsInline muted className="max-w-full max-h-[55vh] rounded-lg bg-black" />
+              <div className="min-h-[4.5rem] flex items-center">
+                {pages.length > 0 ? (
+                  <div className="flex gap-2 flex-wrap justify-center mt-3 max-w-full overflow-x-auto">
+                    {pages.map((p, i) => (
+                      <div key={i} className="relative">
+                        <img src={p} alt={`Page ${i + 1}`} className="w-14 h-14 object-cover rounded border-2 border-white" />
+                        <span className="absolute -bottom-1.5 -left-1.5 w-5 h-5 rounded-full bg-white text-black text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
+                        <button type="button" onClick={() => supprimerPage(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-white/50 text-xs text-center mt-3">Aucune page pour l'instant</p>
+                )}
+              </div>
+              <div className="flex items-center gap-4 mt-2">
                 <button type="button" onClick={fermer} className="rounded-lg px-4 py-2 text-sm font-medium text-white border border-white/40">Annuler</button>
-                <button type="button" onClick={capturerPage} className="rounded-full w-16 h-16 bg-white border-4 border-slate-300" title="Capturer" />
+                <div className="flex flex-col items-center gap-1.5">
+                  <button type="button" onClick={capturerPage} className="rounded-full w-16 h-16 bg-white border-4 border-slate-300 active:scale-95 transition" title="Photographier cette page" />
+                  <span className="text-white text-[11px] font-medium">{pages.length === 0 ? "Photographier" : "Page suivante"}</span>
+                </div>
                 <button
                   type="button"
                   onClick={terminer}
