@@ -67,6 +67,7 @@ const fileInputRefs = useRef({});
   const [enCoursExercices, setEnCoursExercices] = useState(new Set());
   const [enCoursTestIA, setEnCoursTestIA] = useState(new Set());
   const [enCoursFlashcardsIA, setEnCoursFlashcardsIA] = useState(new Set());
+  const [enCoursCorrige, setEnCoursCorrige] = useState(new Set());
   const [enCoursSuppression, setEnCoursSuppression] = useState(new Set());
   const [enCoursArchivage, setEnCoursArchivage] = useState(new Set());
   const [enConfirmationSuppression, setEnConfirmationSuppression] = useState(null);
@@ -125,7 +126,7 @@ const fileInputRefs = useRef({});
 
     const { data: docs } = await supabase
       .from("documents")
-      .select("id, nom, type, fichier_url, chapitre_id, genere_par_ia, format, chapitre:chapitres(nom)")
+      .select("id, nom, type, fichier_url, chapitre_id, genere_par_ia, format, corrige_de_id, chapitre:chapitres(nom)")
       .eq("matiere_id", matiere.id)
       .eq("enfant_id", enfantId)
       .eq("archive", modeArchive)
@@ -425,6 +426,30 @@ const fileInputRefs = useRef({});
     }
   }
 
+  /* Genere par IA le corrige d'un exercice/test deja importe (signalement de
+  Phil : un exercice photographie depuis un manuel doit pouvoir etre corrige
+  par l'IA, comme un exercice genere directement dans l'application). Le
+  corrige est enregistre comme document lie via corrige_de_id -> DevoirCard.js
+  l'affiche deja automatiquement (Parent/Soutien tout de suite, Enfant apres
+  avoir declare l'exercice fini), aucune modification necessaire la-bas. */
+  async function genererCorrige(d) {
+    setEnCoursCorrige((prev) => new Set(prev).add(d.id));
+    setMessage("");
+    try {
+      await authFetch(`/api/documents/${d.id}/corrige`, { method: "POST" });
+      charger();
+      setMessage("Corrigé généré par IA.");
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setEnCoursCorrige((prev) => {
+        const next = new Set(prev);
+        next.delete(d.id);
+        return next;
+      });
+    }
+  }
+
   async function supprimerDocument(documentId) {
     setEnCoursSuppression((prev) => new Set(prev).add(documentId));
     setMessage("");
@@ -604,6 +629,11 @@ const fileInputRefs = useRef({});
                 ✨ {enCoursFlashcardsIA.has(d.id) ? "Génération..." : "Flashcards"}
               </button>
             </>
+          )}
+          {!lectureSeule && !modeArchive && (d.type === "exercice" || d.type === "test") && !documents.some((doc2) => doc2.corrige_de_id === d.id) && (
+            <button onClick={() => genererCorrige(d)} disabled={enCoursCorrige.has(d.id)} className={PILL_IA} title="Génère le corrigé de cet exercice par IA">
+              ✨ {enCoursCorrige.has(d.id) ? "Génération..." : "Corrigé"}
+            </button>
           )}
           <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
           {!lectureSeule && !modeArchive && (
