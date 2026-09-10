@@ -61,7 +61,7 @@ const SOURCES_IA = [
 /* Champ de formulaire réutilisable : libellé au-dessus, style commun. */
 function Champ({ label, children }) {
     return (
-          <label className="block space-y-1.5">
+          <label className="block space-y-1.5 min-w-0">
             <span className="block text-xs font-display font-semibold text-slate-600 dark:text-slate-300">{label}</span>
   {children}
   </label>
