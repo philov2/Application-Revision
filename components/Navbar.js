@@ -62,12 +62,12 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
           {estAdmin && (
-            <nav className="flex items-center gap-1 text-sm">
+            <nav className="flex items-center gap-1 text-sm overflow-x-auto whitespace-nowrap max-w-full">
               {TABLEAUX.map((t) => (
                 <Link
                   key={t.role}
                   href={t.chemin}
-                  className={`px-3 py-1 rounded-full ${pathname === t.chemin ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
+                  className={`shrink-0 px-3 py-1 rounded-full ${pathname === t.chemin ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
                   style={pathname === t.chemin ? { background: "var(--azur)" } : {}}
                 >
                   {t.label}
@@ -75,7 +75,7 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
               ))}
               <Link
                 href="/admin/comptes"
-                className={`px-3 py-1 rounded-full ${pathname === "/admin/comptes" ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
+                className={`shrink-0 px-3 py-1 rounded-full ${pathname === "/admin/comptes" ? "font-medium text-white" : "text-slate-500 dark:text-slate-400"}`}
                 style={pathname === "/admin/comptes" ? { background: "var(--azur)" } : {}}
               >
                 Comptes
