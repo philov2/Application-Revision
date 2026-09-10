@@ -618,20 +618,6 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           </div>
         )}
 
-        {revisionFlashcardsOuverte && flashcardsDeck && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
-            onClick={() => setRevisionFlashcardsOuverte(false)}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
-            >
-              <RevisionFlashcards flashcards={flashcardsDeck} onFermer={() => setRevisionFlashcardsOuverte(false)} />
-            </div>
-          </div>
-        )}
-
         {devoir.type === "revision" && !devoir.flashcardsId && (
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="min-w-0">
@@ -1014,6 +1000,19 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
         </>
       ) : (
         carteDetail
+      )}
+      {revisionFlashcardsOuverte && flashcardsDeck && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6"
+          onClick={() => setRevisionFlashcardsOuverte(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+          >
+            <RevisionFlashcards flashcards={flashcardsDeck} onFermer={() => setRevisionFlashcardsOuverte(false)} />
+          </div>
+        </div>
       )}
     </>
   );
