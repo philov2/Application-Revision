@@ -594,15 +594,17 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <Champ label="Date limite">
-                                      <input
-                    name="date_echeance"
-                    type="date"
-                    required
-                    value={dateEcheance}
-                    onChange={(e) => setDateEcheance(e.target.value)}
-                    className={CLASSE_INPUT}
-                  />
-                      </Champ>
+                    <div className="w-full overflow-hidden rounded-xl">
+                      <input
+                        name="date_echeance"
+                        type="date"
+                        required
+                        value={dateEcheance}
+                        onChange={(e) => setDateEcheance(e.target.value)}
+                        className={`${CLASSE_INPUT} max-w-full min-w-0`}
+                      />
+                    </div>
+                  </Champ>
                 <Champ label="Nom du devoir">
                                         <input
                     name="titre"
