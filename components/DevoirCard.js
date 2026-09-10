@@ -625,7 +625,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl"
             >
               <RevisionFlashcards flashcards={flashcardsDeck} onFermer={() => setRevisionFlashcardsOuverte(false)} />
             </div>
