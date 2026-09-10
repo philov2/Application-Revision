@@ -601,7 +601,8 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                         required
                         value={dateEcheance}
                         onChange={(e) => setDateEcheance(e.target.value)}
-                        className={`${CLASSE_INPUT} max-w-full min-w-0`}
+                        className={`${CLASSE_INPUT} max-w-full min-w-0 appearance-none`}
+                        style={{ WebkitAppearance: "none", appearance: "none", boxSizing: "border-box", width: "100%" }}
                       />
                     </div>
                   </Champ>
