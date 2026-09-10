@@ -592,7 +592,7 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
                                                                                                                     
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <Champ label="Date limite">
                                       <input
                     name="date_echeance"
