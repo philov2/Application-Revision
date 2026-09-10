@@ -60,9 +60,9 @@ export default function Navbar({ role, nom, enfantId, compteId }) {
             Study Buddy
           </span>
         </Link>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap min-w-0">
           {estAdmin && (
-            <nav className="flex items-center gap-1 text-sm overflow-x-auto whitespace-nowrap max-w-full">
+            <nav className="flex items-center gap-1 text-sm overflow-x-auto whitespace-nowrap max-w-full min-w-0">
               {TABLEAUX.map((t) => (
                 <Link
                   key={t.role}
