@@ -326,6 +326,15 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                 const nouveauDocument = await importerDocument(fichier, form.get("nom_fichier") || titre, form.get("type_fichier") || typeDocumentParDefaut);
                                 documentIdAEnvoyer = nouveauDocument.id;
                     }
+          } else if (modeDocument === "existant" && type === "test") {
+          if (!documentIdAEnvoyer) {
+                    throw new Error("Choisissez un document de type Cours à partir duquel générer le test.");
+          }
+          const resultatTest = await authFetch(`/api/documents/${documentIdAEnvoyer}/test-ia`, {
+                    method: "POST",
+                    body: JSON.stringify({ consigne: "" }),
+          });
+          testIdAEnvoyer = resultatTest.test.id;
           } else if (modeDocument === "ia") {
                     if ((type === "test" || estFlashcardsFormat) && !chapitreId) {
                                 throw new Error("Choisissez ou créez d'abord un chapitre : un contenu généré par IA (test ou flashcards) doit être rattaché à un chapitre.");
