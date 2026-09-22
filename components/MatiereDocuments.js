@@ -46,7 +46,7 @@ const PILL_IA = "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs f
    et supprimer définitivement. La carte ne s'affiche pas du tout si la
    matière n'a aucun document archivé, pour ne pas encombrer l'onglet
    Archives de matières vides. */
-export default function MatiereDocuments({ matiere, enfantId, compteId, lectureSeule = false, modeArchive = false, peutSupprimerMatiere = false, onMatiereSupprimee, onMatiereRenommee }) {
+export default function MatiereDocuments({ matiere, enfantId, compteId, lectureSeule = false, modeArchive = false, peutSupprimerMatiere = false, onMatiereSupprimee, onMatiereRenommee, onDevoirCree }) {
   const router = useRouter();
   const [chapitres, setChapitres] = useState([]);
 /* Permet a CaptureAppareilPhoto d'injecter la photo ou le PDF directement
@@ -340,6 +340,7 @@ const fileInputRefs = useRef({});
         dateEcheance: new Date().toISOString().slice(0, 10),
         creePar: compteId,
       });
+      onDevoirCree?.();
     } catch (err) {
       setMessage(`Contenu généré, mais échec de la création du devoir : ${err.message}`);
     }
