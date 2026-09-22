@@ -366,7 +366,7 @@ function Contenu() {
             )}
             <div className="space-y-4">
               {matieres.map((m) => (
-                <MatiereDocuments key={m.id} matiere={m} enfantId={enfant.id} compteId={compteId} peutSupprimerMatiere={true} onMatiereSupprimee={retirerMatiereLocale} onMatiereRenommee={renommerMatiereLocale} />
+                <MatiereDocuments key={m.id} matiere={m} enfantId={enfant.id} compteId={compteId} peutSupprimerMatiere={true} onMatiereSupprimee={retirerMatiereLocale} onMatiereRenommee={renommerMatiereLocale} onDevoirCree={() => recharger(enfant.id)} />
               ))}
               {matieres.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-xs">Aucune matière pour l&apos;instant.</p>}
             </div>
