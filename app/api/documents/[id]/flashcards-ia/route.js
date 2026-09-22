@@ -39,8 +39,8 @@ export async function POST(request, { params }) {
   if (documentError || !document) {
     return NextResponse.json({ error: "Document introuvable." }, { status: 404 });
   }
-  if (document.type !== "cours") {
-    return NextResponse.json({ error: "Seuls les documents de type Cours peuvent servir a generer des flashcards." }, { status: 400 });
+  if (!["cours", "synthese"].includes(document.type)) {
+    return NextResponse.json({ error: "Seuls les documents de type Cours ou Synthese peuvent servir a generer des flashcards." }, { status: 400 });
   }
   if (!document.chapitre_id) {
     return NextResponse.json({ error: "Rattachez d'abord ce document a un chapitre pour generer des flashcards." }, { status: 400 });
