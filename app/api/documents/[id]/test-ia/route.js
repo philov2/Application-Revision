@@ -34,8 +34,8 @@ export async function POST(request, { params }) {
   if (documentError || !document) {
         return NextResponse.json({ error: "Document introuvable." }, { status: 404 });
   }
-    if (document.type !== "cours") {
-          return NextResponse.json({ error: "Seuls les documents de type Cours peuvent servir a generer un test." }, { status: 400 });
+    if (!["cours", "synthese"].includes(document.type)) {
+          return NextResponse.json({ error: "Seuls les documents de type Cours ou Synthese peuvent servir a generer un test." }, { status: 400 });
     }
     if (!document.chapitre_id) {
           return NextResponse.json({ error: "Ce cours doit d'abord etre rattache a un chapitre pour pouvoir generer un test (le test est retrouve par l'enfant via le chapitre)." }, { status: 400 });
