@@ -4,6 +4,7 @@ import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/li
 import { genererEtEnregistrerCorrige } from "@/lib/corrigeIA";
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
+import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -95,7 +96,7 @@ export async function POST(request, { params }) {
           return NextResponse.json({ error: `Echec de la generation par IA : ${err.message}` }, { status: 500 });
     }
 
-  const cheminExercices = `${document.enfant_id}/${Date.now()}-exercices-${document.nom || "cours"}.md`;
+  const cheminExercices = `${document.enfant_id}/${Date.now()}-exercices-${sanitizeNomFichier(document.nom) || "cours"}.md`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from("documents")
       .upload(cheminExercices, Buffer.from(texteExercices, "utf-8"), { contentType: "text/markdown; charset=utf-8" });
