@@ -699,7 +699,11 @@ const fileInputRefs = useRef({});
 
       {!matiereReduite && (
         <>
-          {message && <p className="text-sm text-red-600">{message}</p>}
+          {message && (
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] px-4 py-2 rounded-lg shadow-lg bg-gray-900 text-white text-sm text-center">
+              {message}
+            </div>
+          )}
           {!lectureSeule && !modeArchive && (
             <form onSubmit={ajouterChapitre} className="flex gap-2">
               <input value={nouveauChapitre} onChange={(e) => setNouveauChapitre(e.target.value)} placeholder="+ Nouveau chapitre" className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-3 py-1.5 text-sm" />
