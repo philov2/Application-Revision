@@ -604,11 +604,13 @@ const fileInputRefs = useRef({});
           <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {!lectureSeule && !modeArchive && d.type === "cours" && (
+          {!lectureSeule && !modeArchive && (d.type === "cours" || d.type === "synthese") && (
             <>
-              <button onClick={() => genererSynthese(d)} disabled={enCoursSynthese.has(d.id)} className={PILL_IA} title="Génère une synthèse et crée automatiquement un devoir pour l'enfant">
+              {d.type === "cours" && (
+<button onClick={() => genererSynthese(d)} disabled={enCoursSynthese.has(d.id)} className={PILL_IA} title="Génère une synthèse et crée automatiquement un devoir pour l'enfant">
                 ✨ {enCoursSynthese.has(d.id) ? "Génération..." : "Synthèse"}
               </button>
+              )}
               <button onClick={() => genererExercices(d)} disabled={enCoursExercices.has(d.id)} className={PILL_IA} title="Génère des exercices et crée automatiquement un devoir pour l'enfant">
                 ✨ {enCoursExercices.has(d.id) ? "Génération..." : "Exercices"}
               </button>
