@@ -36,8 +36,8 @@ export async function POST(request, { params }) {
   if (documentError || !document) {
         return NextResponse.json({ error: "Document introuvable." }, { status: 404 });
   }
-    if (document.type !== "cours") {
-          return NextResponse.json({ error: "Seuls les documents de type Cours peuvent servir a generer des exercices." }, { status: 400 });
+    if (!["cours", "synthese"].includes(document.type)) {
+          return NextResponse.json({ error: "Seuls les documents de type Cours ou Synthese peuvent servir a generer des exercices." }, { status: 400 });
     }
 
   const { data: fichier, error: telechargementError } = await supabaseAdmin.storage.from("documents").download(document.fichier_url);
