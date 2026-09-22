@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
 import { genererTexteIA } from "@/lib/genererTexteIA";
+import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
 // Genere une synthese IA a partir d'un document de type "cours" deja importe.
 // - Telecharge le fichier original depuis le Storage
@@ -62,7 +63,7 @@ export async function POST(request, { params }) {
           return NextResponse.json({ error: `Echec de la generation par IA : ${err.message}` }, { status: 500 });
     }
 
-  const cheminSynthese = `${document.enfant_id}/${Date.now()}-synthese-${document.nom || "cours"}.md`;
+  const cheminSynthese = `${document.enfant_id}/${Date.now()}-synthese-${sanitizeNomFichier(document.nom) || "cours"}.md`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from("documents")
       .upload(cheminSynthese, Buffer.from(texteSynthese, "utf-8"), { contentType: "text/markdown" });
