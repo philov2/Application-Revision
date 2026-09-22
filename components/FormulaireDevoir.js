@@ -335,6 +335,15 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                     body: JSON.stringify({ consigne: "" }),
           });
           testIdAEnvoyer = resultatTest.test.id;
+          } else if (modeDocument === "existant" && type === "exercice") {
+          if (!documentIdAEnvoyer) {
+                    throw new Error("Choisissez un document de type Cours à partir duquel générer les exercices.");
+          }
+          const resultatExercices = await authFetch(`/api/documents/${documentIdAEnvoyer}/exercices`, {
+                    method: "POST",
+                    body: JSON.stringify({ consigne: "" }),
+          });
+          documentIdAEnvoyer = resultatExercices.document.id;
           } else if (modeDocument === "ia") {
                     if ((type === "test" || estFlashcardsFormat) && !chapitreId) {
                                 throw new Error("Choisissez ou créez d'abord un chapitre : un contenu généré par IA (test ou flashcards) doit être rattaché à un chapitre.");
