@@ -729,9 +729,6 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
                                                      Étape 1 : importez le fichier de cours (PDF, Word ou image) qui servira de base.
                          </p>
-                           <Champ label="Nom du cours source">
-                                                     <input name="nom_fichier" placeholder="Ex. Cours sur la Révolution française" className={CLASSE_INPUT} />
-                         </Champ>
                            <Champ label="Fichier du cours">
                                                      <FichierBouton
                                name="fichier_source"
