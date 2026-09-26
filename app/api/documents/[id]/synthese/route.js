@@ -3,6 +3,8 @@ import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/li
 import { genererTexteIA } from "@/lib/genererTexteIA";
 import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
+export const maxDuration = 60;
+
 // Genere une synthese IA a partir d'un document de type "cours" deja importe.
 // - Telecharge le fichier original depuis le Storage
 // - Envoie son contenu a genererTexteIA (Claude puis Gemini en secours) avec une consigne de synthese
