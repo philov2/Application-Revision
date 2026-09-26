@@ -89,7 +89,7 @@ export async function POST(request, { params }) {
   const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", document.matiere_id).single();
   const consigneLangueMatiere = consigneLangue(matiere?.nom);
 
-  const consigneSysteme = `Tu es un assistant pedagogique qui aide des eleves de college et lycee. Voici un exercice ou un test (fourni en piece jointe, eventuellement une photo ou un scan). Redige le corrige complet et detaille : pour chaque question ou exercice, donne la reponse attendue avec une explication claire et concise, en reprenant si possible la meme numerotation que l'enonce. ${consigneLangueMatiere}`;
+  const consigneSysteme = `Tu es un assistant pedagogique qui aide des eleves de college et lycee. Voici un exercice ou un test (fourni en piece jointe, eventuellement une photo ou un scan). Redige un corrige concis : pour chaque question ou exercice, donne uniquement la reponse finale et le calcul ou raisonnement essentiel (1 a 2 lignes maximum par question, sans reformuler l'enonce), en reprenant si possible la meme numerotation que l'enonce. Va droit au but pour rester bref. ${consigneLangueMatiere}`;
 
   let texteCorrige;
   try {
@@ -97,7 +97,7 @@ export async function POST(request, { params }) {
       systemPrompt: consigneSysteme,
       promptTexte: "Redige le corrige complet de cet exercice.",
       pieceJointe,
-      maxTokens: 8192,
+      maxTokens: 4096,
     });
     texteCorrige = resultat.texte;
   } catch (err) {
