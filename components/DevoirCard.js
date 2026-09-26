@@ -106,6 +106,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   const [corrigeDisponible, setCorrigeDisponible] = useState(null);
   const [enCoursCorrige, setEnCoursCorrige] = useState(false);
   const [erreurCorrige, setErreurCorrige] = useState("");
+  const [declencheurVerifCorrige, setDeclencheurVerifCorrige] = useState(0);
 
   // Jalon "flashcards" (signalement de Phil : rendre l'application plus
   // attractive pour une adolescente, dans la même veine que le streak, le
@@ -184,19 +185,54 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setCorrigeDisponible(null);
       return;
     }
-    (async () => {
+    let annule = false;
+    let minuteur = null;
+
+    async function verifier() {
       try {
-        const { data } = await supabase
+        const { data: corrige } = await supabase
           .from("documents")
           .select("id, nom, fichier_url, genere_par_ia, format")
           .eq("corrige_de_id", devoir.document.id)
           .maybeSingle();
-        setCorrigeDisponible(data || null);
+        if (annule) return;
+        if (corrige) {
+          setCorrigeDisponible(corrige);
+          setEnCoursCorrige(false);
+          setErreurCorrige("");
+          if (minuteur) clearInterval(minuteur);
+          return;
+        }
+        setCorrigeDisponible(null);
+        const { data: source } = await supabase
+          .from("documents")
+          .select("corrige_statut, corrige_erreur")
+          .eq("id", devoir.document.id)
+          .maybeSingle();
+        if (annule) return;
+        if (source?.corrige_statut === "en_cours") {
+          setEnCoursCorrige(true);
+          if (!minuteur) minuteur = setInterval(verifier, 4000);
+        } else if (source?.corrige_statut === "erreur") {
+          setEnCoursCorrige(false);
+          setErreurCorrige(source.corrige_erreur || "Echec de la generation du corrige.");
+          if (minuteur) clearInterval(minuteur);
+        } else {
+          setEnCoursCorrige(false);
+          if (minuteur) clearInterval(minuteur);
+        }
       } catch {
         // silencieux : ne bloque pas l'affichage du devoir
       }
-    })();
-  }, [devoir.type, devoir.document?.id]);
+    }
+
+    verifier();
+
+    return () => {
+      annule = true;
+      if (minuteur) clearInterval(minuteur);
+    };
+  }, [devoir.type, devoir.document?.id, declencheurVerifCorrige]);
 
   useEffect(() => {
     if (devoir.type !== "revision" || !devoir.flashcardsId) {
@@ -341,11 +377,14 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
     setErreurCorrige("");
     setEnCoursCorrige(true);
     try {
-      const resultat = await authFetch(`/api/documents/${devoir.document.id}/corrige`, { method: "POST" });
-      setCorrigeDisponible(resultat.document);
+      // Cette route declenche desormais une generation asynchrone (Supabase
+      // Edge Function, voir corrige/route.js) et repond tout de suite : le
+      // useEffect ci-dessus se charge d'interroger le statut jusqu'a ce que
+      // le corrige soit pret ou qu'une erreur soit enregistree.
+      await authFetch(`/api/documents/${devoir.document.id}/corrige`, { method: "POST" });
+      setDeclencheurVerifCorrige((n) => n + 1);
     } catch (err) {
       setErreurCorrige(err.message);
-    } finally {
       setEnCoursCorrige(false);
     }
   }
