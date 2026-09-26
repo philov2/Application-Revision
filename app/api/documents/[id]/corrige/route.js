@@ -3,6 +3,7 @@ import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
+import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -101,7 +102,7 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: `Echec de la generation par IA : ${err.message}` }, { status: 500 });
   }
 
-  const cheminCorrige = `${document.enfant_id}/${Date.now()}-corrige-${document.nom || "exercice"}.md`;
+  const cheminCorrige = `${document.enfant_id}/${Date.now()}-corrige-${sanitizeNomFichier(document.nom) || "exercice"}.md`;
   const { error: uploadError } = await supabaseAdmin.storage
     .from("documents")
     .upload(cheminCorrige, Buffer.from(texteCorrige, "utf-8"), { contentType: "text/markdown; charset=utf-8" });
