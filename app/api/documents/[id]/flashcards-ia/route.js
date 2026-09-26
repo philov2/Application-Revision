@@ -4,6 +4,8 @@ import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/li
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
 
+export const maxDuration = 60;
+
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Jalon "flashcards" (signalement de Phil : rendre l'application plus
