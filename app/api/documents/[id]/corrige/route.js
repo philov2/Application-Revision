@@ -1,25 +1,23 @@
 import { NextResponse } from "next/server";
-import mammoth from "mammoth";
 import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/lib/supabaseAdmin";
-import { consigneLangue } from "@/lib/langueMatiere";
-import { genererTexteIA } from "@/lib/genererTexteIA";
-import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
-export const maxDuration = 60;
+export const maxDuration = 30;
 
-const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-
-/* Genere le corrige d'un exercice ou d'un test deja importe (signalement de
-Phil : un exercice photographie depuis un manuel scolaire n'a pas ete cree
-par l'IA, mais le Parent doit quand meme pouvoir obtenir un corrige genere
-par IA a partir du fichier importe).
-- Telecharge le fichier original depuis le Storage
-- Envoie son contenu (texte ou image/PDF en vision) a genererTexteIA (Claude
-  puis Gemini en secours) avec une consigne de redaction de corrige
-- Enregistre le resultat comme un nouveau document de type "corrige", relie
-  au document source via corrige_de_id (voir schema.sql) -> DevoirCard.js
-  affiche deja automatiquement "Voir le corrige" des que ce champ est rempli,
-  aucune modification necessaire la-bas. */
+/* Genere le corrige d'un exercice ou d'un test deja importe, de facon
+ASYNCHRONE (signalement de Phil : meme apres avoir raccourci la consigne et
+ajoute des delais par fournisseur, un exercice avec beaucoup de questions
+demande parfois pres d'une minute de traitement par l'IA - constate par Phil
+en testant Claude directement en dehors de l'application - ce qui depasse le
+plafond strict de 60s d'une fonction Vercel sur le plan Hobby et provoque une
+erreur 504 imprevisible). Cette route ne fait plus que verifier les
+conditions puis declencher la Supabase Edge Function "generer-corrige" (voir
+supabase/functions/generer-corrige), qui n'a pas cette limite de duree et
+fait le vrai travail (telechargement, appel IA, enregistrement) en
+arriere-plan. Le document source passe par un statut "en_cours" le temps du
+traitement (voir schema.sql : documents.corrige_statut / corrige_erreur) ;
+DevoirCard.js et MatiereDocuments.js interrogent ce statut a intervalles
+reguliers pour savoir quand afficher le corrige ou l'erreur, au lieu
+d'attendre la reponse de cette route. */
 export async function POST(request, { params }) {
   if (!supabaseAdminConfigured) {
     return NextResponse.json({ error: "Supabase n'est pas encore configure cote serveur (SUPABASE_SERVICE_ROLE_KEY manquante)." }, { status: 500 });
@@ -44,6 +42,9 @@ export async function POST(request, { params }) {
   if (document.type !== "exercice" && document.type !== "test") {
     return NextResponse.json({ error: "Seuls les documents de type Exercice ou Test peuvent servir a generer un corrige." }, { status: 400 });
   }
+  if (document.corrige_statut === "en_cours") {
+    return NextResponse.json({ error: "Une generation est deja en cours pour ce document." }, { status: 400 });
+  }
 
   const { data: corrigeExistant } = await supabaseAdmin
     .from("documents")
@@ -54,86 +55,29 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: "Un corrige existe deja pour ce document." }, { status: 400 });
   }
 
-  const { data: fichier, error: telechargementError } = await supabaseAdmin.storage.from("documents").download(document.fichier_url);
-  if (telechargementError || !fichier) {
-    return NextResponse.json({ error: `Impossible de telecharger le document original : ${telechargementError?.message || "erreur inconnue"}` }, { status: 500 });
+  const edgeFunctionUrl = process.env.SUPABASE_EDGE_FUNCTION_URL_CORRIGE;
+  const edgeFunctionSecret = process.env.EDGE_FUNCTION_SECRET;
+  if (!edgeFunctionUrl || !edgeFunctionSecret) {
+    return NextResponse.json({ error: "La generation asynchrone du corrige n'est pas encore configuree cote serveur (variables d'environnement manquantes)." }, { status: 500 });
   }
 
-  const arrayBuffer = await fichier.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString("base64");
-  const mime = document.format || "";
+  await supabaseAdmin.from("documents").update({ corrige_statut: "en_cours", corrige_erreur: null }).eq("id", id);
 
-  let pieceJointe;
-  if (mime === "application/pdf" || mime.startsWith("image/")) {
-    pieceJointe = { mimeType: mime, base64 };
-  } else if (mime.startsWith("text/")) {
-    pieceJointe = { texte: Buffer.from(arrayBuffer).toString("utf-8") };
-  } else if (mime === MIME_DOCX) {
-    let texteExtrait;
-    try {
-      const resultatExtraction = await mammoth.extractRawText({ buffer: Buffer.from(arrayBuffer) });
-      texteExtrait = resultatExtraction.value;
-    } catch (err) {
-      return NextResponse.json({ error: `Impossible de lire ce fichier Word : ${err.message}` }, { status: 400 });
-    }
-    if (!texteExtrait || !texteExtrait.trim()) {
-      return NextResponse.json({ error: "Ce fichier Word ne contient pas de texte exploitable." }, { status: 400 });
-    }
-    pieceJointe = { texte: texteExtrait };
-  } else if (mime === "application/msword") {
-    return NextResponse.json({ error: "Les anciens fichiers Word (.doc) ne sont pas pris en charge. Enregistrez le document au format .docx ou PDF, puis reessayez." }, { status: 400 });
-  } else {
-    return NextResponse.json({ error: `Format de fichier non pris en charge pour la generation d'un corrige : ${mime || "inconnu"}` }, { status: 400 });
-  }
-
-  const { data: matiere } = await supabaseAdmin.from("matieres").select("nom").eq("id", document.matiere_id).single();
-  const consigneLangueMatiere = consigneLangue(matiere?.nom);
-
-  const consigneSysteme = `Tu es un assistant pedagogique qui aide des eleves de college et lycee. Voici un exercice ou un test (fourni en piece jointe, eventuellement une photo ou un scan). Redige un corrige concis : pour chaque question ou exercice, donne uniquement la reponse finale et le calcul ou raisonnement essentiel (1 a 2 lignes maximum par question, sans reformuler l'enonce), en reprenant si possible la meme numerotation que l'enonce. Va droit au but pour rester bref. ${consigneLangueMatiere}`;
-
-  let texteCorrige;
   try {
-    const resultat = await genererTexteIA({
-      systemPrompt: consigneSysteme,
-      promptTexte: "Redige le corrige complet de cet exercice.",
-      pieceJointe,
-      maxTokens: 4096,
+    const reponse = await fetch(edgeFunctionUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-fonction-secret": edgeFunctionSecret },
+      body: JSON.stringify({ documentId: id, compteId: compte.id }),
     });
-    texteCorrige = resultat.texte;
+    if (!reponse.ok) {
+      const detail = await reponse.text();
+      await supabaseAdmin.from("documents").update({ corrige_statut: "erreur", corrige_erreur: `Echec du declenchement : ${detail}` }).eq("id", id);
+      return NextResponse.json({ error: `Echec du declenchement de la generation : ${detail}` }, { status: 500 });
+    }
   } catch (err) {
-    return NextResponse.json({ error: `Echec de la generation par IA : ${err.message}` }, { status: 500 });
+    await supabaseAdmin.from("documents").update({ corrige_statut: "erreur", corrige_erreur: err.message }).eq("id", id);
+    return NextResponse.json({ error: `Echec du declenchement de la generation : ${err.message}` }, { status: 500 });
   }
 
-  const cheminCorrige = `${document.enfant_id}/${Date.now()}-corrige-${sanitizeNomFichier(document.nom) || "exercice"}.md`;
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from("documents")
-    .upload(cheminCorrige, Buffer.from(texteCorrige, "utf-8"), { contentType: "text/markdown; charset=utf-8" });
-  if (uploadError) {
-    return NextResponse.json({ error: `Echec de l'enregistrement du corrige : ${uploadError.message}` }, { status: 500 });
-  }
-
-  const nomDocument = `Corrigé - ${document.nom}`;
-  const { data: nouveauCorrige, error: insertError } = await supabaseAdmin
-    .from("documents")
-    .insert({
-      nom: nomDocument,
-      type: "corrige",
-      matiere_id: document.matiere_id,
-      chapitre_id: document.chapitre_id,
-      enfant_id: document.enfant_id,
-      cree_par: compte.id,
-      fichier_url: cheminCorrige,
-      taille_octets: Buffer.byteLength(texteCorrige, "utf-8"),
-      format: "text/markdown",
-      genere_par_ia: true,
-      corrige_de_id: document.id,
-    })
-    .select()
-    .single();
-
-  if (insertError) {
-    return NextResponse.json({ error: `Echec de l'enregistrement du corrige : ${insertError.message}` }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true, document: nouveauCorrige });
+  return NextResponse.json({ success: true, statut: "en_cours" });
 }
