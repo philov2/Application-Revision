@@ -3,6 +3,8 @@ import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/li
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
 
+export const maxDuration = 60;
+
 // Genere une synthese de cours par IA a partir d'un simple prompt tape par
 // l'utilisateur (parent ou soutien), sans document source a importer au
 // prealable. Le resultat est enregistre comme un nouveau document de type
