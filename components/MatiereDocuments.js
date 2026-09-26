@@ -126,7 +126,7 @@ const fileInputRefs = useRef({});
 
     const { data: docs } = await supabase
       .from("documents")
-      .select("id, nom, type, fichier_url, chapitre_id, genere_par_ia, format, corrige_de_id, chapitre:chapitres(nom)")
+      .select("id, nom, type, fichier_url, chapitre_id, genere_par_ia, format, corrige_de_id, corrige_statut, corrige_erreur, chapitre:chapitres(nom)")
       .eq("matiere_id", matiere.id)
       .eq("enfant_id", enfantId)
       .eq("archive", modeArchive)
@@ -438,17 +438,55 @@ const fileInputRefs = useRef({});
     setMessage("");
     try {
       await authFetch(`/api/documents/${d.id}/corrige`, { method: "POST" });
-      charger();
-      setMessage("Corrigé généré par IA.");
     } catch (err) {
       setMessage(err.message);
-    } finally {
       setEnCoursCorrige((prev) => {
         const next = new Set(prev);
         next.delete(d.id);
         return next;
       });
+      return;
     }
+    // La generation continue en arriere-plan (Supabase Edge Function, voir
+    // corrige/route.js) : cette route repond desormais tout de suite, donc
+    // on interroge le statut a intervalles reguliers (meme principe que
+    // DevoirCard.js) au lieu d'attendre la reponse.
+    const minuteur = setInterval(async () => {
+      try {
+        const { data: corrige } = await supabase
+          .from("documents")
+          .select("id")
+          .eq("corrige_de_id", d.id)
+          .maybeSingle();
+        if (corrige) {
+          clearInterval(minuteur);
+          setEnCoursCorrige((prev) => {
+            const next = new Set(prev);
+            next.delete(d.id);
+            return next;
+          });
+          charger();
+          setMessage("Corrigé généré par IA.");
+          return;
+        }
+        const { data: source } = await supabase
+          .from("documents")
+          .select("corrige_statut, corrige_erreur")
+          .eq("id", d.id)
+          .maybeSingle();
+        if (source?.corrige_statut === "erreur") {
+          clearInterval(minuteur);
+          setEnCoursCorrige((prev) => {
+            const next = new Set(prev);
+            next.delete(d.id);
+            return next;
+          });
+          setMessage(source.corrige_erreur || "Echec de la generation du corrige.");
+        }
+      } catch {
+        // silencieux : on retente au prochain intervalle
+      }
+    }, 4000);
   }
 
   async function supprimerDocument(documentId) {
