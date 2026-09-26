@@ -97,7 +97,7 @@ export async function POST(request, { params }) {
       systemPrompt: consigneSysteme,
       promptTexte: "Redige le corrige complet de cet exercice.",
       pieceJointe,
-      maxTokens: 4096,
+      maxTokens: 8192,
     });
     texteCorrige = resultat.texte;
   } catch (err) {
