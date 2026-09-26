@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { matieres as matieresSample } from "@/lib/sampleData";
 import { supabase } from "@/lib/supabaseClient";
+import { authFetch } from "@/lib/authFetch";
 import { modifierDevoir, supprimerDevoir, basculerStatutDevoir } from "@/lib/devoirsSupabase";
 import { soumettreReponseExercice, noterExercice, urlSigneeFichierExercice } from "@/lib/reponsesExercicesSupabase";
 import { chargerTest, chargerResultatTest, soumettreResultatTest } from "@/lib/testsSupabase";
@@ -103,6 +104,8 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
   // seulement après envoi de sa réponse, et tout de suite pour le
   // Parent/Soutien, juste à côté du fichier de l'exercice).
   const [corrigeDisponible, setCorrigeDisponible] = useState(null);
+  const [enCoursCorrige, setEnCoursCorrige] = useState(false);
+  const [erreurCorrige, setErreurCorrige] = useState("");
 
   // Jalon "flashcards" (signalement de Phil : rendre l'application plus
   // attractive pour une adolescente, dans la même veine que le streak, le
@@ -330,6 +333,20 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
       setErreurDocument(err.message);
     } finally {
       setEnChargementDocument(false);
+    }
+  }
+
+  async function genererCorrige() {
+    if (!devoir.document) return;
+    setErreurCorrige("");
+    setEnCoursCorrige(true);
+    try {
+      const resultat = await authFetch(`/api/documents/${devoir.document.id}/corrige`, { method: "POST" });
+      setCorrigeDisponible(resultat.document);
+    } catch (err) {
+      setErreurCorrige(err.message);
+    } finally {
+      setEnCoursCorrige(false);
     }
   }
 
@@ -640,6 +657,7 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
             {devoir.document && (
               <div className="flex items-center gap-2 flex-wrap">
                 {erreurDocument && <p className="text-red-600 w-full">{erreurDocument}</p>}
+                {erreurCorrige && <p className="text-red-600 w-full">{erreurCorrige}</p>}
                 <button
                   onClick={voirDocument}
                   disabled={enChargementDocument}
@@ -656,6 +674,20 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30 disabled:opacity-50"
                   >
                     ✅ {enChargementDocument ? "Ouverture..." : `Voir le corrigé : ${corrigeDisponible.nom}`}
+                  </button>
+                )}
+                {/* Génération à la demande : le Parent/Soutien peut demander
+                    un corrigé IA directement depuis la carte du devoir (avant,
+                    il fallait retrouver le document dans l'onglet Chapitres et
+                    documents pour faire la même chose). */}
+                {matieres && !corrigeDisponible && (
+                  <button
+                    onClick={genererCorrige}
+                    disabled={enCoursCorrige}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 disabled:opacity-50"
+                    title="Génère un corrigé de cet exercice par IA"
+                  >
+                    ✨ {enCoursCorrige ? "Génération..." : "Générer un corrigé"}
                   </button>
                 )}
               </div>
