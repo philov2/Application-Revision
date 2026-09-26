@@ -3,6 +3,8 @@ import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/li
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
 
+export const maxDuration = 60;
+
 // Genere un jeu de flashcards (question au recto, reponse au verso) par IA a
 // partir d'un simple prompt tape par l'utilisateur, sans document source a
 // importer au prealable -- meme principe que
