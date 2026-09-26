@@ -4,6 +4,8 @@ import { genererEtEnregistrerCorrige } from "@/lib/corrigeIA";
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
 
+export const maxDuration = 60;
+
 // Genere des exercices d'entrainement par IA a partir d'un simple prompt
 // tape par l'utilisateur, sans document source a importer au prealable.
 // Le resultat est enregistre comme un nouveau document de type "exercice".
