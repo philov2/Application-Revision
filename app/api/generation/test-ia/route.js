@@ -3,6 +3,8 @@ import { supabaseAdmin, supabaseAdminConfigured, getCompteFromToken } from "@/li
 import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
 
+export const maxDuration = 60;
+
 // Genere un test a choix multiples (QCM) par IA a partir d'un simple prompt
 // tape par l'utilisateur, sans document source a importer au prealable.
 // Le resultat est enregistre directement dans la table "tests", rattache au
