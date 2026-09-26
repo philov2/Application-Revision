@@ -212,3 +212,16 @@ create table flashcards (
 );
 
 alter table devoirs add column if not exists flashcards_id uuid references flashcards(id) on delete set null;
+
+-- Jalon "generation asynchrone du corrige" (signalement de Phil : un
+-- exercice avec beaucoup de questions demande parfois pres d'une minute de
+-- traitement par l'IA, ce qui depasse le plafond strict de 60s d'une
+-- fonction Vercel sur le plan Hobby -- constate par Phil en testant Claude
+-- directement en dehors de l'application). La generation se fait desormais
+-- de facon asynchrone via une Supabase Edge Function (voir
+-- supabase/functions/generer-corrige) qui n'a pas cette limite de duree :
+-- le document source (exercice/test) passe par ces deux colonnes le temps
+-- du traitement, et DevoirCard.js / MatiereDocuments.js interrogent le
+-- statut a intervalles reguliers au lieu d'attendre une reponse immediate.
+alter table documents add column if not exists corrige_statut text; -- null | 'en_cours' | 'erreur' (absence de valeur ET absence de corrige_de_id lie = jamais demande)
+alter table documents add column if not exists corrige_erreur text; -- message d'erreur si corrige_statut = 'erreur'
