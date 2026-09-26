@@ -6,6 +6,8 @@ import { consigneLangue } from "@/lib/langueMatiere";
 import { genererTexteIA } from "@/lib/genererTexteIA";
 import { sanitizeNomFichier } from "@/lib/sanitizeNomFichier";
 
+export const maxDuration = 60;
+
 const MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Genere des exercices d'entrainement par IA a partir d'un document de type "cours" deja importe.
