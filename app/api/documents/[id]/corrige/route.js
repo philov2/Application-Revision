@@ -57,7 +57,8 @@ export async function POST(request, { params }) {
 
   const edgeFunctionUrl = process.env.SUPABASE_EDGE_FUNCTION_URL_CORRIGE;
   const edgeFunctionSecret = process.env.EDGE_FUNCTION_SECRET;
-  if (!edgeFunctionUrl || !edgeFunctionSecret) {
+  const edgeFunctionApiKey = process.env.SUPABASE_EDGE_FUNCTION_APIKEY;
+  if (!edgeFunctionUrl || !edgeFunctionSecret || !edgeFunctionApiKey) {
     return NextResponse.json({ error: "La generation asynchrone du corrige n'est pas encore configuree cote serveur (variables d'environnement manquantes)." }, { status: 500 });
   }
 
@@ -72,9 +73,13 @@ export async function POST(request, { params }) {
         // La passerelle Supabase exige en plus sa propre cle API sur tout
         // appel a une Edge Function (independamment de notre secret
         // "x-fonction-secret" ci-dessus, qui reste la vraie autorisation
-        // metier verifiee par la fonction elle-meme).
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-        authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        // metier verifiee par la fonction elle-meme). Depuis la migration
+        // de Supabase vers le nouveau format de cles (sb_secret_... /
+        // sb_publishable_...), l'ancienne cle service_role n'est plus
+        // acceptee ici : il faut la nouvelle cle "secret" recuperee dans
+        // Project Settings > API Keys sur Supabase.
+        apikey: process.env.SUPABASE_EDGE_FUNCTION_APIKEY,
+        authorization: `Bearer ${process.env.SUPABASE_EDGE_FUNCTION_APIKEY}`,
       },
       body: JSON.stringify({ documentId: id, compteId: compte.id }),
     });
