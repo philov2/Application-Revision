@@ -180,7 +180,7 @@ async function traiter(supabase, documentId, compteId) {
     const consigneSysteme = `Tu es un assistant pedagogique qui aide des eleves de college et lycee. Voici un exercice ou un test (fourni en piece jointe, eventuellement une photo ou un scan). Redige un corrige concis : pour chaque question ou exercice, donne uniquement la reponse finale et le calcul ou raisonnement essentiel (1 a 2 lignes maximum par question, sans reformuler l'enonce), en reprenant si possible la meme numerotation que l'enonce. Va droit au but pour rester bref. ${consigneLangueMatiere}`;
 
     console.log("[corrige] appel IA en cours...");
-    const resultat = await genererTexteIA({ systemPrompt: consigneSysteme, promptTexte: "Redige le corrige complet de cet exercice.", pieceJointe, maxTokens: 4096 });
+    const resultat = await genererTexteIA({ systemPrompt: consigneSysteme, promptTexte: "Redige le corrige complet de cet exercice.", pieceJointe, maxTokens: 8000 });
     console.log(`[corrige] IA terminee, source=${resultat.source}, longueur=${resultat.texte.length}`);
 
     const cheminCorrige = `${document.enfant_id}/${Date.now()}-corrige-${sanitizeNomFichier(document.nom) || "exercice"}.md`;
