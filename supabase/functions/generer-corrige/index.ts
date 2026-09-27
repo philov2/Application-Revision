@@ -142,6 +142,7 @@ async function genererTexteIA({ systemPrompt, promptTexte, pieceJointe, maxToken
 
 // --- Traitement principal ---------------------------------------------------
 async function traiter(supabase, documentId, compteId) {
+  console.log(`[corrige] debut documentId=${documentId}`);
   try {
     const { data: document, error: documentError } = await supabase.from("documents").select("*").eq("id", documentId).single();
     if (documentError || !document) throw new Error("Document introuvable.");
@@ -149,6 +150,7 @@ async function traiter(supabase, documentId, compteId) {
     const { data: fichier, error: telechargementError } = await supabase.storage.from("documents").download(document.fichier_url);
     if (telechargementError || !fichier) throw new Error(`Impossible de telecharger le document original : ${telechargementError?.message || "erreur inconnue"}`);
 
+    console.log("[corrige] fichier telecharge");
     const arrayBuffer = await fichier.arrayBuffer();
     const mime = document.format || "";
 
@@ -177,7 +179,9 @@ async function traiter(supabase, documentId, compteId) {
     const consigneLangueMatiere = consigneLangue(matiere?.nom);
     const consigneSysteme = `Tu es un assistant pedagogique qui aide des eleves de college et lycee. Voici un exercice ou un test (fourni en piece jointe, eventuellement une photo ou un scan). Redige un corrige concis : pour chaque question ou exercice, donne uniquement la reponse finale et le calcul ou raisonnement essentiel (1 a 2 lignes maximum par question, sans reformuler l'enonce), en reprenant si possible la meme numerotation que l'enonce. Va droit au but pour rester bref. ${consigneLangueMatiere}`;
 
+    console.log("[corrige] appel IA en cours...");
     const resultat = await genererTexteIA({ systemPrompt: consigneSysteme, promptTexte: "Redige le corrige complet de cet exercice.", pieceJointe, maxTokens: 4096 });
+    console.log(`[corrige] IA terminee, source=${resultat.source}, longueur=${resultat.texte.length}`);
 
     const cheminCorrige = `${document.enfant_id}/${Date.now()}-corrige-${sanitizeNomFichier(document.nom) || "exercice"}.md`;
     const { error: uploadError } = await supabase.storage.from("documents").upload(cheminCorrige, new TextEncoder().encode(resultat.texte), { contentType: "text/markdown; charset=utf-8" });
@@ -198,8 +202,10 @@ async function traiter(supabase, documentId, compteId) {
     });
     if (insertError) throw new Error(`Echec de l'enregistrement du corrige : ${insertError.message}`);
 
+    console.log("[corrige] termine avec succes");
     await supabase.from("documents").update({ corrige_statut: null, corrige_erreur: null }).eq("id", documentId);
   } catch (err) {
+    console.log(`[corrige] ERREUR: ${err.message}`);
     await supabase.from("documents").update({ corrige_statut: "erreur", corrige_erreur: err.message }).eq("id", documentId);
   }
 }
