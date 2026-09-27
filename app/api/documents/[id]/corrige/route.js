@@ -66,7 +66,16 @@ export async function POST(request, { params }) {
   try {
     const reponse = await fetch(edgeFunctionUrl, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-fonction-secret": edgeFunctionSecret },
+      headers: {
+        "content-type": "application/json",
+        "x-fonction-secret": edgeFunctionSecret,
+        // La passerelle Supabase exige en plus sa propre cle API sur tout
+        // appel a une Edge Function (independamment de notre secret
+        // "x-fonction-secret" ci-dessus, qui reste la vraie autorisation
+        // metier verifiee par la fonction elle-meme).
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
       body: JSON.stringify({ documentId: id, compteId: compte.id }),
     });
     if (!reponse.ok) {
