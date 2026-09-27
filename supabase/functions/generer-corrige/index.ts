@@ -85,7 +85,7 @@ async function appellerClaude({ systemPrompt, promptTexte, pieceJointe, maxToken
   const reponse = await fetchAvecDelai("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": cle, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODELE_CLAUDE, max_tokens: maxTokens || 4096, system: systemPrompt, messages: [{ role: "user", content: contenu }] }),
+    body: JSON.stringify({ model: MODELE_CLAUDE, max_tokens: maxTokens || 4096, thinking: { type: "disabled" }, system: systemPrompt, messages: [{ role: "user", content: contenu }] }),
   }, 100000);
   if (!reponse.ok) throw new Error(`erreur ${reponse.status} : ${await reponse.text()}`);
   const donnees = await reponse.json();
