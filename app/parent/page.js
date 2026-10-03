@@ -26,6 +26,7 @@ export default function DashboardParent() {
     <AuthGuard role="parent">
 <Suspense fallback={null}>
       <Contenu />
+</Suspense>
     </AuthGuard>
   );
 }
