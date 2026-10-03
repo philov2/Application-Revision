@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
@@ -23,12 +24,15 @@ import BanniereEncouragement from "@/components/BanniereEncouragement";
 export default function DashboardParent() {
   return (
     <AuthGuard role="parent">
+<Suspense fallback={null}>
       <Contenu />
     </AuthGuard>
   );
 }
 
 function Contenu() {
+const searchParams = useSearchParams();
+const enfantParamId = searchParams.get("enfant");
   const [enfants, setEnfants] = useState(supabaseConfigured ? [] : enfantsDemo);
   const [matieres, setMatieres] = useState(supabaseConfigured ? [] : matieresDemo);
   const [enfantSelectionne, setEnfantSelectionne] = useState(enfantsDemo[0]?.id);
@@ -75,8 +79,9 @@ function Contenu() {
         }));
         if (listeEnfants.length > 0) {
           setEnfants(listeEnfants);
-          setEnfantSelectionne(listeEnfants[0].id);
-          await recharger(listeEnfants[0].id);
+          const enfantInitial = enfantParamId && listeEnfants.some((e) => e.id === enfantParamId) ? enfantParamId : listeEnfants[0].id;
+setEnfantSelectionne(enfantInitial);
+          await recharger(enfantInitial);
         }
         const { data: mats } = await supabase.from("matieres").select("id, nom, couleur").order("nom");
         if (mats) setMatieres(mats);
