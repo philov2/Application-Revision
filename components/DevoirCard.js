@@ -1033,6 +1033,11 @@ export default function DevoirCard({ devoir, onToggle, matieres, onChange, enfan
               >
                 {devoir.matiere} · {LABEL_TYPE[devoir.type] || devoir.type}
               </span>
+{devoir.titre && (
+<span className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 line-clamp-2 px-1 leading-tight">
+{devoir.titre}
+</span>
+)}
               {devoir.type === "exercice" && devoir.reponseExercice?.note != null && (
                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold ${classeNote(devoir.reponseExercice.note)}`}>
                   {devoir.reponseExercice.note}/20
