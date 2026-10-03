@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import DemoBanner from "@/components/DemoBanner";
 import DevoirCard from "@/components/DevoirCard";
@@ -26,17 +27,23 @@ const LABEL_TYPE_NOTIF = { revision: "Réviser le cours", exercice: "Exercices",
 export default function DashboardEnfant() {
   return (
     <AuthGuard role="enfant">
-      <Contenu />
+      <Suspense fallback={null}>
+        <Contenu />
+      </Suspense>
     </AuthGuard>
   );
 }
 
 function Contenu() {
+  const searchParams = useSearchParams();
+  const enfantParamId = searchParams.get("enfant");
   const [devoirs, setDevoirs] = useState(supabaseConfigured ? [] : devoirsEnfant);
   const [enfantId, setEnfantId] = useState(null);
   const [nomEnfant, setNomEnfant] = useState("Rose");
   const [compteId, setCompteId] = useState(null);
   const [matieres, setMatieres] = useState(supabaseConfigured ? [] : matieresDemo);
+  const [estAdmin, setEstAdmin] = useState(false);
+  const [listeEnfants, setListeEnfants] = useState([]);
   /* Jalon "repertoire d'archivage" (signalement de Phil) : l'Enfant peut */
   /* consulter le meme historique que Parent/Soutien, en lecture seule */
   /* (aucun bouton archiver/supprimer), comme son onglet Documents actuel. */
@@ -87,6 +94,14 @@ function Contenu() {
     setDevoirs(liste);
   }
 
+  async function changerEnfant(id) {
+    const enfant = listeEnfants.find((e) => e.id === id);
+    if (!enfant) return;
+    setEnfantId(enfant.id);
+    setNomEnfant(enfant.nom);
+    await recharger(enfant.id);
+  }
+
   useEffect(() => {
     if (!supabaseConfigured) return;
     (async () => {
@@ -100,8 +115,10 @@ function Contenu() {
       if (compte?.couleur_accent) setCouleurAccent(compte.couleur_accent);
 
       if (compte?.role === "admin") {
-        const { data: enfants } = await supabase.from("comptes").select("id, nom").eq("role", "enfant").limit(1);
-        const enfant = enfants && enfants[0];
+        setEstAdmin(true);
+        const { data: enfants } = await supabase.from("comptes").select("id, nom").eq("role", "enfant").order("nom");
+        if (enfants) setListeEnfants(enfants);
+        const enfant = (enfantParamId && enfants?.find((e) => e.id === enfantParamId)) || (enfants && enfants[0]);
         if (enfant) {
           setEnfantId(enfant.id);
           setNomEnfant(enfant.nom);
@@ -193,6 +210,20 @@ function Contenu() {
       <DemoBanner />
       <Navbar role="enfant" nom={nomEnfant} enfantId={enfantId} compteId={compteId} />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-8 space-y-8">
+        {estAdmin && listeEnfants.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 text-sm">
+            <span className="font-medium text-amber-800 dark:text-amber-300">Vue admin —</span>
+            <select
+              value={enfantId || ""}
+              onChange={(e) => changerEnfant(e.target.value)}
+              className="rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-sm px-2 py-1"
+            >
+              {listeEnfants.map((e) => (
+                <option key={e.id} value={e.id}>{e.nom}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700 flex-wrap">
           <button onClick={() => setOnglet("devoirs")} className={classeOnglet(onglet === "devoirs")} style={styleOnglet(onglet === "devoirs")}>
             Mes devoirs
