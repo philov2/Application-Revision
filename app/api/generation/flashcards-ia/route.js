@@ -81,7 +81,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Les flashcards generees par l'IA sont mal formees. Reessayez." }, { status: 500 });
   }
 
-  const titrePrompt = prompt.slice(0, 40).replace(/\s+/g, " ").trim();
+  const titrePrompt = prompt.slice(0, 120).replace(/\s+/g, " ").trim();
 
   const { data: nouvellesFlashcards, error: insertError } = await supabaseAdmin
     .from("flashcards")
