@@ -677,7 +677,7 @@ const fileInputRefs = useRef({});
   function DocumentRow({ d }) {
     return (
       <div className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 w-full">
           <p className="font-medium break-words">📄 {d.nom}</p>
           <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}</p>
           <div className="flex items-center gap-1 flex-wrap mt-1">{pastillesDevoir("document_id", d.id)}</div>
@@ -947,7 +947,7 @@ input.files = dt.files;
               <div className="space-y-1.5">
                 {documentsSansChapitre.map((d) => (
                   <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
-                    <div className="min-w-0 flex-1"><p className="font-medium break-words">📄 {d.nom}</p><div className="flex items-center gap-1 flex-wrap mt-1">{pastillesDevoir("document_id", d.id)}</div></div>
+                    <div className="min-w-0 w-full"><p className="font-medium break-words">📄 {d.nom}</p><div className="flex items-center gap-1 flex-wrap mt-1">{pastillesDevoir("document_id", d.id)}</div></div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {chapitres.length > 0 && (
                         <select disabled={enCoursAssignation.has(d.id)} onChange={(e) => assignerChapitre(d.id, e.target.value)} defaultValue="" className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs">
