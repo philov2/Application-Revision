@@ -79,7 +79,7 @@ export async function POST(request) {
           return NextResponse.json({ error: "Le test genere par l'IA est mal forme. Reessayez." }, { status: 500 });
     }
 
-  const titrePrompt = prompt.slice(0, 40).replace(/\s+/g, " ").trim();
+  const titrePrompt = prompt.slice(0, 120).replace(/\s+/g, " ").trim();
 
   const { data: nouveauTest, error: insertError } = await supabaseAdmin
       .from("tests")
