@@ -661,14 +661,21 @@ export default function FormulaireDevoir({ enfantId, compteId, matieres, onCree 
 
 {modeDocument === "existant" &&
                       (documents.length > 0 ? (
-                                              <select value={documentId} onChange={(e) => setDocumentId(e.target.value)} className={CLASSE_INPUT}>
-                          <option value="">Aucun document</option>
-{documents.map((d) => (
-                            <option key={d.id} value={d.id}>
-{d.nom}
-</option>
-                        ))}
-                          </select>
+                                              <div className="max-h-64 overflow-y-auto space-y-1 rounded-lg border border-slate-200 dark:border-slate-700 p-1.5">
+  <label className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer ${documentId === "" ? "bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-300 dark:ring-slate-600" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}>
+    <input type="radio" name="document-existant" className="mt-1" checked={documentId === ""} onChange={() => setDocumentId("")} />
+    <span className="text-slate-500 dark:text-slate-400">Aucun document</span>
+  </label>
+  {documents.map((d) => (
+    <label key={d.id} className={`flex items-start gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer ${documentId === d.id ? "bg-slate-100 dark:bg-slate-800 ring-1 ring-slate-300 dark:ring-slate-600" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}>
+      <input type="radio" name="document-existant" className="mt-1" checked={documentId === d.id} onChange={() => setDocumentId(d.id)} />
+      <span className="min-w-0 break-words">
+        <span className="font-medium">{d.nom}</span>
+        {d.type ? <span className="block text-xs capitalize text-slate-500 dark:text-slate-400">{d.type}</span> : null}
+      </span>
+    </label>
+  ))}
+</div>
                     ) : (
                                             <p className="text-xs text-slate-400">
                                               Aucun document déjà importé pour cette matière{chapitreId ? " / ce chapitre" : ""}.
