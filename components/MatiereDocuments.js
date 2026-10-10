@@ -54,6 +54,7 @@ dans l'input file existant de chaque chapitre (voir onTerminer plus bas),
 sans dupliquer la logique d'import. */
 const fileInputRefs = useRef({});
   const [documents, setDocuments] = useState([]);
+  const [devoirsLies, setDevoirsLies] = useState([]);
   const [testsParChapitre, setTestsParChapitre] = useState({});
   // Jalon "flashcards" (signalement de Phil) : même principe que
   // testsParChapitre ci-dessus, pour afficher et gérer les decks de
@@ -132,6 +133,16 @@ const fileInputRefs = useRef({});
       .eq("archive", modeArchive)
       .order("created_at", { ascending: false });
     setDocuments(docs || []);
+
+    /* Devoirs de cet enfant dans cette matière : sert à indiquer, pour chaque
+       document / test / deck de flashcards, s'il est utilisé par un devoir à
+       faire ou déjà fait (aide au rangement avant suppression). */
+    const { data: devs } = await supabase
+      .from("devoirs")
+      .select("id, statut, document_id, test_id, flashcards_id")
+      .eq("enfant_id", enfantId)
+      .eq("matiere_id", matiere.id);
+    setDevoirsLies(devs || []);
 
     if (modeArchive) {
       setTestsParChapitre({});
@@ -635,12 +646,41 @@ const fileInputRefs = useRef({});
      matière vide. */
   if (modeArchive && documents.length === 0) return null;
 
+  function pastillesDevoir(champ, id) {
+    if (lectureSeule) return null;
+    const lies = devoirsLies.filter((dv) => dv[champ] === id);
+    const aFaire = lies.filter((dv) => dv.statut !== "fait").length;
+    const faits = lies.filter((dv) => dv.statut === "fait").length;
+    if (lies.length === 0) {
+      return (
+        <span className="inline-block rounded-full border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400" title="Aucun devoir n'utilise ce fichier : sa suppression n'a pas d'impact sur les devoirs">
+          Aucun devoir
+        </span>
+      );
+    }
+    return (
+      <>
+        {aFaire > 0 && (
+          <span className="inline-block rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 px-2 py-0.5 text-[10px] font-medium" title="Utilisé par un devoir encore à faire">
+            🟠 Devoir à faire{aFaire > 1 ? ` (${aFaire})` : ""}
+          </span>
+        )}
+        {faits > 0 && (
+          <span className="inline-block rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 px-2 py-0.5 text-[10px] font-medium" title="Utilisé par un devoir déjà fait">
+            ✅ Devoir fait{faits > 1 ? ` (${faits})` : ""}
+          </span>
+        )}
+      </>
+    );
+  }
+
   function DocumentRow({ d }) {
     return (
       <div className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
-        <div>
-          <p className="font-medium">📄 {d.nom}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium break-words">📄 {d.nom}</p>
           <p className="text-xs text-slate-500">{TYPES_DOCUMENT.find((t) => t.value === d.type)?.label || d.type}</p>
+          <div className="flex items-center gap-1 flex-wrap mt-1">{pastillesDevoir("document_id", d.id)}</div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {!lectureSeule && !modeArchive && (d.type === "cours" || d.type === "synthese") && (
@@ -839,7 +879,7 @@ input.files = dt.files;
                         <div className="space-y-1 pl-1">
                           {testsChapitre.map((t) => (
                             <div key={t.id} className="flex items-center justify-between text-xs">
-                              <span>📝 {t.titre}</span>
+                              <span className="min-w-0 flex-1 break-words">📝 {t.titre} <span className="inline-flex items-center gap-1 ml-1 align-middle flex-wrap">{pastillesDevoir("test_id", t.id)}</span></span>
                               {!lectureSeule && (
                                 enConfirmationSuppressionTest === t.id ? (
                                   <span className="flex items-center gap-1.5">
@@ -862,7 +902,7 @@ input.files = dt.files;
                         <div className="space-y-1 pl-1">
                           {flashcardsChapitre.map((f) => (
                             <div key={f.id} className="flex items-center justify-between text-xs">
-                              <span>🗂 {f.titre}</span>
+                              <span className="min-w-0 flex-1 break-words">🗂 {f.titre} <span className="inline-flex items-center gap-1 ml-1 align-middle flex-wrap">{pastillesDevoir("flashcards_id", f.id)}</span></span>
                               {!lectureSeule && (
                                 enConfirmationSuppressionFlashcards === f.id ? (
                                   <span className="flex items-center gap-1.5">
@@ -907,7 +947,7 @@ input.files = dt.files;
               <div className="space-y-1.5">
                 {documentsSansChapitre.map((d) => (
                   <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
-                    <p className="font-medium">📄 {d.nom}</p>
+                    <div className="min-w-0 flex-1"><p className="font-medium break-words">📄 {d.nom}</p><div className="flex items-center gap-1 flex-wrap mt-1">{pastillesDevoir("document_id", d.id)}</div></div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {chapitres.length > 0 && (
                         <select disabled={enCoursAssignation.has(d.id)} onChange={(e) => assignerChapitre(d.id, e.target.value)} defaultValue="" className="rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-2 py-1 text-xs">
@@ -947,7 +987,7 @@ input.files = dt.files;
             <div className="space-y-1.5">
               {documentsSansChapitre.map((d) => (
                 <div key={d.id} className="flex items-center justify-between text-sm rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 flex-wrap gap-2 bg-white dark:bg-slate-900/40">
-                  <p className="font-medium">📄 {d.nom}</p>
+                  <p className="font-medium break-words min-w-0">📄 {d.nom}</p>
                   <button onClick={() => ouvrir(d)} className={PILL_NEUTRE}>↗ Ouvrir</button>
                 </div>
               ))}
