@@ -49,8 +49,8 @@ export async function POST(request) {
           return NextResponse.json({ error: `Echec de la generation par IA : ${err.message}` }, { status: 500 });
     }
 
-  const titrePrompt = prompt.slice(0, 50).replace(/\s+/g, " ").trim();
-    const nomDocument = `Synthese IA - ${titrePrompt}${prompt.length > 50 ? "..." : ""}`;
+  const titrePrompt = prompt.slice(0, 120).replace(/\s+/g, " ").trim();
+    const nomDocument = `Synthese IA - ${titrePrompt}${prompt.length > 120 ? "..." : ""}`;
     const cheminSynthese = `${enfantId}/${Date.now()}-synthese-ia.md`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from("documents")
